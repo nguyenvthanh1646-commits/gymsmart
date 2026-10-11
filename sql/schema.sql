@@ -28,6 +28,8 @@ CREATE TABLE exercises (
     type ENUM('RESISTANCE', 'CARDIO') NOT NULL,
     muscle_group VARCHAR(100) NOT NULL,
     description TEXT NULL,
+    instructions TEXT NULL,
+    common_mistakes TEXT NULL,
     image_url VARCHAR(500) NULL,
     video_url VARCHAR(500) NULL,
     difficulty ENUM('BEGINNER', 'INTERMEDIATE', 'ADVANCED') NOT NULL DEFAULT 'BEGINNER',
@@ -107,41 +109,6 @@ CREATE TABLE nutrition_targets (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- ====== ARTICLES / TAGS ======
-CREATE TABLE articles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    source_url VARCHAR(500) NULL,
-    author VARCHAR(255) NULL,
-    cover_image_url VARCHAR(500) NULL,
-    published_date DATETIME NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-CREATE TABLE tags (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE
-);
-
-CREATE TABLE article_tags (
-    article_id INT NOT NULL,
-    tag_id INT NOT NULL,
-    PRIMARY KEY (article_id, tag_id),
-    FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
-    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
-);
-
-CREATE TABLE saved_articles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    article_id INT NOT NULL,
-    saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_save (user_id, article_id)
-);
 
 -- ====== CHATBOT ======
 CREATE TABLE chatbot_sessions (

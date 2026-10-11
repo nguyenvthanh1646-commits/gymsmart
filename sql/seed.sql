@@ -8,4 +8,4 @@ INSERT INTO exercises (name, type, muscle_group, description, difficulty) VALUES
 ('Gập bụng', 'RESISTANCE', 'ABS', 'Bài tập cơ bụng không cần dụng cụ.', 'BEGINNER'),
 ('Chạy bộ', 'CARDIO', 'FULL_BODY', 'Cardio cơ bản, có thể chạy ngoài trời hoặc máy chạy bộ.', 'BEGINNER');
 
-INSERT INTO tags (name) VALUES ('Dinh dưỡng'), ('Kỹ thuật tập'), ('Phục hồi');
+
