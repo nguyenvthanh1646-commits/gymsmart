@@ -9,11 +9,10 @@ $loggedIn = function_exists('isLoggedIn') && isLoggedIn();
 <header class="navbar">
     <a href="/index.php" class="navbar__logo">GymSmart</a>
     <nav class="navbar__links">
-        <a href="/exercises.php">Bài tập</a>
+        <a href="/exercises.php">Bài tập &amp; Video</a>
         <a href="/workout-plan.php">Lịch tập</a>
         <a href="/nutrition.php">TDEE/Macro</a>
         <a href="/progress.php">Tiến trình</a>
-        <a href="/articles.php">Nghiên cứu</a>
         <?php if ($loggedIn): ?>
             <a href="/api/logout.php">Đăng xuất</a>
         <?php else: ?>
