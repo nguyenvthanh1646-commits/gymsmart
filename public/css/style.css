@@ -1,0 +1,82 @@
+/* style.css — biến dùng chung + layout cơ bản.
+   Mỗi tính năng riêng có thể tạo thêm file CSS riêng (VD: workout-plan.css)
+   và include thêm trong trang .php tương ứng, không sửa trực tiếp file này
+   trừ khi thay đổi style dùng CHUNG toàn hệ thống. */
+
+:root {
+    --color-accent: #ff5a1f;      /* màu nhấn chính — đổi tại đây để áp dụng toàn site */
+    --color-text: #1a1a1a;
+    --color-text-muted: #6b7280;
+    --color-bg: #f9fafb;
+    --color-surface: #ffffff;
+    --color-border: #e5e7eb;
+    --radius: 10px;
+    --font-main: 'Inter', 'Be Vietnam Pro', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: var(--font-main);
+    color: var(--color-text);
+    background: var(--color-bg);
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+}
+.navbar__logo {
+    font-weight: 700;
+    color: var(--color-accent);
+    text-decoration: none;
+    font-size: 1.1rem;
+}
+.navbar__links a {
+    margin-left: 1rem;
+    text-decoration: none;
+    color: var(--color-text);
+    font-size: 0.9rem;
+}
+.navbar__links a:hover { color: var(--color-accent); }
+
+/* Button dùng chung */
+.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+.btn:hover { opacity: 0.9; }
+
+/* Card dùng chung (bài tập, bài viết...) */
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1rem;
+}
+
+.footer {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}

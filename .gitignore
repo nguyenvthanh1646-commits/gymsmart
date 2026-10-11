@@ -1,0 +1,7 @@
+# Không commit file chứa thông tin DB/API key thật
+config.php
+
+# File hệ điều hành/IDE thường gặp
+.DS_Store
+.vscode/
+*.log
