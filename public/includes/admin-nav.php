@@ -4,6 +4,7 @@
  * Dùng: $admNavActive = 'exercises'; include __DIR__ . '/../includes/admin-nav.php';
  * Giá trị $admNavActive: 'dashboard' | 'exercises' | 'users'
  */
+require_once __DIR__ . '/logo.php';
 $admNavActive = $admNavActive ?? '';
 $admNavItems = [
     'dashboard' => ['/admin/dashboard.php', 'Tổng quan'],
@@ -13,7 +14,7 @@ $admNavItems = [
 ?>
 <nav class="adm-nav" aria-label="Quản trị">
     <div class="adm-nav-in">
-        <span class="adm-nav-brand">Quản trị</span>
+        <a class="adm-nav-brand" href="/admin/dashboard.php"><?= gsLogoMark(28) ?><span>Quản trị</span></a>
         <?php foreach ($admNavItems as $key => [$href, $label]): ?>
             <a href="<?= $href ?>" class="<?= $admNavActive === $key ? 'is-active' : '' ?>"><?= htmlspecialchars($label) ?></a>
         <?php endforeach; ?>
