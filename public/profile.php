@@ -35,6 +35,13 @@ $goalOptions = [
     'MAINTAIN'    => 'Duy trì',
     'GAIN_MUSCLE' => 'Tăng cơ',
 ];
+// Trình độ tập luyện: dùng để gợi ý lịch tập (số buổi, số bài, số set phù hợp).
+// Khóa trùng đúng giá trị ENUM của cột experience_level trong bảng users.
+$experienceOptions = [
+    'BEGINNER'     => 'Mới tập (dưới 6 tháng)',
+    'INTERMEDIATE' => 'Trung bình (6 tháng đến 2 năm)',
+    'ADVANCED'     => 'Nâng cao (trên 2 năm)',
+];
 
 // Lấy id từ SESSION, KHÔNG lấy từ form/URL. Nếu lấy từ form, người dùng có thể
 // sửa số id để xem hoặc sửa hồ sơ của người khác.
@@ -42,7 +49,7 @@ $userId = $_SESSION['user_id'];
 
 // Đọc thông tin hiện tại của user
 $stmt = $pdo->prepare(
-    "SELECT full_name, email, age, height_cm, weight_kg, gender, activity_level, goal
+    "SELECT full_name, email, age, height_cm, weight_kg, gender, activity_level, experience_level, goal
      FROM users WHERE id = ?"
 );
 $stmt->execute([$userId]);
@@ -67,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $weight   = str_replace(',', '.', trim($_POST['weight_kg'] ?? ''));
     $gender   = $_POST['gender'] ?? '';
     $activity = $_POST['activity_level'] ?? '';
+    $experience = $_POST['experience_level'] ?? '';
     $goal     = $_POST['goal'] ?? '';
 
     // Giữ lại những gì người dùng vừa nhập để hiện lại form nếu có lỗi
@@ -77,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'weight_kg'      => $weight,
         'gender'         => $gender,
         'activity_level' => $activity,
+        'experience_level' => $experience,
         'goal'           => $goal,
     ]);
 
@@ -109,6 +118,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!array_key_exists($activity, $activityOptions)) {
         $errors[] = 'Vui lòng chọn mức độ vận động.';
     }
+    // Trình độ tập luyện: thuật toán gợi ý lịch tập (B) dùng giá trị này
+    if (!array_key_exists($experience, $experienceOptions)) {
+        $errors[] = 'Vui lòng chọn trình độ tập luyện.';
+    }
     if (!array_key_exists($goal, $goalOptions)) {
         $errors[] = 'Vui lòng chọn mục tiêu.';
     }
@@ -118,12 +131,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare(
             "UPDATE users
              SET full_name = ?, age = ?, height_cm = ?, weight_kg = ?,
-                 gender = ?, activity_level = ?, goal = ?
+                 gender = ?, activity_level = ?, experience_level = ?, goal = ?
              WHERE id = ?"
         );
         $stmt->execute([
             $fullName, $ageValue, $heightValue, $weightValue,
-            $gender, $activity, $goal, $userId,
+            $gender, $activity, $experience, $goal, $userId,
         ]);
 
         // Cập nhật tên trong session để menu/trang khác hiện tên mới
@@ -206,6 +219,19 @@ include __DIR__ . '/includes/header.php';
                 <?php foreach ($activityOptions as $value => $label): ?>
                     <option value="<?= $value ?>"
                         <?= ($form['activity_level'] ?? '') === $value ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($label) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </p>
+
+        <p>
+            <label for="experience_level">Trình độ tập luyện</label><br>
+            <select id="experience_level" name="experience_level" required>
+                <option value="">-- Chọn --</option>
+                <?php foreach ($experienceOptions as $value => $label): ?>
+                    <option value="<?= $value ?>"
+                        <?= ($form['experience_level'] ?? '') === $value ? 'selected' : '' ?>>
                         <?= htmlspecialchars($label) ?>
                     </option>
                 <?php endforeach; ?>
