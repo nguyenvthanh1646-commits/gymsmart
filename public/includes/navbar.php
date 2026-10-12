@@ -14,6 +14,7 @@ $loggedIn = function_exists('isLoggedIn') && isLoggedIn();
         <a href="/nutrition.php">TDEE/Macro</a>
         <a href="/progress.php">Tiến trình</a>
         <?php if ($loggedIn): ?>
+            <a href="/profile.php">Hồ sơ</a>
             <a href="/api/logout.php">Đăng xuất</a>
         <?php else: ?>
             <a href="/login.php">Đăng nhập</a>
