@@ -213,13 +213,14 @@ $pillActiveStyle = 'display: inline-block; padding: 0.4rem 0.9rem; margin: 0 0.4
             ?>
             <!-- (int) ép id thành số nguyên để không chèn được ký tự lạ vào đường dẫn -->
             <a href="/exercise-detail.php?id=<?= (int)$ex['id'] ?>"
-               style="text-decoration: none; color: inherit;">
-                <div class="card">
+               style="text-decoration: none; color: inherit; display: block;">
+                <!-- height: 100% để mọi thẻ trong cùng hàng cao bằng nhau dù tên bài dài ngắn khác nhau -->
+                <div class="card" style="height: 100%; box-sizing: border-box;">
                     <?php if (!empty($ex['image_url'])): ?>
                         <img src="<?= htmlspecialchars($ex['image_url']) ?>"
                              alt="<?= htmlspecialchars($ex['name']) ?>"
                              loading="lazy"
-                             style="width: 100%; height: 140px; object-fit: cover; border-radius: 6px;">
+                             style="display: block; width: 100%; height: 140px; object-fit: cover; border-radius: 6px;">
                     <?php else: ?>
                         <div style="height: 140px; border-radius: 6px; background: var(--color-border);
                                     display: flex; align-items: center; justify-content: center;
@@ -228,7 +229,10 @@ $pillActiveStyle = 'display: inline-block; padding: 0.4rem 0.9rem; margin: 0 0.4
                         </div>
                     <?php endif; ?>
 
-                    <h3 style="margin: 0.75rem 0 0.25rem;"><?= htmlspecialchars($ex['name']) ?></h3>
+                    <!-- Tên dài tối đa 2 dòng (-webkit-line-clamp), min-height giữ chỗ 2 dòng để các thẻ thẳng hàng -->
+                    <h3 style="margin: 0.75rem 0 0.25rem; line-height: 1.3; min-height: 2.6em;
+                               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+                               overflow: hidden;"><?= htmlspecialchars($ex['name']) ?></h3>
                     <p style="margin: 0; font-size: 0.85rem; color: var(--color-text-muted);">
                         <?= htmlspecialchars($muscle) ?> · <?= htmlspecialchars($type) ?> · <?= htmlspecialchars($difficulty) ?>
                     </p>
