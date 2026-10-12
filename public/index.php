@@ -15,6 +15,12 @@ require_once __DIR__ . '/includes/auth.php'; // có session + isLoggedIn()
 require_once __DIR__ . '/includes/db.php';   // có biến $pdo
 
 $loggedIn       = isLoggedIn();
+
+// Quản trị viên có trang chủ riêng (tổng quan), không dùng trang chủ của người dùng
+if ($loggedIn && ($_SESSION['role'] ?? '') === 'ADMIN') {
+    header('Location: /admin/dashboard.php');
+    exit;
+}
 $missingFields  = []; // tên các mục hồ sơ còn thiếu (để hiển thị cho người dùng)
 
 if ($loggedIn) {
