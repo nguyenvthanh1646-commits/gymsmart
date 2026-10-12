@@ -19,7 +19,9 @@
 
 require_once __DIR__ . '/../../config.php';
 
-$dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4';
+// DB_PORT là tùy chọn: ai chưa khai báo trong config.php thì dùng cổng mặc định 3306
+$port = defined('DB_PORT') ? DB_PORT : 3306;
+$dsn  = 'mysql:host=' . DB_HOST . ';port=' . $port . ';dbname=' . DB_NAME . ';charset=utf8mb4';
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // báo lỗi rõ ràng thay vì im lặng
