@@ -12,6 +12,10 @@
     --color-border: #e5e7eb;
     --radius: 10px;
     --font-main: 'Inter', 'Be Vietnam Pro', sans-serif;
+    --color-error: #d93025;
+    --color-error-bg: #fdecea;
+    --color-success: #1e8e3e;
+    --color-success-bg: #e6f4ea;
 }
 
 * { box-sizing: border-box; }
@@ -79,4 +83,73 @@ body {
     padding: 1.5rem;
     color: var(--color-text-muted);
     font-size: 0.85rem;
+}
+/* ===== Form (E1) ===== */
+form label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+form input[type="text"],
+form input[type="email"],
+form input[type="password"],
+form input[type="number"],
+form input[type="date"],
+form select,
+form textarea {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+form input:focus,
+form select:focus,
+form textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(255, 90, 31, 0.2);
+}
+
+/* Nút submit chưa có class thì vẫn đẹp, còn nếu đã dùng .btn thì .btn ưu tiên */
+form button[type="submit"]:not(.btn) {
+    padding: 0.6rem 1.2rem;
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+form button[type="submit"]:not(.btn):hover { opacity: 0.9; }
+
+/* Thông báo */
+.alert {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+}
+.alert--error {
+    color: var(--color-error);
+    background: var(--color-error-bg);
+    border-color: var(--color-error);
+}
+.alert--success {
+    color: var(--color-success);
+    background: var(--color-success-bg);
+    border-color: var(--color-success);
+}
+form label + br {
+    display: none;
 }
