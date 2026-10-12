@@ -37,6 +37,7 @@ erDiagram
         float weight_kg
         enum gender "MALE, FEMALE, OTHER"
         enum activity_level "SEDENTARY..EXTRA_ACTIVE"
+        enum experience_level "BEGINNER, INTERMEDIATE, ADVANCED"
         enum goal "LOSE_FAT, MAINTAIN, GAIN_MUSCLE"
         datetime created_at
         datetime updated_at
@@ -150,6 +151,7 @@ Lưu thông tin tài khoản và chỉ số cơ thể cơ bản (dùng chung đ�
 | role | enum | `USER`, `ADMIN` |
 | age, height_cm, weight_kg, gender | | dùng tính TDEE |
 | activity_level | enum | hệ số hoạt động (ít vận động → vận động nhiều) |
+| experience_level | enum | trình độ tập luyện (`BEGINNER`, `INTERMEDIATE`, `ADVANCED`), dùng cho thuật toán gợi ý lịch tập; cùng bộ giá trị với `exercises.difficulty` |
 | goal | enum | mục tiêu (giảm mỡ / duy trì / tăng cơ), ảnh hưởng cách tính macro và gợi ý lịch tập |
 
 ### `exercises`
