@@ -5,6 +5,8 @@
 
 :root {
     --color-accent: #ff5a1f;      /* màu nhấn chính — đổi tại đây để áp dụng toàn site */
+    --color-accent-hover: #e64a0f;
+    --color-accent-soft: rgba(255, 90, 31, 0.18);
     --color-text: #1a1a1a;
     --color-text-muted: #6b7280;
     --color-bg: #f9fafb;
@@ -12,15 +14,61 @@
     --color-border: #e5e7eb;
     --radius: 10px;
     --font-main: 'Inter', 'Be Vietnam Pro', sans-serif;
+    --color-error: #d93025;
+    --color-error-bg: #fdecea;
+    --color-success: #1e8e3e;
+    --color-success-bg: #e6f4ea;
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+    --shadow-md: 0 4px 14px rgba(16, 24, 40, 0.08);
+    --transition: 0.18s ease;
 }
 
 * { box-sizing: border-box; }
 
+html { -webkit-text-size-adjust: 100%; }
+
 body {
     margin: 0;
     font-family: var(--font-main);
+    font-size: 16px;
+    line-height: 1.6;
     color: var(--color-text);
     background: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+    background: var(--color-accent);
+    color: #fff;
+}
+
+/* Tiêu đề và liên kết */
+h1, h2, h3 {
+    margin: 0 0 0.75rem;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.1rem; }
+
+p { margin: 0 0 1rem; }
+
+a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+a:hover {
+    color: var(--color-accent-hover);
+    text-decoration: underline;
+}
+
+a:focus-visible,
+button:focus-visible {
+    outline: 3px solid var(--color-accent-soft);
+    outline-offset: 2px;
 }
 
 .container {
@@ -31,52 +79,210 @@ body {
 
 /* Navbar */
 .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.5rem;
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
 }
 .navbar__logo {
-    font-weight: 700;
+    font-weight: 800;
     color: var(--color-accent);
     text-decoration: none;
-    font-size: 1.1rem;
+    font-size: 1.25rem;
+    letter-spacing: -0.02em;
+}
+.navbar__logo:hover {
+    color: var(--color-accent-hover);
+    text-decoration: none;
 }
 .navbar__links a {
-    margin-left: 1rem;
+    margin-left: 1.25rem;
+    padding: 0.35rem 0;
     text-decoration: none;
     color: var(--color-text);
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: color var(--transition), border-color var(--transition);
 }
-.navbar__links a:hover { color: var(--color-accent); }
+.navbar__links a:hover {
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
+    text-decoration: none;
+}
 
 /* Button dùng chung */
 .btn {
     display: inline-block;
-    padding: 0.6rem 1.2rem;
+    padding: 0.65rem 1.4rem;
     background: var(--color-accent);
     color: #fff;
     border: none;
     border-radius: var(--radius);
     cursor: pointer;
     text-decoration: none;
+    font-family: inherit;
     font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    box-shadow: 0 2px 6px rgba(255, 90, 31, 0.3);
+    transition: background var(--transition), transform var(--transition),
+                box-shadow var(--transition);
 }
-.btn:hover { opacity: 0.9; }
+.btn:hover {
+    background: var(--color-accent-hover);
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 90, 31, 0.35);
+}
+.btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(255, 90, 31, 0.3);
+}
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
 
 /* Card dùng chung (bài tập, bài viết...) */
 .card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: 1rem;
+    border-radius: calc(var(--radius) + 4px);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
 }
+.card h1 { margin-bottom: 1.25rem; }
 
 .footer {
     text-align: center;
     padding: 1.5rem;
+    margin-top: 2rem;
     color: var(--color-text-muted);
     font-size: 0.85rem;
+}
+
+/* ===== Form (E1) ===== */
+label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+    display: block;
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    margin-bottom: 1.1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    box-shadow: var(--shadow-sm);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #9ca3af;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+    border-color: #cfd4dc;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+/* Ô chọn: mũi tên riêng cho đồng nhất giữa các trình duyệt */
+select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.5rem;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236b7280' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.9rem center;
+}
+
+input[disabled],
+input[readonly] {
+    background: var(--color-bg);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* HTML của các trang có <br> sau <label> và bọc trong <p>: bỏ khoảng trống thừa */
+label + br { display: none; }
+p:has(> label) { margin: 0; }
+
+/* Nút submit chưa có class thì vẫn đẹp; đã dùng .btn thì .btn ưu tiên */
+button[type="submit"]:not(.btn) {
+    padding: 0.65rem 1.4rem;
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(255, 90, 31, 0.3);
+    transition: background var(--transition), transform var(--transition);
+}
+button[type="submit"]:not(.btn):hover {
+    background: var(--color-accent-hover);
+    transform: translateY(-1px);
+}
+
+/* Thông báo */
+.alert {
+    padding: 0.8rem 1rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid transparent;
+    border-left-width: 4px;
+    border-radius: var(--radius);
+    font-size: 0.92rem;
+}
+.alert--error {
+    color: var(--color-error);
+    background: var(--color-error-bg);
+    border-color: var(--color-error);
+}
+.alert--success {
+    color: var(--color-success);
+    background: var(--color-success-bg);
+    border-color: var(--color-success);
 }
