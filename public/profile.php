@@ -13,6 +13,7 @@
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 requireLogin();
 
@@ -67,6 +68,12 @@ $errors = [];
 $form = $user; // dữ liệu hiển thị trong form (mặc định là dữ liệu trong DB)
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Chống CSRF: form phải gửi kèm mã bí mật lưu trong session (xem includes/csrf.php)
+    if (!verifyCsrf()) {
+        http_response_code(403);
+        exit('Yêu cầu không hợp lệ (sai mã bảo vệ). Hãy quay lại và thử lại.');
+    }
+
     $fullName = trim($_POST['full_name'] ?? '');
     $age      = trim($_POST['age'] ?? '');
     // Cho phép gõ dấu phẩy kiểu Việt Nam (1,75) bằng cách đổi thành dấu chấm
@@ -170,6 +177,7 @@ include __DIR__ . '/includes/header.php';
     <?php endif; ?>
 
     <form method="post" action="/profile.php">
+        <?= csrfField() ?>
         <p>
             <label for="full_name">Họ và tên</label><br>
             <input type="text" id="full_name" name="full_name"
@@ -204,7 +212,7 @@ include __DIR__ . '/includes/header.php';
             <select id="gender" name="gender" required>
                 <option value="">-- Chọn --</option>
                 <?php foreach ($genderOptions as $value => $label): ?>
-                    <option value="<?= $value ?>"
+                    <option value="<?= htmlspecialchars($value) ?>"
                         <?= ($form['gender'] ?? '') === $value ? 'selected' : '' ?>>
                         <?= htmlspecialchars($label) ?>
                     </option>
@@ -217,7 +225,7 @@ include __DIR__ . '/includes/header.php';
             <select id="activity_level" name="activity_level" required>
                 <option value="">-- Chọn --</option>
                 <?php foreach ($activityOptions as $value => $label): ?>
-                    <option value="<?= $value ?>"
+                    <option value="<?= htmlspecialchars($value) ?>"
                         <?= ($form['activity_level'] ?? '') === $value ? 'selected' : '' ?>>
                         <?= htmlspecialchars($label) ?>
                     </option>
@@ -230,7 +238,7 @@ include __DIR__ . '/includes/header.php';
             <select id="experience_level" name="experience_level" required>
                 <option value="">-- Chọn --</option>
                 <?php foreach ($experienceOptions as $value => $label): ?>
-                    <option value="<?= $value ?>"
+                    <option value="<?= htmlspecialchars($value) ?>"
                         <?= ($form['experience_level'] ?? '') === $value ? 'selected' : '' ?>>
                         <?= htmlspecialchars($label) ?>
                     </option>
@@ -243,7 +251,7 @@ include __DIR__ . '/includes/header.php';
             <select id="goal" name="goal" required>
                 <option value="">-- Chọn --</option>
                 <?php foreach ($goalOptions as $value => $label): ?>
-                    <option value="<?= $value ?>"
+                    <option value="<?= htmlspecialchars($value) ?>"
                         <?= ($form['goal'] ?? '') === $value ? 'selected' : '' ?>>
                         <?= htmlspecialchars($label) ?>
                     </option>

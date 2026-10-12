@@ -10,7 +10,8 @@
  */
 
 require_once __DIR__ . '/includes/auth.php'; // có session + isLoggedIn()
-require_once __DIR__ . '/includes/db.php';   // có biến $pdo
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/csrf.php';   // có biến $pdo
 
 // Đã đăng nhập rồi thì không cần vào trang này nữa
 if (isLoggedIn()) {
@@ -22,6 +23,12 @@ $error = '';
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Chống CSRF: form phải gửi kèm mã bí mật lưu trong session (xem includes/csrf.php)
+    if (!verifyCsrf()) {
+        http_response_code(403);
+        exit('Yêu cầu không hợp lệ (sai mã bảo vệ). Hãy tải lại trang đăng nhập/đăng ký và thử lại.');
+    }
+
     $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
@@ -68,6 +75,7 @@ include __DIR__ . '/includes/header.php';
     <?php endif; ?>
 
     <form method="post" action="/login.php">
+        <?= csrfField() ?>
         <p>
             <label for="email">Email</label><br>
             <input type="email" id="email" name="email"

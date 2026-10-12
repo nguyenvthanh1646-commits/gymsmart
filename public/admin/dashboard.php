@@ -10,10 +10,10 @@ require_once __DIR__ . '/../includes/db.php';
 
 requireAdmin();
 
-/** Chạy câu SQL không có tham số và trả về một con số (COUNT...) */
+/** Chạy câu SQL KHÔNG có dữ liệu người dùng (chỉ truyền hằng số viết sẵn trong file này) và trả về một con số */
 function scalar(PDO $pdo, string $sql): int
 {
-    return (int)$pdo->query($sql)->fetchColumn();
+    return (int)$pdo->query($sql)->fetchColumn(); // audit:ok $sql là hằng số viết sẵn trong file này
 }
 
 $totalUsers = scalar($pdo, "SELECT COUNT(*) FROM users WHERE role = 'USER'");
@@ -37,9 +37,12 @@ $difficultyLabels = ['BEGINNER' => 'Dễ', 'INTERMEDIATE' => 'Trung bình', 'ADV
 /** Đếm số bài theo một cột, trả về mảng [giá trị => số bài] đủ mọi nhãn (nhãn không có bài thì 0) */
 function countBy(PDO $pdo, string $column, array $labels): array
 {
-    // $column là chuỗi do CHÍNH code này truyền vào (không phải dữ liệu người dùng),
-    // nên đưa thẳng vào SQL là an toàn.
-    $rows = $pdo->query("SELECT $column AS k, COUNT(*) AS c FROM exercises GROUP BY $column")->fetchAll();
+    // Tên cột không thể đưa vào dấu ? của prepare(), nên phải ghép vào câu SQL.
+    // Để an toàn, chỉ cho phép đúng các cột nằm trong danh sách này (whitelist).
+    if (!in_array($column, ['muscle_group', 'difficulty', 'type'], true)) {
+        throw new InvalidArgumentException('Cột không được phép: ' . $column);
+    }
+    $rows = $pdo->query("SELECT $column AS k, COUNT(*) AS c FROM exercises GROUP BY $column")->fetchAll(); // audit:ok $column đã qua whitelist ở trên
     $found = [];
     foreach ($rows as $r) {
         $found[$r['k']] = (int)$r['c'];
@@ -87,17 +90,17 @@ include __DIR__ . '/../includes/admin-nav.php';
     </div>
 
     <div class="adm-stats">
-        <div class="adm-stat"><div class="adm-stat-num"><?= $totalUsers ?></div><div class="adm-stat-label">Người dùng</div></div>
-        <div class="adm-stat"><div class="adm-stat-num"><?= $totalEx ?></div><div class="adm-stat-label">Bài tập</div></div>
-        <div class="adm-stat <?= $noVideo > 0 ? 'adm-stat-warn' : '' ?>"><div class="adm-stat-num"><?= $noVideo ?></div><div class="adm-stat-label">Bài chưa có video</div></div>
-        <div class="adm-stat <?= $noImage > 0 ? 'adm-stat-warn' : '' ?>"><div class="adm-stat-num"><?= $noImage ?></div><div class="adm-stat-label">Bài chưa có ảnh</div></div>
+        <div class="adm-stat"><div class="adm-stat-num"><?= (int)$totalUsers ?></div><div class="adm-stat-label">Người dùng</div></div>
+        <div class="adm-stat"><div class="adm-stat-num"><?= (int)$totalEx ?></div><div class="adm-stat-label">Bài tập</div></div>
+        <div class="adm-stat <?= $noVideo > 0 ? 'adm-stat-warn' : '' ?>"><div class="adm-stat-num"><?= (int)$noVideo ?></div><div class="adm-stat-label">Bài chưa có video</div></div>
+        <div class="adm-stat <?= $noImage > 0 ? 'adm-stat-warn' : '' ?>"><div class="adm-stat-num"><?= (int)$noImage ?></div><div class="adm-stat-label">Bài chưa có ảnh</div></div>
     </div>
 
     <?php if ($noVideo > 0 || $noImage > 0 || $incomplete > 0): ?>
         <div class="adm-todo">
-            <?php if ($noVideo > 0): ?><a href="/admin/exercises.php"><?= $noVideo ?> bài cần thêm video</a><?php endif; ?>
-            <?php if ($noImage > 0): ?><a href="/admin/exercises.php"><?= $noImage ?> bài cần thêm ảnh</a><?php endif; ?>
-            <?php if ($incomplete > 0): ?><a href="/admin/users.php"><?= $incomplete ?> người dùng chưa đủ hồ sơ</a><?php endif; ?>
+            <?php if ($noVideo > 0): ?><a href="/admin/exercises.php"><?= (int)$noVideo ?> bài cần thêm video</a><?php endif; ?>
+            <?php if ($noImage > 0): ?><a href="/admin/exercises.php"><?= (int)$noImage ?> bài cần thêm ảnh</a><?php endif; ?>
+            <?php if ($incomplete > 0): ?><a href="/admin/users.php"><?= (int)$incomplete ?> người dùng chưa đủ hồ sơ</a><?php endif; ?>
         </div>
     <?php endif; ?>
 

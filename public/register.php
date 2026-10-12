@@ -10,7 +10,8 @@
  */
 
 require_once __DIR__ . '/includes/auth.php'; // có session + isLoggedIn()
-require_once __DIR__ . '/includes/db.php';   // có biến $pdo
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/csrf.php';   // có biến $pdo
 
 // Đã đăng nhập rồi thì không cần đăng ký nữa
 if (isLoggedIn()) {
@@ -23,6 +24,12 @@ $fullName = '';
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Chống CSRF: form phải gửi kèm mã bí mật lưu trong session (xem includes/csrf.php)
+    if (!verifyCsrf()) {
+        http_response_code(403);
+        exit('Yêu cầu không hợp lệ (sai mã bảo vệ). Hãy tải lại trang đăng nhập/đăng ký và thử lại.');
+    }
+
     // trim() bỏ khoảng trắng thừa đầu/cuối; "?? ''" tránh lỗi khi thiếu trường
     $fullName = trim($_POST['full_name'] ?? '');
     $email    = trim($_POST['email'] ?? '');
@@ -39,8 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Email không đúng định dạng.';
     }
 
-    if (strlen($password) < 6) {
-        $errors[] = 'Mật khẩu phải có ít nhất 6 ký tự.';
+    // Tối thiểu 8 ký tự cho mật khẩu đỡ bị đoán ra.
+    // Tối đa 72 BYTE vì bcrypt (PASSWORD_DEFAULT) chỉ đọc 72 byte đầu, phần sau bị bỏ qua.
+    if (strlen($password) < 8) {
+        $errors[] = 'Mật khẩu phải có ít nhất 8 ký tự.';
+    } elseif (strlen($password) > 72) {
+        $errors[] = 'Mật khẩu tối đa 72 ký tự.';
     }
 
     // ===== 2. Kiểm tra email đã tồn tại chưa =====
@@ -91,6 +102,7 @@ include __DIR__ . '/includes/header.php';
     <?php endif; ?>
 
     <form method="post" action="/register.php">
+        <?= csrfField() ?>
         <p>
             <label for="full_name">Họ và tên</label><br>
             <input type="text" id="full_name" name="full_name"
@@ -103,7 +115,7 @@ include __DIR__ . '/includes/header.php';
         </p>
         <p>
             <label for="password">Mật khẩu</label><br>
-            <input type="password" id="password" name="password" required>
+            <input type="password" id="password" name="password" minlength="8" maxlength="72" required>
         </p>
         <button type="submit" class="btn">Đăng ký</button>
     </form>
