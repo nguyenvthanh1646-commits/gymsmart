@@ -75,3 +75,60 @@ function calculateTDEE($bmr, $activityLevel) {
 
     return $bmr * $factors[$activityLevel];
 }
+
+
+
+/**
+ * Tính calo mục tiêu và chia macro (gram) theo goal.
+ * Quy đổi: protein 4 kcal/g, carb 4 kcal/g, fat 9 kcal/g.
+ *
+ * @param float  $tdee     TDEE (kcal/ngày)
+ * @param float  $weightKg Cân nặng (kg)
+ * @param string $goal     LOSE_FAT | MAINTAIN | GAIN_MUSCLE
+ * @return array ['target_kcal', 'protein_g', 'carbs_g', 'fat_g']
+ * @throws InvalidArgumentException nếu dữ liệu không hợp lệ
+ */
+function calculateTargets($tdee, $weightKg, $goal) {
+    // Thông số theo goal: hệ số calo so với TDEE, g protein/kg, g fat/kg
+    // TODO: bạn tìm nguồn (VD: ISSN position stand về protein, ACSM)
+    // rồi ghi lý do chọn từng số vào comment.
+    $profiles = [
+        'LOSE_FAT'    => ['kcal_factor' => 0.80, 'protein_per_kg' => 2.0, 'fat_per_kg' => 0.8], // giảm 20%
+        'MAINTAIN'    => ['kcal_factor' => 1.00, 'protein_per_kg' => 1.6, 'fat_per_kg' => 0.9],
+        'GAIN_MUSCLE' => ['kcal_factor' => 1.10, 'protein_per_kg' => 1.8, 'fat_per_kg' => 1.0], // tăng 10%
+    ];
+
+    // Whitelist goal
+    if (!is_string($goal) || !array_key_exists($goal, $profiles)) {
+        throw new InvalidArgumentException('Mục tiêu không hợp lệ');
+    }
+    // Kiểm tra số đầu vào
+    if (!is_numeric($tdee) || $tdee <= 0 || !is_numeric($weightKg) || $weightKg <= 0) {
+        throw new InvalidArgumentException('TDEE và cân nặng phải là số > 0');
+    }
+
+    $p = $profiles[$goal];
+
+    // Calo mục tiêu = TDEE điều chỉnh theo mục tiêu
+    $targetKcal = $tdee * $p['kcal_factor'];
+
+    // Protein và fat tính theo cân nặng
+    $proteinG = $p['protein_per_kg'] * $weightKg;
+    $fatG     = $p['fat_per_kg'] * $weightKg;
+
+    // Carb = phần calo còn lại sau khi trừ protein và fat, chia 4 kcal/g
+    $carbsG = ($targetKcal - $proteinG * 4 - $fatG * 9) / 4;
+
+    // Nếu calo còn lại âm (cân nặng lớn, calo thấp) thì đặt carb = 0
+    if ($carbsG < 0) {
+        $carbsG = 0;
+    }
+
+    // Làm tròn 1 chữ số thập phân; tên khóa khớp cột bảng nutrition_targets
+    return [
+        'target_kcal' => round($targetKcal, 1),
+        'protein_g'   => round($proteinG, 1),
+        'carbs_g'     => round($carbsG, 1),
+        'fat_g'       => round($fatG, 1),
+    ];
+}
