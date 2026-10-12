@@ -147,10 +147,10 @@ $pillActiveStyle = 'display: inline-block; padding: 0.4rem 0.9rem; margin: 0 0.4
 <!-- Hàng nút lọc theo nhóm cơ: giữ nguyên các bộ lọc khác đang bật -->
 <nav aria-label="Lọc theo nhóm cơ" style="margin-bottom: 1rem;">
     <a href="<?= htmlspecialchars(exerciseUrl(array_merge($current, ['muscle_group' => '']))) ?>"
-       style="<?= $selectedMuscle === '' ? $pillActiveStyle : $pillStyle ?>">Tất cả</a>
+       style="<?= $selectedMuscle === '' ? $pillActiveStyle : $pillStyle /* audit:ok chuỗi style viết sẵn */ ?>">Tất cả</a>
     <?php foreach ($muscleLabels as $value => $label): ?>
         <a href="<?= htmlspecialchars(exerciseUrl(array_merge($current, ['muscle_group' => $value]))) ?>"
-           style="<?= $selectedMuscle === $value ? $pillActiveStyle : $pillStyle ?>">
+           style="<?= $selectedMuscle === $value ? $pillActiveStyle : $pillStyle /* audit:ok chuỗi style viết sẵn */ ?>">
             <?= htmlspecialchars($label) ?>
         </a>
     <?php endforeach; ?>
@@ -171,7 +171,7 @@ $pillActiveStyle = 'display: inline-block; padding: 0.4rem 0.9rem; margin: 0 0.4
     <select name="type" aria-label="Loại bài tập">
         <option value="">Tất cả loại</option>
         <?php foreach ($typeLabels as $value => $label): ?>
-            <option value="<?= $value ?>" <?= $selectedType === $value ? 'selected' : '' ?>>
+            <option value="<?= htmlspecialchars($value) ?>" <?= $selectedType === $value ? 'selected' : '' ?>>
                 <?= htmlspecialchars($label) ?>
             </option>
         <?php endforeach; ?>
@@ -180,7 +180,7 @@ $pillActiveStyle = 'display: inline-block; padding: 0.4rem 0.9rem; margin: 0 0.4
     <select name="difficulty" aria-label="Độ khó">
         <option value="">Mọi độ khó</option>
         <?php foreach ($difficultyLabels as $value => $label): ?>
-            <option value="<?= $value ?>" <?= $selectedDifficulty === $value ? 'selected' : '' ?>>
+            <option value="<?= htmlspecialchars($value) ?>" <?= $selectedDifficulty === $value ? 'selected' : '' ?>>
                 <?= htmlspecialchars($label) ?>
             </option>
         <?php endforeach; ?>
