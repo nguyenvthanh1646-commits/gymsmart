@@ -106,9 +106,12 @@
 }
 
 /* ===== Thanh điều hướng quản trị ===== */
+body{overflow-x:hidden}
+.container:has(> .adm-nav){max-width:none;padding:0}   /* khu quản trị dùng toàn bề ngang, thanh menu tối kéo hết chiều rộng */
 .adm-nav{background:#111827;color:#fff}
 .adm-nav-in{max-width:1040px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:4px;overflow-x:auto;white-space:nowrap}
-.adm-nav-brand{font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:.78rem;color:#fdba74;margin-right:12px;padding:14px 0}
+.adm-nav a.adm-nav-brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.78rem;color:#fdba74;margin-right:14px;padding:12px 0;border-bottom:0}
+.adm-nav a.adm-nav-brand:hover{color:#fff}
 .adm-nav a{color:#d1d5db;text-decoration:none;padding:14px 12px;font-size:.95rem;border-bottom:3px solid transparent}
 .adm-nav a:hover{color:#fff}
 .adm-nav a.is-active{color:#fff;border-bottom-color:#ff5a1f}
@@ -141,4 +144,23 @@
 .adm-warn{background:#fef3c7;color:#92400e}
 .adm-b-ADMIN{background:#fee2e2;color:#991b1b}
 .adm-b-USER{background:#f3f4f6;color:#374151}
+
+/* ===== Dải chào đầu trang Tổng quan ===== */
+.adm-hero{position:relative;overflow:hidden;display:flex;flex-wrap:wrap;gap:20px 24px;align-items:center;justify-content:space-between;
+  color:#fff;border-radius:20px;padding:30px 32px;margin-bottom:18px;
+  background:radial-gradient(520px 260px at 92% 0%,rgba(255,90,31,.38),transparent 65%),radial-gradient(420px 260px at 0% 100%,rgba(70,104,230,.28),transparent 65%),linear-gradient(135deg,#070b18,#101a35)}
+.adm-hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:44px 44px;-webkit-mask-image:linear-gradient(180deg,#000,transparent 90%);mask-image:linear-gradient(180deg,#000,transparent 90%)}
+.adm-hero>*{position:relative}
+.adm-hero__chip{display:inline-block;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);font-size:.74rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c7d0e6}
+.adm-hero h1{margin:12px 0 4px;font-size:clamp(1.5rem,3.4vw,2.1rem);line-height:1.25;letter-spacing:-.01em}
+.adm-hero p{margin:0;color:#c7d0e6}
+.adm-hero__cta{display:flex;flex-wrap:wrap;gap:10px}
+.adm-btn-light{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.22)}
+.adm-btn-light:hover{background:rgba(255,255,255,.16)}
+.adm-stat{display:flex;gap:14px;align-items:center}
+.adm-stat-ico{flex:none;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#ff8a3d,#ff4b0f);box-shadow:0 8px 16px rgba(255,90,31,.25)}
+.adm-stat-warn .adm-stat-ico{background:linear-gradient(135deg,#fbbf24,#d97706);box-shadow:0 8px 16px rgba(217,119,6,.25)}
+@media (max-width:720px){.adm-hero{padding:22px 20px}.adm-hero__cta{width:100%}.adm-hero__cta .adm-btn{flex:1}.adm-stat{flex-direction:column;align-items:flex-start;gap:10px}}
 </style>

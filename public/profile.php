@@ -160,107 +160,122 @@ $pageTitle = 'Hồ sơ cá nhân';
 include __DIR__ . '/includes/header.php';
 ?>
 
-<div class="card" style="max-width: 520px; margin: 2rem auto;">
-    <h1>Hồ sơ cá nhân</h1>
-    <p>Thông tin này dùng để tính TDEE, macro và gợi ý lịch tập phù hợp với bạn.</p>
+<div class="narrow">
+    <div class="pg-head">
+        <div>
+            <h1>Hồ sơ cá nhân</h1>
+            <p class="pg-sub">Thông tin này dùng để tính TDEE, macro và gợi ý lịch tập phù hợp với bạn.</p>
+        </div>
+    </div>
 
-    <?php if (isset($_GET['saved'])): ?>
-        <p style="color: #15803d;">Đã lưu hồ sơ.</p>
-    <?php endif; ?>
+    <div class="card">
+        <?php if (isset($_GET['saved'])): ?>
+            <div class="alert alert--ok" role="status">Đã lưu hồ sơ.</div>
+        <?php endif; ?>
 
-    <?php if (!empty($errors)): ?>
-        <ul style="color: #b91c1c;">
-            <?php foreach ($errors as $error): ?>
-                <li><?= htmlspecialchars($error) ?></li>
-            <?php endforeach; ?>
-        </ul>
-    <?php endif; ?>
+        <?php if (!empty($errors)): ?>
+            <div class="alert alert--error" role="alert">
+                <ul>
+                    <?php foreach ($errors as $error): ?>
+                        <li><?= htmlspecialchars($error) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
-    <form method="post" action="/profile.php">
-        <?= csrfField() ?>
-        <p>
-            <label for="full_name">Họ và tên</label><br>
-            <input type="text" id="full_name" name="full_name"
-                   value="<?= htmlspecialchars($form['full_name'] ?? '') ?>" required>
-        </p>
+        <form method="post" action="/profile.php">
+            <?= csrfField() ?>
 
-        <p>
-            <label>Email (không đổi được)</label><br>
-            <input type="email" value="<?= htmlspecialchars($user['email']) ?>" disabled>
-        </p>
+            <fieldset class="form-sec">
+                <h2><i>1</i> Thông tin cơ bản</h2>
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="full_name">Họ và tên</label>
+                        <input type="text" id="full_name" name="full_name"
+                               value="<?= htmlspecialchars($form['full_name'] ?? '') ?>" required>
+                    </div>
+                    <div class="field">
+                        <label for="email">Email (không đổi được)</label>
+                        <input type="email" id="email" value="<?= htmlspecialchars($user['email']) ?>" disabled>
+                    </div>
+                <div class="field">
+                    <label for="age">Tuổi</label>
+                    <input type="number" id="age" name="age" min="10" max="100"
+                           value="<?= htmlspecialchars((string)($form['age'] ?? '')) ?>" required>
+                </div>
+                <div class="field">
+                    <label for="gender">Giới tính</label>
+                    <select id="gender" name="gender" required>
+                        <option value="">-- Chọn --</option>
+                        <?php foreach ($genderOptions as $value => $label): ?>
+                            <option value="<?= htmlspecialchars($value) ?>"
+                                <?= ($form['gender'] ?? '') === $value ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="height_cm">Chiều cao (cm)</label>
+                    <input type="number" id="height_cm" name="height_cm" min="100" max="250" step="0.1"
+                           value="<?= htmlspecialchars((string)($form['height_cm'] ?? '')) ?>" required>
+                </div>
+                <div class="field">
+                    <label for="weight_kg">Cân nặng (kg)</label>
+                    <input type="number" id="weight_kg" name="weight_kg" min="30" max="300" step="0.1"
+                           value="<?= htmlspecialchars((string)($form['weight_kg'] ?? '')) ?>" required>
+                </div>
+                </div>
+            </fieldset>
 
-        <p>
-            <label for="age">Tuổi</label><br>
-            <input type="number" id="age" name="age" min="10" max="100"
-                   value="<?= htmlspecialchars((string)($form['age'] ?? '')) ?>" required>
-        </p>
+            <fieldset class="form-sec">
+                <h2><i>2</i> Tập luyện</h2>
+                <div class="form-grid">
+                <div class="field span-2">
+                    <label for="activity_level">Mức độ vận động</label>
+                    <select id="activity_level" name="activity_level" required>
+                        <option value="">-- Chọn --</option>
+                        <?php foreach ($activityOptions as $value => $label): ?>
+                            <option value="<?= htmlspecialchars($value) ?>"
+                                <?= ($form['activity_level'] ?? '') === $value ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="experience_level">Trình độ tập luyện</label>
+                    <select id="experience_level" name="experience_level" required>
+                        <option value="">-- Chọn --</option>
+                        <?php foreach ($experienceOptions as $value => $label): ?>
+                            <option value="<?= htmlspecialchars($value) ?>"
+                                <?= ($form['experience_level'] ?? '') === $value ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="goal">Mục tiêu</label>
+                    <select id="goal" name="goal" required>
+                        <option value="">-- Chọn --</option>
+                        <?php foreach ($goalOptions as $value => $label): ?>
+                            <option value="<?= htmlspecialchars($value) ?>"
+                                <?= ($form['goal'] ?? '') === $value ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                </div>
+            </fieldset>
 
-        <p>
-            <label for="height_cm">Chiều cao (cm)</label><br>
-            <input type="number" id="height_cm" name="height_cm" min="100" max="250" step="0.1"
-                   value="<?= htmlspecialchars((string)($form['height_cm'] ?? '')) ?>" required>
-        </p>
-
-        <p>
-            <label for="weight_kg">Cân nặng (kg)</label><br>
-            <input type="number" id="weight_kg" name="weight_kg" min="30" max="300" step="0.1"
-                   value="<?= htmlspecialchars((string)($form['weight_kg'] ?? '')) ?>" required>
-        </p>
-
-        <p>
-            <label for="gender">Giới tính</label><br>
-            <select id="gender" name="gender" required>
-                <option value="">-- Chọn --</option>
-                <?php foreach ($genderOptions as $value => $label): ?>
-                    <option value="<?= htmlspecialchars($value) ?>"
-                        <?= ($form['gender'] ?? '') === $value ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($label) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </p>
-
-        <p>
-            <label for="activity_level">Mức độ vận động</label><br>
-            <select id="activity_level" name="activity_level" required>
-                <option value="">-- Chọn --</option>
-                <?php foreach ($activityOptions as $value => $label): ?>
-                    <option value="<?= htmlspecialchars($value) ?>"
-                        <?= ($form['activity_level'] ?? '') === $value ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($label) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </p>
-
-        <p>
-            <label for="experience_level">Trình độ tập luyện</label><br>
-            <select id="experience_level" name="experience_level" required>
-                <option value="">-- Chọn --</option>
-                <?php foreach ($experienceOptions as $value => $label): ?>
-                    <option value="<?= htmlspecialchars($value) ?>"
-                        <?= ($form['experience_level'] ?? '') === $value ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($label) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </p>
-
-        <p>
-            <label for="goal">Mục tiêu</label><br>
-            <select id="goal" name="goal" required>
-                <option value="">-- Chọn --</option>
-                <?php foreach ($goalOptions as $value => $label): ?>
-                    <option value="<?= htmlspecialchars($value) ?>"
-                        <?= ($form['goal'] ?? '') === $value ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($label) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </p>
-
-        <button type="submit" class="btn">Lưu hồ sơ</button>
-    </form>
+            <div class="form-actions">
+                <button type="submit" class="btn">Lưu hồ sơ</button>
+                <a class="btn btn--ghost" href="/index.php">Về trang chủ</a>
+            </div>
+        </form>
+    </div>
 </div>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

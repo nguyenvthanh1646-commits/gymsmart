@@ -132,40 +132,35 @@ $hasFilter = ($selectedMuscle !== '' || $selectedType !== ''
 
 $pageTitle = 'Bài tập & Video';
 include __DIR__ . '/includes/header.php';
-
-// Style tạm (E sẽ thay bằng class riêng ở việc E2)
-$pillStyle = 'display: inline-block; padding: 0.4rem 0.9rem; margin: 0 0.4rem 0.4rem 0; '
-           . 'border: 1px solid var(--color-border); border-radius: 999px; '
-           . 'text-decoration: none; color: var(--color-text); background: var(--color-surface);';
-$pillActiveStyle = 'display: inline-block; padding: 0.4rem 0.9rem; margin: 0 0.4rem 0.4rem 0; '
-                 . 'border: 1px solid var(--color-accent); border-radius: 999px; '
-                 . 'text-decoration: none; color: #fff; background: var(--color-accent);';
 ?>
 
-<h1>Thư viện bài tập</h1>
+<div class="pg-head">
+    <div>
+        <h1>Thư viện bài tập</h1>
+        <p class="pg-sub">Chọn nhóm cơ, lọc theo loại và độ khó, rồi bấm vào bài tập để xem video hướng dẫn.</p>
+    </div>
+    <div class="pg-count">Có <b><?= count($exercises) ?></b> bài tập<?= $hasFilter ? ' phù hợp bộ lọc' : '' ?></div>
+</div>
 
 <!-- Hàng nút lọc theo nhóm cơ: giữ nguyên các bộ lọc khác đang bật -->
-<nav aria-label="Lọc theo nhóm cơ" style="margin-bottom: 1rem;">
+<nav class="chips" aria-label="Lọc theo nhóm cơ">
     <a href="<?= htmlspecialchars(exerciseUrl(array_merge($current, ['muscle_group' => '']))) ?>"
-       style="<?= $selectedMuscle === '' ? $pillActiveStyle : $pillStyle /* audit:ok chuỗi style viết sẵn */ ?>">Tất cả</a>
+       class="chip<?= $selectedMuscle === '' ? ' is-active' : '' /* audit:ok chuỗi class viết sẵn */ ?>">Tất cả</a>
     <?php foreach ($muscleLabels as $value => $label): ?>
         <a href="<?= htmlspecialchars(exerciseUrl(array_merge($current, ['muscle_group' => $value]))) ?>"
-           style="<?= $selectedMuscle === $value ? $pillActiveStyle : $pillStyle /* audit:ok chuỗi style viết sẵn */ ?>">
-            <?= htmlspecialchars($label) ?>
-        </a>
+           class="chip<?= $selectedMuscle === $value ? ' is-active' : '' /* audit:ok chuỗi class viết sẵn */ ?>"><?= htmlspecialchars($label) ?></a>
     <?php endforeach; ?>
 </nav>
 
 <!-- Form tìm kiếm + lọc loại/độ khó. Dùng GET (không phải POST) vì đây là thao tác
      chỉ để xem: kết quả có địa chỉ riêng, gửi link hoặc bấm F5 đều ổn. -->
-<form method="get" action="/exercises.php"
-      style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
+<form method="get" action="/exercises.php" class="filter-bar">
     <?php if ($selectedMuscle !== ''): ?>
         <!-- Giữ nhóm cơ đang chọn khi bấm "Lọc" -->
         <input type="hidden" name="muscle_group" value="<?= htmlspecialchars($selectedMuscle) ?>">
     <?php endif; ?>
 
-    <input type="search" name="q" maxlength="100" placeholder="Tìm theo tên bài tập..."
+    <input type="search" name="q" maxlength="100" placeholder="Tìm theo tên bài tập..." aria-label="Tìm theo tên bài tập"
            value="<?= htmlspecialchars($keyword) ?>">
 
     <select name="type" aria-label="Loại bài tập">
@@ -189,21 +184,22 @@ $pillActiveStyle = 'display: inline-block; padding: 0.4rem 0.9rem; margin: 0 0.4
     <button type="submit" class="btn">Lọc</button>
 
     <?php if ($hasFilter): ?>
-        <a href="/exercises.php">Xóa bộ lọc</a>
+        <a class="filter-clear" href="/exercises.php">Xóa bộ lọc</a>
     <?php endif; ?>
 </form>
 
-<p>Có <?= count($exercises) ?> bài tập<?= $hasFilter ? ' phù hợp bộ lọc' : '' ?>.</p>
-
 <?php if (empty($exercises)): ?>
-    <?php if ($hasFilter): ?>
-        <p>Không tìm thấy bài tập phù hợp. <a href="/exercises.php">Xóa bộ lọc</a></p>
-    <?php else: ?>
-        <p>Chưa có bài tập nào.</p>
-    <?php endif; ?>
+    <div class="empty">
+        <?php if ($hasFilter): ?>
+            <b>Không tìm thấy bài tập phù hợp</b>
+            Thử đổi từ khóa hoặc <a href="/exercises.php">xóa bộ lọc</a>.
+        <?php else: ?>
+            <b>Chưa có bài tập nào</b>
+            Quản trị viên sẽ sớm bổ sung thư viện.
+        <?php endif; ?>
+    </div>
 <?php else: ?>
-    <!-- Lưới tạm bằng style trực tiếp. E sẽ thay bằng class riêng ở việc E2. -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
+    <div class="ex-grid">
         <?php foreach ($exercises as $ex): ?>
             <?php
             // ?? '...' : nếu giá trị trong DB không có trong bảng nhãn thì in luôn giá trị gốc
@@ -212,30 +208,23 @@ $pillActiveStyle = 'display: inline-block; padding: 0.4rem 0.9rem; margin: 0 0.4
             $difficulty = $difficultyLabels[$ex['difficulty']] ?? $ex['difficulty'];
             ?>
             <!-- (int) ép id thành số nguyên để không chèn được ký tự lạ vào đường dẫn -->
-            <a href="/exercise-detail.php?id=<?= (int)$ex['id'] ?>"
-               style="text-decoration: none; color: inherit; display: block;">
-                <!-- height: 100% để mọi thẻ trong cùng hàng cao bằng nhau dù tên bài dài ngắn khác nhau -->
-                <div class="card" style="height: 100%; box-sizing: border-box;">
+            <a class="ex-card" href="/exercise-detail.php?id=<?= (int)$ex['id'] ?>">
+                <div class="ex-card__media">
                     <?php if (!empty($ex['image_url'])): ?>
                         <img src="<?= htmlspecialchars($ex['image_url']) ?>"
-                             alt="<?= htmlspecialchars($ex['name']) ?>"
-                             loading="lazy"
-                             style="display: block; width: 100%; height: 140px; object-fit: cover; border-radius: 6px;">
+                             alt="<?= htmlspecialchars($ex['name']) ?>" loading="lazy">
                     <?php else: ?>
-                        <div style="height: 140px; border-radius: 6px; background: var(--color-border);
-                                    display: flex; align-items: center; justify-content: center;
-                                    color: var(--color-text-muted); font-size: 0.85rem;">
-                            Chưa có ảnh
-                        </div>
+                        <div class="ex-card__ph">Chưa có ảnh</div>
                     <?php endif; ?>
-
-                    <!-- Tên dài tối đa 2 dòng (-webkit-line-clamp), min-height giữ chỗ 2 dòng để các thẻ thẳng hàng -->
-                    <h3 style="margin: 0.75rem 0 0.25rem; line-height: 1.3; min-height: 2.6em;
-                               display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
-                               overflow: hidden;"><?= htmlspecialchars($ex['name']) ?></h3>
-                    <p style="margin: 0; font-size: 0.85rem; color: var(--color-text-muted);">
-                        <?= htmlspecialchars($muscle) ?> · <?= htmlspecialchars($type) ?> · <?= htmlspecialchars($difficulty) ?>
-                    </p>
+                    <span class="tag tag--<?= htmlspecialchars($ex['difficulty']) ?> ex-card__level"><?= htmlspecialchars($difficulty) ?></span>
+                </div>
+                <div class="ex-card__body">
+                    <!-- Tên dài tối đa 2 dòng (line-clamp), min-height giữ chỗ 2 dòng để các thẻ thẳng hàng -->
+                    <h3><?= htmlspecialchars($ex['name']) ?></h3>
+                    <div class="ex-meta">
+                        <span class="tag"><?= htmlspecialchars($muscle) ?></span>
+                        <span class="tag"><?= htmlspecialchars($type) ?></span>
+                    </div>
                 </div>
             </a>
         <?php endforeach; ?>

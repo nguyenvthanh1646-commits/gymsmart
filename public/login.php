@@ -67,28 +67,50 @@ $pageTitle = 'Đăng nhập';
 include __DIR__ . '/includes/header.php';
 ?>
 
-<div class="card" style="max-width: 420px; margin: 2rem auto;">
-    <h1>Đăng nhập</h1>
+<div class="auth">
+    <aside class="auth__aside">
+        <?= gsLogo('light', false, 40) ?>
+        <h2>Train Harder<br>&amp; <em>Smarter</em></h2>
+        <p>Thư viện bài tập có video, lịch tập cá nhân hóa, TDEE/Macro và theo dõi tiến trình, tất cả trong một nơi.</p>
+        <ul class="auth__points">
+            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Video hướng dẫn chuẩn kỹ thuật</li>
+            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Lịch tập theo trình độ và mục tiêu</li>
+            <li><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Tính TDEE và macro khoa học</li>
+        </ul>
+    </aside>
 
-    <?php if ($error !== ''): ?>
-        <p style="color: #b91c1c;"><?= htmlspecialchars($error) ?></p>
-    <?php endif; ?>
+    <section class="auth__main">
+        <div class="auth__box">
+            <h1>Chào mừng trở lại</h1>
+            <p class="pg-sub">Đăng nhập để tiếp tục hành trình tập luyện của bạn.</p>
 
-    <form method="post" action="/login.php">
-        <?= csrfField() ?>
-        <p>
-            <label for="email">Email</label><br>
-            <input type="email" id="email" name="email"
-                   value="<?= htmlspecialchars($email) ?>" required>
-        </p>
-        <p>
-            <label for="password">Mật khẩu</label><br>
-            <input type="password" id="password" name="password" required>
-        </p>
-        <button type="submit" class="btn">Đăng nhập</button>
-    </form>
+            <?php if ($error !== ''): ?>
+                <div class="alert alert--error" role="alert"><?= htmlspecialchars($error) ?></div>
+            <?php endif; ?>
 
-    <p>Chưa có tài khoản? <a href="/register.php">Đăng ký</a></p>
+            <form method="post" action="/login.php">
+                <?= csrfField() ?>
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" autocomplete="email"
+                           value="<?= htmlspecialchars($email) ?>" required>
+                </div>
+                <div class="field">
+                    <label for="password">Mật khẩu</label>
+                    <div class="pw">
+                        <input type="password" id="password" name="password" autocomplete="current-password" required>
+                        <button type="button" class="pw__btn" data-pw-toggle="password" aria-label="Hiện mật khẩu" aria-pressed="false">
+                            <svg class="pw__eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="pw__off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.9 17.9A10.9 10.9 0 0112 19c-6.4 0-10-7-10-7a18.5 18.5 0 015.1-5.9M9.9 5.2A10 10 0 0112 5c6.4 0 10 7 10 7a18.6 18.6 0 01-2.2 3.2M1 1l22 22"/><path d="M14.1 14.1a3 3 0 01-4.2-4.2"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn--block">Đăng nhập</button>
+            </form>
+
+            <p class="auth__alt">Chưa có tài khoản? <a href="/register.php">Đăng ký miễn phí</a></p>
+        </div>
+    </section>
 </div>
 
+<script src="/js/password-toggle.js"></script>
 <?php include __DIR__ . '/includes/footer.php'; ?>
