@@ -45,3 +45,33 @@ function calculateBMR($weightKg, $heightCm, $age, $gender) {
 
     return $bmr; // trả về cho nơi gọi hàm (VD: calculateTDEE)
 }
+/**
+ * Tính TDEE (tổng calo đốt cả ngày) = BMR x hệ số hoạt động.
+ *
+ * @param float  $bmr           BMR (kcal/ngày), lấy từ calculateBMR()
+ * @param string $activityLevel SEDENTARY | LIGHT | MODERATE | ACTIVE | EXTRA_ACTIVE
+ * @return float TDEE (kcal/ngày)
+ * @throws InvalidArgumentException nếu dữ liệu không hợp lệ
+ */
+function calculateTDEE($bmr, $activityLevel) {
+    // Mảng kết hợp: tên mức hoạt động => hệ số (theo Harris-Benedict/Mifflin)
+    $factors = [
+        'SEDENTARY'   => 1.2,    // ít vận động
+        'LIGHT'       => 1.375,  // tập nhẹ 1-3 buổi/tuần
+        'MODERATE'    => 1.55,   // tập vừa 3-5 buổi/tuần
+        'ACTIVE'      => 1.725,  // tập nặng 6-7 buổi/tuần
+        'EXTRA_ACTIVE'=> 1.9,    // tập rất nặng/lao động nặng
+    ];
+
+    // Whitelist: chỉ chấp nhận khóa có trong mảng
+    if (!is_string($activityLevel) || !array_key_exists($activityLevel, $factors)) {
+        throw new InvalidArgumentException('Mức độ hoạt động không hợp lệ');
+    }
+
+    // Kiểm tra BMR là số dương
+    if (!is_numeric($bmr) || $bmr <= 0) {
+        throw new InvalidArgumentException('BMR phải là số > 0');
+    }
+
+    return $bmr * $factors[$activityLevel];
+}
