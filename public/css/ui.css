@@ -118,14 +118,20 @@ a { color: var(--ui-accent-dark); }
 .chip.is-active { background: var(--gs-ink, #0b1020); border-color: var(--gs-ink, #0b1020); color: #fff; font-weight: 600; }
 
 .filter-bar {
-    display: grid; grid-template-columns: minmax(0, 1fr) 190px 190px auto; gap: 10px; align-items: center;
+    display: grid; grid-template-columns: minmax(0, 1fr) 190px 190px auto; gap: 10px; align-items: stretch;
     padding: 12px; margin-bottom: 18px; background: #fff; border: 1px solid var(--ui-line); border-radius: 16px; box-shadow: var(--ui-shadow-sm);
 }
 .filter-bar :is(input, select) {
-    width: 100%; min-height: 46px; padding: 10px 14px; border: 1px solid #d5dbe8; border-radius: 10px; background: #fff; color: var(--color-text); font-size: .97rem;
+    box-sizing: border-box; width: 100%; height: 48px; margin: 0; padding: 0 14px; border: 1px solid #d5dbe8; border-radius: 10px;
+    background-color: #fff; color: var(--color-text); font-size: .97rem; line-height: 1.4; vertical-align: middle;
+}
+.filter-bar select {   /* tự vẽ mũi tên để giống nhau trên mọi trình duyệt/hệ điều hành */
+    appearance: none; -webkit-appearance: none; padding-right: 38px; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 13px center;
 }
 .filter-bar :is(input, select):focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 4px rgba(255, 90, 31, .16); }
-.filter-bar .btn { min-height: 46px; border-radius: 10px; }
+.filter-bar .btn { height: 48px; min-height: 48px; border-radius: 10px; }
 .filter-clear { grid-column: 1 / -1; justify-self: start; font-size: .9rem; font-weight: 600; text-decoration: none; }
 .filter-clear:hover { text-decoration: underline; }
 
