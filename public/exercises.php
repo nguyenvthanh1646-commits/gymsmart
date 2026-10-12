@@ -5,7 +5,7 @@
  * B1: lấy bài tập từ bảng exercises, hiển thị bằng foreach.
  * B2: mỗi bài là một thẻ, bấm vào sang exercise-detail.php?id=...
  * B3: lọc theo nhóm cơ        (?muscle_group=CHEST)
- * B4: tìm theo tên            (?q=ngực)
+ * B4: tìm theo tên, nhóm cơ, loại (?q=ngực)
  * B5: lọc theo loại, độ khó   (?type=CARDIO&difficulty=BEGINNER)
  * Các bộ lọc kết hợp được với nhau, ví dụ:
  *   /exercises.php?muscle_group=CHEST&type=RESISTANCE&q=tạ
@@ -105,9 +105,29 @@ if ($selectedDifficulty !== '') {
     $params[] = $selectedDifficulty;
 }
 if ($keyword !== '') {
-    $where[]  = 'name LIKE ?';
+    // Tìm theo TÊN bài tập. Thêm nữa: nếu từ khóa trùng một phần với tên nhóm cơ hoặc loại
+    // (ví dụ gõ "ngực" khớp nhóm Ngực) thì lấy luôn các bài thuộc nhóm/loại đó.
+    // Giá trị trong DB là CHEST, BACK... còn người dùng gõ tiếng Việt, nên phải đổi qua bảng nhãn.
+    $orParts  = ['name LIKE ?'];
     // Dấu % ghép vào GIÁ TRỊ (không phải câu SQL): '%abc%' = chứa "abc" ở đâu cũng được
-    $params[] = '%' . escapeLike($keyword) . '%';
+    $orParams = ['%' . escapeLike($keyword) . '%'];
+
+    foreach ([['muscle_group', $muscleLabels], ['type', $typeLabels]] as [$column, $labels]) {
+        $matchedKeys = [];
+        foreach ($labels as $key => $label) {
+            if (mb_stripos($label, $keyword) !== false) {
+                $matchedKeys[] = $key; // $key lấy từ bảng nhãn viết sẵn trong code, không phải từ người dùng
+            }
+        }
+        if (!empty($matchedKeys)) {
+            // Tên cột ($column) là chữ cố định ở trên; các giá trị vẫn đi qua dấu ?
+            $orParts[] = $column . ' IN (' . implode(',', array_fill(0, count($matchedKeys), '?')) . ')';
+            $orParams  = array_merge($orParams, $matchedKeys);
+        }
+    }
+
+    $where[] = '(' . implode(' OR ', $orParts) . ')';
+    $params  = array_merge($params, $orParams);
 }
 
 $sql = "SELECT id, name, type, muscle_group, difficulty, image_url FROM exercises";
@@ -159,7 +179,7 @@ include __DIR__ . '/includes/header.php';
         <input type="hidden" name="muscle_group" value="<?= htmlspecialchars($selectedMuscle) ?>">
     <?php endif; ?>
 
-    <input type="search" name="q" maxlength="100" placeholder="Tìm theo tên bài tập..." aria-label="Tìm theo tên bài tập"
+    <input type="search" name="q" maxlength="100" placeholder="Tìm theo tên, nhóm cơ hoặc loại..." aria-label="Tìm bài tập"
            value="<?= htmlspecialchars($keyword) ?>">
 
     <select name="type" aria-label="Loại bài tập">
