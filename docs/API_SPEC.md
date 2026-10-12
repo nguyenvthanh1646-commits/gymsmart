@@ -2,9 +2,11 @@
 
 Tài liệu đặc tả API, dùng làm hợp đồng (contract) giữa backend và frontend. Cập nhật file này ngay khi thêm/sửa endpoint (theo quy định trong `CLAUDE.md`).
 
-**Base URL:** `/api/v1`
+> **Lưu ý khi code bằng PHP thuần:** các endpoint dưới đây viết dạng REST để mô tả rõ chức năng và dữ liệu. Khi triển khai, mỗi endpoint là một file trong `public/api/` (ví dụ `POST /auth/login` → `api/login.php`), xác thực bằng **PHP session** (cookie), không dùng JWT. Quy ước response `{success, data, message}` vẫn giữ nguyên.
+
+**Base URL (quy ước mô tả):** `/api`
 **Format response chung:** `{ success: boolean, data: object|array|null, message: string }`
-**Auth:** Bearer token (JWT) trong header `Authorization: Bearer <token>`, trừ các endpoint đánh dấu 🔓 Public.
+**Auth:** PHP session — đăng nhập thành công thì lưu `$_SESSION['user_id']` và `$_SESSION['role']`; mọi endpoint trừ 🔓 Public phải kiểm tra bằng `requireLogin()` / `requireAdmin()` trong `includes/auth.php`.
 
 ---
 
@@ -13,7 +15,7 @@ Tài liệu đặc tả API, dùng làm hợp đồng (contract) giữa backend 
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
 | POST | `/auth/register` | 🔓 Public | Đăng ký tài khoản mới |
-| POST | `/auth/login` | 🔓 Public | Đăng nhập, trả về JWT |
+| POST | `/auth/login` | 🔓 Public | Đăng nhập, lưu thông tin vào session |
 | GET | `/auth/me` | User | Lấy thông tin tài khoản đang đăng nhập |
 | PUT | `/auth/me` | User | Cập nhật hồ sơ (chỉ số cơ thể, mục tiêu...) |
 
@@ -34,7 +36,7 @@ Tài liệu đặc tả API, dùng làm hợp đồng (contract) giữa backend 
 // Request
 { "email": "a@example.com", "password": "string" }
 // Response 200
-{ "success": true, "data": { "token": "jwt...", "user": { "id": 1, "fullName": "...", "role": "USER" } }, "message": "OK" }
+{ "success": true, "data": { "user": { "id": 1, "fullName": "...", "role": "USER" } }, "message": "OK" }
 ```
 
 **PUT `/auth/me`**
@@ -162,19 +164,30 @@ Tài liệu đặc tả API, dùng làm hợp đồng (contract) giữa backend 
 
 ---
 
-## 7. Article & Tag
+## 7. Video & hướng dẫn bài tập (nằm trong Exercise)
 
-| Method | Endpoint | Quyền | Mô tả |
-|---|---|---|---|
-| GET | `/articles?tag=&search=` | User | Danh sách bài viết, filter theo tag/từ khóa |
-| GET | `/articles/{id}` | User | Chi tiết bài viết |
-| POST | `/articles` | Admin | Tạo bài viết |
-| PUT | `/articles/{id}` | Admin | Sửa bài viết |
-| DELETE | `/articles/{id}` | Admin | Xóa bài viết |
-| GET | `/tags` | User | Danh sách tag |
-| POST | `/articles/{id}/save` | User | Lưu bài viết yêu thích |
-| DELETE | `/articles/{id}/save` | User | Bỏ lưu |
-| GET | `/articles/saved` | User | Danh sách bài đã lưu |
+Không có module bài viết riêng. Ảnh, video và hướng dẫn nằm ngay trong tài nguyên `exercises` (mục 2). Chi tiết 1 bài tập trả thêm các trường:
+
+**GET `/exercises/{id}`**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 3, "name": "Kéo xà đơn", "type": "RESISTANCE", "muscleGroup": "BACK",
+    "difficulty": "INTERMEDIATE",
+    "description": "Bài kéo cơ bản cho lưng xô.",
+    "instructions": "Bước 1: ...\nBước 2: ...",
+    "commonMistakes": "Đu người lấy đà; không xuống hết biên độ.",
+    "imageUrl": "...",
+    "videoUrl": "dQw4w9WgXcQ"
+  },
+  "message": "OK"
+}
+```
+
+- `videoUrl` chỉ lưu **ID video YouTube**; trang web tự ghép thành `https://www.youtube.com/embed/<ID>` khi hiển thị trong `<iframe>`.
+- Bài tập chưa có video thì `videoUrl` là `null`, giao diện phải ẩn khung video thay vì báo lỗi.
+- Gợi ý bài cùng nhóm cơ: `GET /exercises?muscleGroup=BACK&limit=3` (loại bài hiện tại ở phía PHP).
 
 ---
 
@@ -202,7 +215,7 @@ Tài liệu đặc tả API, dùng làm hợp đồng (contract) giữa backend 
 }
 ```
 
-> Backend xử lý: lấy `nutrition_targets` gần nhất + `workout_plans` active của user, nhét vào system prompt/context trước khi gọi Anthropic API (phục vụ Mức 2 — cá nhân hóa). Ở Mức 3, backend còn query thêm `articles` liên quan theo từ khóa để đưa vào context.
+> Backend xử lý: lấy `nutrition_targets` gần nhất + `workout_plans` active của user, nhét vào system prompt/context trước khi gọi Anthropic API (phục vụ Mức 2 — cá nhân hóa). Ở Mức 3, backend còn query bảng `exercises` (mô tả, nhóm cơ, hướng dẫn) theo từ khóa trong câu hỏi để đưa vào context và dẫn tới trang bài tập.
 
 ---
 
@@ -227,7 +240,7 @@ Response lỗi format thống nhất:
 
 ## Ghi chú khi triển khai
 
-- Tất cả endpoint (trừ 🔓 Public) đều yêu cầu JWT hợp lệ — xử lý tập trung qua Spring Security filter, không tự check thủ công trong từng Controller
+- Tất cả endpoint (trừ 🔓 Public) đều phải gọi `requireLogin()` ở đầu file; endpoint Admin gọi `requireAdmin()` — kiểm tra ở PHP, không chỉ ẩn nút ở giao diện
 - Endpoint Admin cần thêm `@PreAuthorize("hasRole('ADMIN')")` (hoặc tương đương), không chỉ kiểm tra ở frontend
 - Khi thêm entity mới trong `ERD.md`, nhớ bổ sung endpoint tương ứng vào file này
 - Với `/nutrition/calculate` và `/workout-plans/generate`: đây là 2 endpoint chứa "thuật toán" quan trọng nhất của đồ án — viết rõ comment giải thích công thức/logic ngay trong code, không chỉ dựa vào tài liệu này
