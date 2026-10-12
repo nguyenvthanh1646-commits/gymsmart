@@ -20,5 +20,8 @@ $loggedIn = function_exists('isLoggedIn') && isLoggedIn();
             <a href="/login.php">Đăng nhập</a>
             <a href="/register.php">Đăng ký</a>
         <?php endif; ?>
+        <?php if (($_SESSION['role'] ?? '') === 'ADMIN'): ?>
+    <a href="/admin/dashboard.php">Quản trị</a>
+<?php endif; ?>
     </nav>
 </header>

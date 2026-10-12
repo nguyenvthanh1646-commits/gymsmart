@@ -231,7 +231,7 @@ $pillActiveStyle = 'display: inline-block; padding: 0.4rem 0.9rem; margin: 0 0.4
 
                     <!-- Tên dài tối đa 2 dòng (-webkit-line-clamp), min-height giữ chỗ 2 dòng để các thẻ thẳng hàng -->
                     <h3 style="margin: 0.75rem 0 0.25rem; line-height: 1.3; min-height: 2.6em;
-                               display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+                               display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
                                overflow: hidden;"><?= htmlspecialchars($ex['name']) ?></h3>
                     <p style="margin: 0; font-size: 0.85rem; color: var(--color-text-muted);">
                         <?= htmlspecialchars($muscle) ?> · <?= htmlspecialchars($type) ?> · <?= htmlspecialchars($difficulty) ?>
