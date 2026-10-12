@@ -15,7 +15,7 @@
 | **A** | Auth (đăng ký/đăng nhập/session) + layout dùng chung + bảo mật chung |
 | **B** | Thư viện bài tập + Lịch tập cá nhân hóa |
 | **C** | TDEE/Macro calculator + Theo dõi tiến trình |
-| **D** | Thư viện nghiên cứu/blog + chủ trì `ERD.md`/`schema.sql` chung |
+| **D** | Nhập liệu 40–50 bài tập kèm ảnh/video/hướng dẫn (`seed.sql`) + trang chi tiết bài tập (video nhúng) + chủ trì `ERD.md`/`schema.sql` chung |
 | **E** | Chatbot AI + CSS tổng thể/responsive |
 
 ---
@@ -40,12 +40,12 @@
 **Mục tiêu:** Chạy được end-to-end: đăng ký → xem bài tập → tạo lịch tập → xem TDEE/macro.
 
 ### Sprint 1.1 (tuần 2–3)
-- **A:** Bảng `users`, trang đăng ký/đăng nhập, session, hàm `requireLogin()` dùng chung trong `auth.php`
-- **B:** Bảng `exercises`, trang danh sách + chi tiết bài tập, filter bằng PDO query động (`WHERE` có điều kiện), seed 40–50 bài tập
+- **A:** Bảng `users`, trang đăng ký/đăng nhập/đăng xuất, session, hàm `requireLogin()` dùng chung trong `auth.php` (✅ đã xong); tiếp theo là trang hồ sơ cá nhân `profile.php` (tuổi, chiều cao, cân nặng, giới tính, mức vận động, mục tiêu) để C có dữ liệu tính TDEE
+- **B:** Trang danh sách bài tập dạng lưới có ảnh, bộ lọc theo nhóm cơ/loại/độ khó và ô tìm kiếm bằng PDO query động (`WHERE` có điều kiện)
 - **C:** Viết hàm PHP tính TDEE/Macro (Mifflin-St Jeor) thuần túy, test độc lập bằng vài bộ số liệu tay (chưa cần giao diện)
-- **D:** Hoàn thiện `schema.sql` đầy đủ các bảng core, review cùng A/B/C trước khi ai cũng bắt đầu code
+- **D:** Rà soát `schema.sql` cùng A/B/C trước khi ai cũng bắt đầu code (đã bỏ 4 bảng bài viết, thêm cột `instructions`, `common_mistakes` cho `exercises`); nhập 40–50 bài tập vào `seed.sql` kèm ảnh, ID video YouTube, hướng dẫn; làm trang chi tiết bài tập có video nhúng (`<iframe>` YouTube, chỉ lưu ID video trong DB)
 - **E:** `style.css` khung (biến màu, typography, layout chung); giao diện trang đăng ký/đăng nhập theo A code phần PHP
-- **Demo cuối sprint:** đăng ký → đăng nhập → duyệt thư viện bài tập
+- **Demo cuối sprint:** đăng ký → đăng nhập → duyệt thư viện bài tập → mở 1 bài xem video hướng dẫn
 
 ### Sprint 1.2 (tuần 4–5)
 - **B:** Bảng `workout_plans`/`workout_plan_exercises`, thuật toán gợi ý split (thuần PHP, dùng `if/switch` có trọng số rõ ràng — tự viết, không gọi thư viện ngoài)
@@ -64,7 +64,7 @@
 ### Sprint 2.1 (tuần 7–8)
 - **B:** Bảng `workout_logs`, API check-in set/reps/weight bằng AJAX
 - **C:** Bảng `body_metrics`, trang biểu đồ tiến trình (dùng Chart.js qua CDN, dữ liệu lấy từ `/api/*.php`)
-- **D:** Bảng `articles`/`tags`, trang danh sách/đọc bài viết, filter theo tag, lưu yêu thích
+- **D:** Hoàn thiện nội dung video/hướng dẫn cho toàn bộ bài tập, gợi ý 3 bài cùng nhóm cơ ở cuối trang chi tiết, cửa sổ bật lên (modal) xem video ngay trong trang lịch tập (phối hợp B)
 - **A, E:** Hỗ trợ review chung, hoàn thiện responsive CSS cho các trang mới
 
 ### Sprint 2.2 (tuần 9, buffer)
@@ -86,7 +86,7 @@
 - Bảng `chatbot_sessions`/`chatbot_messages` lưu lịch sử hội thoại
 
 ### Mức 3 — RAG đơn giản
-- Khi user hỏi, PHP query bảng `articles` theo từ khóa/tag liên quan, nhét nội dung vào prompt, chatbot trả lời có dẫn nguồn
+- Khi user hỏi, PHP query bảng `exercises` (tên, nhóm cơ, mô tả, `instructions`, `common_mistakes`) theo từ khóa liên quan, nhét nội dung vào prompt; chatbot trả lời dựa trên dữ liệu đó và dẫn tới trang chi tiết bài tập
 
 > Dừng ở mức nào cũng demo được — ghi rõ trong báo cáo mức đã đạt và giải thích được cơ chế bằng lời, không chỉ chỉ vào code.
 
@@ -118,6 +118,8 @@
 - [ ] Đăng ký/đăng nhập/session hoạt động đúng, đăng xuất xóa session
 - [ ] Thử SQL Injection cơ bản vào các form — hệ thống không bị lỗi/bypass
 - [ ] Thư viện bài tập lọc đúng theo nhóm cơ/loại
+- [ ] Trang chi tiết bài tập hiển thị đúng ảnh, video YouTube, hướng dẫn; bài chưa có video không bị lỗi trang
+- [ ] Mọi bài tập đều ghi nguồn ảnh/video hợp pháp (wger, YouTube nhúng hoặc tự quay), không dùng ảnh/video lấy từ mạng xã hội
 - [ ] Tạo lịch tập với ít nhất 3 tổ hợp input khác nhau ra kết quả hợp lý
 - [ ] TDEE/Macro tính đúng với vài bộ số liệu kiểm tra tay
 - [ ] Biểu đồ tiến trình hiển thị đúng khi có/không có dữ liệu

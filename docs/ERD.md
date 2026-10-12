@@ -2,7 +2,9 @@
 
 Tài liệu thiết kế database, dùng làm tài liệu tham chiếu cho Claude Code khi tạo entity/migration. Cập nhật file này mỗi khi thêm/sửa entity mới (theo quy định trong `CLAUDE.md`).
 
-Phạm vi: 2 role (`USER`, `ADMIN`), không có role Coach, không có chat giữa user với user (theo quyết định đã chốt).
+Phạm vi: 2 role (`USER`, `ADMIN`), không có role Coach, không có chat giữa user với user, **không có module bài viết nghiên cứu** (đã thay bằng ảnh + video hướng dẫn nằm ngay trong bảng `exercises`).
+
+Database dùng MySQL, quản trị qua phpMyAdmin. File tạo bảng thật nằm ở `/sql/schema.sql`; khi sửa cấu trúc bảng thì cập nhật cả file đó và file này.
 
 ---
 
@@ -14,7 +16,6 @@ erDiagram
     USERS ||--o{ WORKOUT_LOGS : "ghi nhận"
     USERS ||--o{ BODY_METRICS : "theo dõi"
     USERS ||--o{ NUTRITION_TARGETS : "sở hữu"
-    USERS ||--o{ SAVED_ARTICLES : "lưu"
     USERS ||--o{ CHATBOT_SESSIONS : "trò chuyện"
 
     EXERCISES ||--o{ WORKOUT_PLAN_EXERCISES : "được dùng trong"
@@ -22,9 +23,6 @@ erDiagram
 
     WORKOUT_PLANS ||--o{ WORKOUT_PLAN_EXERCISES : "gồm"
     WORKOUT_PLAN_EXERCISES ||--o{ WORKOUT_LOGS : "phát sinh"
-
-    ARTICLES ||--o{ SAVED_ARTICLES : "được lưu"
-    ARTICLES }o--o{ TAGS : "gắn nhãn"
 
     CHATBOT_SESSIONS ||--o{ CHATBOT_MESSAGES : "chứa"
 
@@ -50,8 +48,10 @@ erDiagram
         enum type "RESISTANCE, CARDIO"
         varchar muscle_group
         text description
+        text instructions "các bước thực hiện"
+        text common_mistakes "lỗi thường gặp"
         varchar image_url
-        varchar video_url
+        varchar video_url "ID video YouTube"
         enum difficulty "BEGINNER, INTERMEDIATE, ADVANCED"
         datetime created_at
         datetime updated_at
@@ -117,35 +117,6 @@ erDiagram
         datetime created_at
     }
 
-    ARTICLES {
-        bigint id PK
-        varchar title
-        text content
-        varchar source_url
-        varchar author
-        varchar cover_image_url
-        datetime published_date
-        datetime created_at
-        datetime updated_at
-    }
-
-    TAGS {
-        bigint id PK
-        varchar name UK
-    }
-
-    ARTICLE_TAGS {
-        bigint article_id FK
-        bigint tag_id FK
-    }
-
-    SAVED_ARTICLES {
-        bigint id PK
-        bigint user_id FK
-        bigint article_id FK
-        datetime saved_at
-    }
-
     CHATBOT_SESSIONS {
         bigint id PK
         bigint user_id FK
@@ -182,11 +153,15 @@ Lưu thông tin tài khoản và chỉ số cơ thể cơ bản (dùng chung đ�
 | goal | enum | mục tiêu (giảm mỡ / duy trì / tăng cơ), ảnh hưởng cách tính macro và gợi ý lịch tập |
 
 ### `exercises`
-Thư viện bài tập, do `ADMIN` quản lý (CRUD), user chỉ đọc.
+Thư viện bài tập kèm ảnh và video hướng dẫn, do `ADMIN` quản lý (CRUD), user chỉ đọc. Đây cũng là nơi chứa toàn bộ nội dung "học tập" của website (thay cho module bài viết cũ).
 
 | Cột | Ghi chú |
 |---|---|
 | type | `RESISTANCE` (kháng lực) hoặc `CARDIO` |
+| image_url | ảnh minh họa dùng cho thẻ bài tập (ảnh từ nguồn mở như wger, hoặc ảnh nhóm tự chụp; ghi nguồn nếu giấy phép yêu cầu) |
+| video_url | chỉ lưu **ID video YouTube** (VD: `dQw4w9WgXcQ`), PHP ghép thành link nhúng `https://www.youtube.com/embed/<ID>` khi hiển thị |
+| instructions | các bước thực hiện bài tập, hiển thị ở mục "Cách thực hiện" |
+| common_mistakes | lỗi thường gặp, hiển thị ở mục "Lỗi thường gặp" |
 | muscle_group | dùng để filter (ngực, lưng, vai, chân, tay, toàn thân, tim mạch...) |
 | difficulty | dùng trong thuật toán gợi ý lịch tập theo kinh nghiệm user |
 
@@ -207,12 +182,6 @@ Lưu theo mốc thời gian (không update đè), để vẽ biểu đồ tiến
 ### `nutrition_targets`
 Lưu kết quả tính TDEE/macro theo từng lần tính (không phải 1-1 cố định với user, vì chỉ số cơ thể/mục tiêu có thể thay đổi theo thời gian → giữ lịch sử để so sánh tiến trình).
 
-### `articles`, `tags`, `article_tags`
-Thư viện bài viết nghiên cứu, quan hệ nhiều-nhiều với tag qua bảng trung gian `article_tags`. `source_url` dùng để dẫn nguồn khoa học gốc.
-
-### `saved_articles`
-Bookmark bài viết yêu thích của user.
-
 ### `chatbot_sessions`, `chatbot_messages`
 Lưu lịch sử hội thoại với chatbot AI theo từng phiên, để giữ ngữ cảnh nhiều lượt trong 1 session (phục vụ Mức 2 trong `workflow.md` — cá nhân hóa theo dữ liệu user).
 
@@ -222,6 +191,7 @@ Lưu lịch sử hội thoại với chatbot AI theo từng phiên, để giữ 
 
 - **Không có bảng Coach/CoachAssignment** — đã loại khỏi phạm vi (xem `CLAUDE.md`)
 - **Không có bảng Message/Conversation giữa user-user** — đã loại khỏi phạm vi
-- Với **Mức 3 chatbot AI (RAG đơn giản)**: không cần thêm bảng mới, chỉ cần query `articles`/`article_tags` theo từ khóa khi xử lý câu hỏi, không bắt buộc vector DB
+- **Không có bảng bài viết/tag** — module bài viết nghiên cứu đã bị loại, thay bằng video hướng dẫn trong `exercises`
+- Với **Mức 3 chatbot AI (RAG đơn giản)**: không cần thêm bảng mới, chỉ cần query bảng `exercises` (mô tả, nhóm cơ, `instructions`, `common_mistakes`) theo từ khóa khi xử lý câu hỏi, rồi dẫn người dùng tới trang chi tiết bài tập; không bắt buộc vector DB
 - Khi thêm entity mới ngoài danh sách này, **cập nhật lại sơ đồ mermaid và bảng mô tả phía trên**, không tạo entity "ngầm" không ghi vào tài liệu
-- Tất cả bảng nên có `created_at`; bảng có thể chỉnh sửa (users, exercises, workout_plans, articles) nên có thêm `updated_at`
+- Tất cả bảng nên có `created_at`; bảng có thể chỉnh sửa (users, exercises, workout_plans) nên có thêm `updated_at`
