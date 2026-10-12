@@ -132,6 +132,11 @@ a { color: var(--ui-accent-dark); }
 }
 .filter-bar :is(input, select):focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 4px rgba(255, 90, 31, .16); }
 .filter-bar .btn { height: 48px; min-height: 48px; border-radius: 10px; }
+.result-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 2px 16px; padding-bottom: 12px; border-bottom: 1px solid var(--ui-line); }
+.result-bar p { margin: 0; color: var(--color-text-muted); font-size: .95rem; }
+.result-bar b { color: var(--gs-ink, #0b1020); font-size: 1.05rem; }
+.result-bar a { font-size: .9rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.result-bar a:hover { text-decoration: underline; }
 .filter-clear { grid-column: 1 / -1; justify-self: start; font-size: .9rem; font-weight: 600; text-decoration: none; }
 .filter-clear:hover { text-decoration: underline; }
 

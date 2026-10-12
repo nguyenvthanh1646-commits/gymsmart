@@ -139,7 +139,6 @@ include __DIR__ . '/includes/header.php';
         <h1>Thư viện bài tập</h1>
         <p class="pg-sub">Chọn nhóm cơ, lọc theo loại và độ khó, rồi bấm vào bài tập để xem video hướng dẫn.</p>
     </div>
-    <div class="pg-count">Có <b><?= count($exercises) ?></b> bài tập<?= $hasFilter ? ' phù hợp bộ lọc' : '' ?></div>
 </div>
 
 <!-- Hàng nút lọc theo nhóm cơ: giữ nguyên các bộ lọc khác đang bật -->
@@ -182,11 +181,15 @@ include __DIR__ . '/includes/header.php';
     </select>
 
     <button type="submit" class="btn">Lọc</button>
-
-    <?php if ($hasFilter): ?>
-        <a class="filter-clear" href="/exercises.php">Xóa bộ lọc</a>
-    <?php endif; ?>
 </form>
+
+<!-- Thanh kết quả: số bài tập tìm được + nút xóa bộ lọc -->
+<div class="result-bar">
+    <p><b><?= count($exercises) ?></b> bài tập<?= $hasFilter ? ' phù hợp bộ lọc' : ' trong thư viện' ?></p>
+    <?php if ($hasFilter): ?>
+        <a href="/exercises.php">&#10005; Xóa bộ lọc</a>
+    <?php endif; ?>
+</div>
 
 <?php if (empty($exercises)): ?>
     <div class="empty">
