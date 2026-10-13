@@ -69,12 +69,12 @@ function aiScrub(string $text): string
  * @param array       $turns      [['role'=>'user'|'model','text'=>'...'], ...] — lượt cuối phải là 'user'
  * @param array       $options    maxTokens (int), json (bool), schema (array|null), temperature (float)
  * @return array ['ok'=>bool, 'text'=>string, 'code'=>string, 'http'=>int, 'detail'=>string]
- *   code: OK | AI_NO_CURL | AI_NO_KEY | AI_NETWORK | AI_SSL | AI_AUTH | AI_MODEL | AI_QUOTA | AI_BUSY | AI_HTTP | AI_BLOCKED | AI_EMPTY
+ *   code: OK | AI_NO_CURL | AI_NO_KEY | AI_NETWORK | AI_TIMEOUT | AI_SSL | AI_AUTH | AI_MODEL | AI_QUOTA | AI_BUSY | AI_HTTP | AI_BLOCKED | AI_EMPTY
  */
 function aiGenerate(string $system, array $turns, array $options = []): array
 {
-    // Lỗi 5xx của Google (đặc biệt 503 "quá tải") thường chỉ thoáng qua: thử lại tối đa 3 lần,
-    // chờ lâu dần (1,2 giây, 2,4 giây). Vẫn lỗi thì đổi sang model dự phòng nếu có khai báo AI_MODEL_FALLBACK.
+    // Lỗi 5xx của Google (đặc biệt 503 "quá tải") và lỗi quá thời gian chờ thường chỉ thoáng qua: thử lại tối đa 3 lần
+    // (kết nối mới mỗi lần), chờ lâu dần (1,2 giây, 2,4 giây). Vẫn lỗi thì đổi sang model dự phòng nếu có khai báo AI_MODEL_FALLBACK.
     $models = [aiModel()];
     $fb = trim((string)aiConst('AI_MODEL_FALLBACK', ''));
     if ($fb !== '' && preg_match('/^[A-Za-z0-9._-]{3,64}$/', $fb) && $fb !== $models[0]) {
@@ -84,7 +84,7 @@ function aiGenerate(string $system, array $turns, array $options = []): array
     foreach ($models as $model) {
         for ($try = 0; $try < 3; $try++) {
             $res = aiGenerateOnce($system, $turns, $options, $model);
-            if ($res['ok'] || $res['code'] !== 'AI_BUSY') {
+            if ($res['ok'] || !in_array($res['code'], ['AI_BUSY', 'AI_TIMEOUT'], true)) {
                 return $res;
             }
             if ($try < 2) {
@@ -144,10 +144,15 @@ function aiGenerateOnce(string $system, array $turns, array $options, string $mo
         CURLOPT_POST           => true,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_TIMEOUT        => 40,
+        CURLOPT_TIMEOUT        => max(5, (int)aiConst('AI_TIMEOUT', 30)), // quá hạn thì thử lại bằng kết nối mới (xem aiGenerate)
+        CURLOPT_FRESH_CONNECT  => true,
         CURLOPT_HTTPHEADER     => ['content-type: application/json', 'x-goog-api-key: ' . $key],
         CURLOPT_POSTFIELDS     => $payload,
     ];
+    // Nhiều máy Windows/mạng nhà có IPv6 chập chờn: kết nối được nhưng không nhận được gì rồi quá hạn. Ép dùng IPv4 cho chắc.
+    if (aiConst('AI_FORCE_IPV4', true)) {
+        $opts[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V4;
+    }
     $ca = (string)aiConst('AI_CA_BUNDLE', '');
     if ($ca !== '' && is_file($ca)) {
         $opts[CURLOPT_CAINFO] = $ca; // XAMPP/Windows thường thiếu bộ chứng chỉ gốc → lỗi SSL 60
@@ -163,6 +168,9 @@ function aiGenerateOnce(string $system, array $turns, array $options, string $mo
         // 35, 51, 58, 60, 77, 82, 83, 90, 91: nhóm lỗi chứng chỉ/SSL
         if (in_array($errNo, [35, 51, 58, 60, 77, 82, 83, 90, 91], true)) {
             return $fail('AI_SSL', "cURL lỗi SSL ($errNo): $errText. Trên XAMPP/Windows: tải https://curl.se/ca/cacert.pem, lưu vào C:/xampp/php/extras/ssl/cacert.pem rồi khai báo define('AI_CA_BUNDLE', ...) trong config.php.");
+        }
+        if ($errNo === 28) { // CURLE_OPERATION_TIMEDOUT: Google không trả lời kịp
+            return $fail('AI_TIMEOUT', "Google không phản hồi kịp ($errNo): $errText");
         }
         return $fail('AI_NETWORK', "Không kết nối được tới Google ($errNo): $errText");
     }
@@ -217,6 +225,8 @@ function aiFriendlyError(string $code): string
         case 'AI_AUTH':
         case 'AI_MODEL':
             return 'Chatbot chưa được cấu hình xong. Vui lòng báo quản trị viên.';
+        case 'AI_TIMEOUT':
+            return 'Máy chủ AI phản hồi quá chậm. Bạn kiểm tra mạng rồi bấm "Thử lại" nhé.';
         case 'AI_BUSY':
             return 'Máy chủ AI đang quá tải, bạn bấm "Thử lại" sau vài giây nhé.';
         case 'AI_QUOTA':
