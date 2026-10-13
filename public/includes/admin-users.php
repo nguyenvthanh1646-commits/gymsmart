@@ -30,8 +30,7 @@ function handleUserAction(PDO $pdo, string $redirectOther, string $redirectOnDel
     }
 
     if (!verifyCsrf()) {
-        http_response_code(403);
-        exit('Yêu cầu không hợp lệ (sai mã bảo vệ). Hãy quay lại và thử lại.');
+        showCsrfError();
     }
 
     $target = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);

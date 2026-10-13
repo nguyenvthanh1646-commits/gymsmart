@@ -26,8 +26,7 @@ $email = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Chống CSRF: form phải gửi kèm mã bí mật lưu trong session (xem includes/csrf.php)
     if (!verifyCsrf()) {
-        http_response_code(403);
-        exit('Yêu cầu không hợp lệ (sai mã bảo vệ). Hãy tải lại trang đăng nhập/đăng ký và thử lại.');
+        showCsrfError();
     }
 
     // trim() bỏ khoảng trắng thừa đầu/cuối; "?? ''" tránh lỗi khi thiếu trường

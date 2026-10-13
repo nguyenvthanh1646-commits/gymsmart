@@ -239,6 +239,26 @@ a { color: var(--ui-accent-dark); }
     .form-actions .btn { flex: 1; }
 }
 @media (max-width: 380px) { .ex-grid { grid-template-columns: 1fr; } }
+/* ===== Trang báo lỗi (403/404/...) ===== */
+.auth__forgot { display: block; margin-top: 8px; text-align: right; font-size: .88rem; font-weight: 600; text-decoration: none; }
+.auth__forgot:hover { text-decoration: underline; }
+.alert--note { background: #fffaeb; border-color: #fedf89; color: #93370d; }
+.alert--note a { font-weight: 700; color: inherit; text-decoration: underline; }
+.err { max-width: 560px; margin: 4vh auto 2vh; text-align: center; padding: 8px 0 24px; }
+.err__code {
+    font-size: clamp(4.5rem, 14vw, 7rem); font-weight: 800; line-height: 1; letter-spacing: -.04em;
+    background: linear-gradient(135deg, #ff8a3d, #ff4b0f); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.err h1 { margin: 14px 0 8px; font-size: clamp(1.4rem, 3vw, 1.8rem); }
+.err p { margin: 0 auto 26px; color: var(--color-text-muted); max-width: 460px; line-height: 1.6; }
+.err__actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+
+/* ===== Đổi mật khẩu (profile) ===== */
+.card + .card { margin-top: 20px; }
+.card__head { margin: 0 0 4px; font-size: 1.1rem; }
+.card__sub { margin: 0 0 18px; color: var(--color-text-muted); font-size: .95rem; }
+.pw-rule { margin: 6px 0 0; font-size: .85rem; color: var(--color-text-muted); }
+
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

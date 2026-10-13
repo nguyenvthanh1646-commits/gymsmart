@@ -48,15 +48,13 @@ $exercise = null; // dữ liệu hiện có (chế độ sửa)
 if (isset($_GET['id']) || isset($_POST['id'])) {
     $editId = filter_var($_GET['id'] ?? $_POST['id'], FILTER_VALIDATE_INT);
     if ($editId === false || $editId < 1) {
-        http_response_code(404);
-        exit('Id bài tập không hợp lệ.');
+        showError(404, 'Id bài tập không hợp lệ', 'Đường dẫn thiếu hoặc sai số thứ tự bài tập.', [['/admin/exercises.php', 'Về danh sách bài tập']]);
     }
     $stmt = $pdo->prepare("SELECT * FROM exercises WHERE id = ?");
     $stmt->execute([$editId]);
     $exercise = $stmt->fetch();
     if (!$exercise) {
-        http_response_code(404);
-        exit('Không tìm thấy bài tập.');
+        showError(404, 'Không tìm thấy bài tập', 'Bài tập này không tồn tại hoặc đã bị xóa.', [['/admin/exercises.php', 'Về danh sách bài tập']]);
     }
 }
 
@@ -71,8 +69,7 @@ $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf()) {
-        http_response_code(403);
-        exit('Yêu cầu không hợp lệ (sai mã bảo vệ). Hãy quay lại và thử lại.');
+        showCsrfError();
     }
 
     foreach ($fields as $f) {
@@ -170,7 +167,7 @@ function renderOptions(array $options, string $selected): void
 }
 ?>
 
-<div class="adm-wrap" style="max-width: 760px;">
+<div class="adm-wrap">
     <div class="adm-head">
         <div>
             <h1><?= $isEdit ? 'Sửa bài tập' : 'Thêm bài tập' ?></h1>
@@ -186,12 +183,13 @@ function renderOptions(array $options, string $selected): void
         </ul>
     <?php endif; ?>
 
-    <form class="adm-panel" method="post" action="/admin/exercise-form.php<?= $isEdit ? '?id=' . (int)$editId : '' ?>">
+    <form class="adm-split" method="post" action="/admin/exercise-form.php<?= $isEdit ? '?id=' . (int)$editId : '' ?>">
         <?= csrfField() ?>
         <?php if ($isEdit): ?>
             <input type="hidden" name="id" value="<?= (int)$editId ?>">
         <?php endif; ?>
 
+        <div class="adm-panel">
         <div class="adm-form-section">
             <h2>Thông tin chung</h2>
             <div class="adm-field">
@@ -231,6 +229,10 @@ function renderOptions(array $options, string $selected): void
                 <textarea class="adm-textarea" id="common_mistakes" name="common_mistakes" rows="4" required><?= htmlspecialchars($form['common_mistakes']) ?></textarea>
             </div>
         </div>
+        </div>
+
+        <aside class="adm-side">
+        <div class="adm-panel">
 
         <div class="adm-form-section">
             <h2>Ảnh và video</h2>
@@ -254,6 +256,8 @@ function renderOptions(array $options, string $selected): void
             <a class="adm-btn adm-btn-ghost" href="/admin/exercises.php">Hủy</a>
             <button type="submit" class="adm-btn"><?= $isEdit ? 'Lưu thay đổi' : 'Thêm bài tập' ?></button>
         </div>
+        </div>
+        </aside>
     </form>
 </div>
 

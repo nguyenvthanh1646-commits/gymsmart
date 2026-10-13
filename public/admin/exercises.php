@@ -26,8 +26,7 @@ $difficultyLabels = [
 // Tạo bản sao của một bài (để sửa nhanh thành bài tương tự), rồi mở form sửa bản sao.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'duplicate') {
     if (!verifyCsrf()) {
-        http_response_code(403);
-        exit('Yêu cầu không hợp lệ (sai mã bảo vệ). Hãy quay lại và thử lại.');
+        showCsrfError();
     }
 
     $id = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);
@@ -65,8 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'dupli
 // ===== Xử lý xóa =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     if (!verifyCsrf()) {
-        http_response_code(403);
-        exit('Yêu cầu không hợp lệ (sai mã bảo vệ). Hãy quay lại và thử lại.');
+        showCsrfError();
     }
 
     $id = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);

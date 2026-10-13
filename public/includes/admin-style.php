@@ -195,4 +195,10 @@ body{overflow-x:hidden}
   .adm-actions{flex-wrap:wrap}
   .adm-hero__cta .adm-btn{padding:0 10px;font-size:.92rem}
 }
+/* ===== Form bài tập: nội dung bên trái, ảnh/video + nút lưu bên phải ===== */
+.adm-split{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.adm-side{position:sticky;top:80px}
+.adm-split .adm-form-section:last-of-type{border-bottom:0}
+.adm-split .adm-preview{max-width:100%;width:100%}
+@media (max-width:900px){.adm-split{grid-template-columns:1fr}.adm-side{position:static}}
 </style>

@@ -17,11 +17,20 @@ Quy ước dùng chung:
 - [x] A-0 Đăng ký, đăng nhập, đăng xuất, `requireLogin()`
 - [x] A-1 Hồ sơ cá nhân `profile.php`, có thêm trình độ tập luyện (`users.experience_level`)
 - [x] A-2 Trang chủ `index.php`, nhắc hoàn thiện hồ sơ
-- [ ] A-3 Tạo file này (`TASKS.md`) và tạo thẻ việc trên GitHub Projects
-- [ ] A-4 Trang quản trị bài tập (thêm, sửa, xóa), chỉ `ADMIN` vào được
+- [x] A-3 Tạo file này (`TASKS.md`) và tạo thẻ việc trên GitHub Projects
+- [x] A-4 Trang quản trị bài tập (thêm, sửa, xóa), chỉ `ADMIN` vào được
   - **File:** `admin/exercises.php`, `admin/exercise-form.php`, hàm `requireAdmin()` trong `includes/auth.php`
   - **Xong khi:** tài khoản USER mở `/admin/...` bị chặn (kiểm tra ở PHP, không chỉ ẩn nút); thêm, sửa, xóa được 1 bài; xóa phải hỏi xác nhận
-- [ ] A-5 Rà soát bảo mật chéo trước khi demo (`prepare()`, `htmlspecialchars()`, thử `' OR '1'='1`)
+- [x] A-5 Rà soát bảo mật chéo trước khi demo (`prepare()`, `htmlspecialchars()`, thử `' OR '1'='1`)
+  - **Đã xong:** `tools/audit.php`, `SECURITY_CHECKLIST.md`, CSRF cho đăng nhập/đăng ký/hồ sơ, giới hạn mật khẩu 8–72 ký tự
+  - **Đã xong thêm:** cookie phiên an toàn trong `includes/auth.php` (HttpOnly, SameSite=Lax, strict mode, secure khi chạy HTTPS)
+  - **Cả nhóm còn làm:** đọc chéo code theo `SECURITY_CHECKLIST.md` bước 3 và ghi bảng kết quả ở cuối file đó
+- [x] A-6 Giao diện chung: font Be Vietnam Pro, `ui.css` (nút, thẻ, form), logo, navbar, trang chủ, đăng nhập/đăng ký/hồ sơ, thư viện bài tập (PR `a-7-ui-polish`)
+- [x] A-7 Admin: quản lý người dùng (xem chi tiết, đổi vai trò USER/ADMIN, xóa), xuất CSV người dùng và bài tập, nhân bản bài tập
+- [x] A-8 Chặn dò mật khẩu ở trang đăng nhập (`includes/login-throttle.php`, bảng `login_attempts` trong `sql/login_attempts.sql`, báo D gộp vào `schema.sql` và `ERD.md`)
+- [x] A-9 Đổi mật khẩu trong hồ sơ (cần nhập mật khẩu hiện tại), trang báo lỗi 403/404/hết hạn mã bảo vệ (`includes/error-page.php`), form bài tập admin bố cục 2 cột
+- [x] A-10 Quên mật khẩu: `forgot-password.php`, `reset-password.php`, bảng `password_resets` trong `sql/password_resets.sql` (báo D gộp vào `schema.sql` và `ERD.md`)
+  - **Cách hoạt động:** mã ngẫu nhiên 32 byte, DB chỉ lưu bản băm SHA-256, hết hạn 30 phút, dùng một lần; trên localhost trang hiện link để demo, trên máy chủ thật gửi bằng `mail()` (cần `APP_URL` trong `config.php`)
 
 ---
 

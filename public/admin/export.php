@@ -31,8 +31,7 @@ $exports = [
 
 $type = $_GET['type'] ?? '';
 if (!is_string($type) || !isset($exports[$type])) {
-    http_response_code(400);
-    exit('Loại dữ liệu không hợp lệ.');
+    showError(400, 'Loại dữ liệu không hợp lệ', 'Chỉ xuất được danh sách người dùng hoặc bài tập.', [['/admin/dashboard.php', 'Về tổng quan']]);
 }
 
 /** Ô bắt đầu bằng ký tự công thức thì thêm dấu ' để Excel coi là chữ thường */
