@@ -1,0 +1,35 @@
+-- seed_batch4.sql — đợt 4: thêm 10 bài tập (id 31-40)
+-- Chỉ chạy MỘT LẦN, sau khi đã nạp seed.sql, seed_batch2.sql, seed_batch3.sql.
+USE gymsmart;
+
+INSERT INTO exercises (name, type, muscle_group, description, instructions, common_mistakes, difficulty) VALUES
+('Cầu mông', 'RESISTANCE', 'LEGS', 'Tập mông và đùi sau, phù hợp người mới.',
+ 'Nằm ngửa, co gối, bàn chân đặt trên sàn\nSiết mông và nâng hông lên đến khi thân thẳng từ vai đến gối\nGiữ một giây rồi hạ hông xuống chậm',
+ 'Ưỡn lưng quá mức ở đỉnh\nĐẩy bằng lưng thay vì mông\nGót chân nhấc khỏi sàn', 'BEGINNER'),
+('Nhón gót', 'RESISTANCE', 'LEGS', 'Tập cơ bắp chân.',
+ 'Đứng thẳng, hai chân rộng bằng hông (có thể vịn tường)\nNhón gót lên cao nhất có thể\nGiữ một giây rồi hạ gót chậm',
+ 'Làm quá nhanh\nKhông nhón hết biên độ\nGập gối trong lúc nhón', 'BEGINNER'),
+('Đạp đùi bằng máy', 'RESISTANCE', 'LEGS', 'Tập đùi trước và mông bằng máy, ít đòi hỏi thăng bằng.',
+ 'Ngồi vào máy, lưng áp sát ghế, hai chân đặt rộng bằng vai trên bệ\nMở khóa an toàn, hạ bệ đến khi gối gập khoảng 90 độ\nĐẩy bệ lên bằng gót chân, không duỗi cứng gối',
+ 'Khóa cứng đầu gối ở đỉnh\nMông nhấc khỏi ghế khi hạ sâu\nĐầu gối chụm vào trong', 'INTERMEDIATE'),
+('Nâng tạ đơn ra trước', 'RESISTANCE', 'SHOULDERS', 'Bài cô lập cơ vai trước.',
+ 'Đứng thẳng, hai tay cầm tạ nhẹ trước đùi\nNâng một tay (hoặc hai tay) thẳng ra trước đến ngang vai\nHạ xuống chậm',
+ 'Dùng đà từ thân người\nNâng tạ cao quá vai\nChọn tạ quá nặng', 'BEGINNER'),
+('Nâng tạ đơn vai sau cúi người', 'RESISTANCE', 'SHOULDERS', 'Tập cơ vai sau, cân bằng với các bài tập vai trước.',
+ 'Đứng chân rộng bằng vai, gập hông cúi người, lưng thẳng\nHai tay cầm tạ nhẹ buông dưới ngực, khuỷu tay hơi cong\nNâng tạ sang hai bên đến ngang vai rồi hạ chậm',
+ 'Cong lưng\nDùng đà để vung tạ\nChọn tạ quá nặng', 'INTERMEDIATE'),
+('Duỗi tay sau tạ đơn', 'RESISTANCE', 'ARMS', 'Bài cô lập cơ tam đầu.',
+ 'Đứng hoặc ngồi, hai tay giữ một tạ đơn trên đầu\nGập khuỷu tay hạ tạ ra sau đầu\nDuỗi tay đẩy tạ lên, giữ khuỷu tay hướng về trước',
+ 'Khuỷu tay mở ra hai bên\nVõng lưng\nChọn tạ quá nặng', 'INTERMEDIATE'),
+('Cuốn cổ tay', 'RESISTANCE', 'ARMS', 'Tập cẳng tay, tăng lực nắm.',
+ 'Ngồi, đặt cẳng tay lên đùi, lòng bàn tay hướng lên, cổ tay thò ra mép gối\nCầm tạ nhẹ, hạ cổ tay xuống\nCuốn cổ tay lên hết biên độ rồi hạ chậm',
+ 'Chọn tạ quá nặng\nĐể cả cẳng tay nhấc lên\nLàm quá nhanh', 'BEGINNER'),
+('Kettlebell swing', 'RESISTANCE', 'FULL_BODY', 'Bài tập bùng nổ từ hông, tập mông, đùi sau, lưng và vai.',
+ 'Đứng chân rộng hơn vai, hai tay cầm quả tạ ấm trước đùi\nĐẩy hông ra sau, để tạ đung đưa giữa hai chân\nĐẩy hông về trước mạnh để tạ bay lên ngang ngực, siết mông ở đỉnh',
+ 'Dùng tay nâng tạ lên thay vì đẩy hông\nCong lưng khi gập hông\nNgồi xuống như squat', 'INTERMEDIATE'),
+('Leo núi tại chỗ', 'CARDIO', 'FULL_BODY', 'Cardio kết hợp tập cơ bụng và thân.',
+ 'Vào tư thế hít đất, thân thẳng\nKéo luân phiên từng gối về phía ngực\nGiữ nhịp nhanh và đều',
+ 'Nhô mông cao\nVõng lưng\nĐể tay trượt khỏi vị trí', 'INTERMEDIATE'),
+('Nhảy dang tay chân', 'CARDIO', 'FULL_BODY', 'Cardio khởi động đơn giản.',
+ 'Đứng thẳng, hai chân khép, tay dọc thân\nNhảy dang hai chân và đưa tay lên trên đầu\nNhảy về tư thế ban đầu theo nhịp đều',
+ 'Tiếp đất mạnh bằng gót chân\nGiữ gối thẳng cứng\nLàm quá nhanh mất nhịp', 'BEGINNER');
