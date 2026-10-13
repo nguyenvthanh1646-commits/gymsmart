@@ -24,14 +24,6 @@ $difficultyLabels = [
 ];
 $typeLabels = ['RESISTANCE' => 'Tập kháng lực', 'CARDIO' => 'Cardio'];
 
-$exercise = false;
-
-// Kiểm tra id: phải là số nguyên >= 1, nếu không thì trả về false
-$id = filter_var(
-    $_GET['id'] ?? '',
-    FILTER_VALIDATE_INT,
-    ['options' => ['min_range' => 1]]
-);
 
 if ($id !== false) {
     // Prepared statement: giá trị id được gửi tách riêng khỏi câu SQL
@@ -39,6 +31,21 @@ if ($id !== false) {
     $stmt->execute([$id]);
     $exercise = $stmt->fetch(PDO::FETCH_ASSOC); // false nếu không có dòng nào
 }
+
+// Chỉ nhận video ID đúng 11 ký tự (chữ, số, _ , -), ngược lại coi như không có video
+$videoId = null;
+if ($exercise && !empty($exercise['video_url'])
+    && preg_match('/^[A-Za-z0-9_-]{11}$/', $exercise['video_url'])) {
+    $videoId = $exercise['video_url'];
+}
+
+// Tách văn bản nhiều dòng thành mảng các bước, bỏ dòng trống
+function splitLines(?string $text): array {
+    $lines = preg_split('/\r\n|\r|\n/', (string)$text);
+    return array_values(array_filter(array_map('trim', $lines), 'strlen'));
+}
+$steps    = $exercise ? splitLines($exercise['instructions'] ?? '') : [];
+$mistakes = $exercise ? splitLines($exercise['common_mistakes'] ?? '') : [];
 
 if (!$exercise) {
     http_response_code(404); // báo cho trình duyệt là không tìm thấy
@@ -84,6 +91,34 @@ include __DIR__ . '/includes/header.php';
         <h2>Mô tả</h2>
         <!-- nl2br đổi xuống dòng thành <br>; phải escape trước rồi mới nl2br -->
         <p><?= nl2br(htmlspecialchars($exercise['description'] ?? '')) ?></p>
+
+        <?php if ($videoId): // chỉ hiện khung video khi có video hợp lệ ?>
+            <h2>Video hướng dẫn</h2>
+            <div style="position:relative; padding-top:56.25%;">
+                <iframe src="https://www.youtube.com/embed/<?= htmlspecialchars($videoId) ?>"
+                        title="Video hướng dẫn: <?= htmlspecialchars($exercise['name']) ?>"
+                        style="position:absolute; inset:0; width:100%; height:100%; border:0;"
+                        allowfullscreen loading="lazy"></iframe>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($steps): ?>
+            <h2>Cách thực hiện</h2>
+            <ol>
+                <?php foreach ($steps as $step): ?>
+                    <li><?= htmlspecialchars($step) ?></li>
+                <?php endforeach; ?>
+            </ol>
+        <?php endif; ?>
+
+        <?php if ($mistakes): ?>
+            <h2>Lỗi thường gặp</h2>
+            <ul>
+                <?php foreach ($mistakes as $m): ?>
+                    <li><?= htmlspecialchars($m) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
 
         <a class="btn" href="exercises.php">Quay lại thư viện</a>
     </div>
