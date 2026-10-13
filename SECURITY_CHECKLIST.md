@@ -243,3 +243,15 @@ Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/t
 | Tài khoản chưa có số đo hoặc chưa tính TDEE | Biểu đồ hiện thông báo "Chưa có dữ liệu", không lỗi JS (F12 > Console) |
 | Đổi 30 ngày / 90 ngày / Tất cả | Biểu đồ vẽ lại theo khoảng chọn, không gọi lại API |
 | Chặn tải `js/vendor/chart.umd.min.js` (DevTools) | Hiện dòng báo lỗi, bảng lịch sử vẫn dùng được |
+
+### Hồ sơ và ảnh đại diện (A-15)
+| Cách thử | Kết quả mong đợi |
+|---|---|
+| Chọn file .txt/.php đổi tên thành .jpg rồi gửi (kể cả bỏ qua JS bằng DevTools) | Server báo "Chỉ nhận ảnh JPG, PNG hoặc WebP", không lưu gì |
+| Chọn ảnh lớn hơn 2 MB | Báo lỗi (JS chặn trước, server vẫn kiểm tra lại) |
+| Gửi form ảnh không kèm mã CSRF | Trang "Phiên làm việc đã hết hạn" (403) |
+| Gửi form ảnh không chọn file | Báo "Bạn chưa chọn ảnh" |
+| Tải ảnh mới | File cũ bị xóa, thư mục `uploads/avatars/` chỉ còn 1 ảnh của user |
+| Mở file ảnh trong `uploads/avatars/` bằng cách đổi đuôi .php | Không chạy được mã (xem `.htaccess` trong thư mục) |
+| Đổi `avatar` trong DB thành `../../config.php` rồi mở Hồ sơ | Bỏ qua đường dẫn lạ, hiện chữ cái đầu |
+| Chưa import `users_avatar.sql` | Trang vẫn mở được, nút đổi ảnh ẩn và có nhắc import |
