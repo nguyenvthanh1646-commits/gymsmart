@@ -17,7 +17,7 @@ if (!is_dir($root)) {
 }
 
 // Trang công khai, không cần đăng nhập
-$publicPages = ['index.php', 'login.php', 'register.php', 'logout.php'];
+$publicPages = ['index.php', 'login.php', 'register.php', 'logout.php', 'forgot-password.php', 'reset-password.php'];
 
 $findings = []; // [mức, file, số dòng, mô tả]
 

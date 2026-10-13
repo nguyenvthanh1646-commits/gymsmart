@@ -66,7 +66,11 @@ Mở từng URL trong 3 trạng thái: **chưa đăng nhập**, **USER**, **ADMI
 | `/admin/exercises.php` | Chuyển về đăng nhập | **Bị chặn** | Xem được |
 | `/admin/exercise-form.php` | Chuyển về đăng nhập | **Bị chặn** | Xem được |
 | `/admin/users.php` | Chuyển về đăng nhập | **Bị chặn** | Xem được |
+| `/admin/user-detail.php?id=2` | Chuyển về đăng nhập | **Bị chặn** | Xem được |
+| `/admin/export.php?type=users` (và `exercises`) | Chuyển về đăng nhập | **Bị chặn** | Tải được CSV, không có cột mật khẩu |
 | Các `/api/*.php` của B, C, D (khi có) | 401 hoặc chuyển hướng | Theo thiết kế | Theo thiết kế |
+
+Thử riêng với quản lý người dùng (đăng nhập ADMIN): tự đổi vai trò hoặc tự xóa chính mình phải bị từ chối; không có nút xóa ở dòng ADMIN; gửi form thiếu `csrf_token` phải ra lỗi 403.
 
 Thêm 3 phép thử:
 - **Đổi id của người khác:** với mọi trang có dữ liệu cá nhân (lịch tập, tiến trình, số đo), thử đổi `?id=` hoặc `?user_id=` sang số của người khác. Kết quả đúng: không xem được. Dữ liệu cá nhân phải luôn lấy theo `$_SESSION['user_id']`.
@@ -86,6 +90,7 @@ Form nào gửi được mà không cần mã thì thiếu `verifyCsrf()`.
 
 - Đăng ký thử mật khẩu 3 ký tự: bị từ chối (tối thiểu 8). Thử 100 ký tự: bị từ chối (tối đa 72).
 - Trong phpMyAdmin, bảng `users`, cột `password_hash` phải là chuỗi bắt đầu bằng `$2y$`, **không** phải mật khẩu thật.
+- Thử đăng nhập sai 5 lần liên tiếp cùng một email: lần thứ 6 phải bị chặn, kể cả nhập đúng mật khẩu. Email không tồn tại cũng bị chặn y như vậy (không để lộ email nào có thật). Đăng nhập đúng bằng email khác vẫn được.
 - Đăng nhập sai email và sai mật khẩu phải cho **cùng một** thông báo (để không dò ra email nào đã đăng ký).
 - Sau khi đăng nhập, mã phiên (cookie `PHPSESSID`) phải **đổi** so với trước đăng nhập (đã có `session_regenerate_id`).
 
@@ -151,7 +156,7 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 
 ## Hạn chế đã biết (ghi vào báo cáo, không phải lỗi bị bỏ sót)
 
-- **Chưa chặn dò mật khẩu hàng loạt** ở trang đăng nhập (không giới hạn số lần thử). Cách làm đơn giản nếu còn thời gian: bảng `login_attempts` đếm số lần sai theo email và IP trong 15 phút gần nhất, quá 5 lần thì tạm khóa.
+- **Chặn dò mật khẩu đã có ở mức cơ bản** (`includes/login-throttle.php`: 5 lần sai cùng email hoặc 20 lần sai cùng IP trong 15 phút thì khóa 15 phút). Chưa có: thông báo cho chủ tài khoản, CAPTCHA, khóa theo thiết bị. Nếu chưa import bảng `login_attempts` thì việc chặn tự tắt (đăng nhập vẫn chạy).
 - **Đăng xuất bằng đường dẫn GET** (`/api/logout.php`). Kẻ xấu có thể ép đăng xuất người dùng, hậu quả nhỏ. Có thể đổi thành form POST sau.
 - **Quyền admin lưu trong session**: nếu bị hạ quyền trong DB thì phiên đang mở vẫn còn quyền cũ cho tới khi đăng xuất.
 - **Đăng ký báo "Email này đã được sử dụng"** cho phép dò xem một email đã có tài khoản chưa. Chấp nhận được ở quy mô đồ án.
@@ -172,3 +177,16 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 | 2.6 | Lỗi và rò rỉ thông tin | | | |
 | 3 | Đọc chéo code (mỗi người một phần) | | | |
 | 4 | Cấu hình (cookie phiên, header, `.gitignore`) | | | |
+
+## Bổ sung: Quên mật khẩu (A-10)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Nhập email không tồn tại ở `/forgot-password.php` | Hiện cùng thông báo như email có thật (không lộ email nào đã đăng ký) |
+| Mở `/reset-password.php?token=abc` hoặc `?token=1' OR '1'='1` | "Link không còn hiệu lực", không lỗi PHP |
+| Dùng lại link đã đổi mật khẩu thành công | "Link không còn hiệu lực" |
+| Mở link sau 30 phút | "Link không còn hiệu lực" |
+| Xem bảng `password_resets` trong phpMyAdmin | Cột `token_hash` là 64 ký tự băm, không phải mã trong link |
+| Gửi form đặt lại với mã bảo vệ sai | Trang "Phiên làm việc đã hết hạn" (403) |
+
+Giới hạn đã biết: trên localhost link hiện ngay trên màn hình để demo; khi triển khai thật phải cấu hình gửi email và đặt `APP_URL`.

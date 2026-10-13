@@ -10,6 +10,28 @@
 // session_start() phải gọi TRƯỚC khi có bất kỳ output nào (kể cả khoảng
 // trắng trước thẻ <?php). Mỗi trang cần session chỉ cần require file này.
 if (session_status() === PHP_SESSION_NONE) {
+    // ===== Cấu hình cookie phiên an toàn (SECURITY_CHECKLIST, bước 4a) =====
+    // Phải đặt TRƯỚC session_start(), sau khi session đã chạy thì đổi không còn tác dụng.
+
+    // Chỉ nhận mã phiên từ cookie, không nhận qua URL (?PHPSESSID=...). Chặn việc gửi link
+    // kèm sẵn mã phiên của kẻ xấu cho nạn nhân (session fixation).
+    ini_set('session.use_only_cookies', '1');
+
+    // Không chấp nhận mã phiên do client tự bịa ra (chưa từng được server cấp).
+    ini_set('session.use_strict_mode', '1');
+
+    // Bật cờ "secure" (chỉ gửi cookie qua HTTPS) khi trang đang chạy bằng HTTPS.
+    // Chạy localhost bằng http thì tự bỏ qua, nếu ép secure ở localhost thì không đăng nhập được.
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+
+    session_set_cookie_params([
+        'lifetime' => 0,          // cookie hết hạn khi đóng trình duyệt
+        'path'     => '/',
+        'httponly' => true,       // JavaScript không đọc được cookie phiên (giảm thiệt hại khi bị XSS)
+        'samesite' => 'Lax',      // trình duyệt không gửi cookie trong yêu cầu chéo trang nguy hiểm (giảm CSRF)
+        'secure'   => $isHttps,
+    ]);
+
     session_start();
 }
 
@@ -45,7 +67,9 @@ function requireAdmin(): void
 {
     requireLogin();
     if (($_SESSION['role'] ?? '') !== 'ADMIN') {
-        http_response_code(403);
-        die('Bạn không có quyền truy cập trang này.');
+        showError(403, 'Bạn không có quyền truy cập', 'Trang này chỉ dành cho quản trị viên. Nếu bạn nghĩ đây là nhầm lẫn, hãy báo người quản trị.');
     }
 }
+
+// Trang báo lỗi dùng chung (showError, showCsrfError)
+require_once __DIR__ . '/error-page.php';

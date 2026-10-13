@@ -67,11 +67,13 @@ if (!$user) {
 $errors = [];
 $form = $user; // dữ liệu hiển thị trong form (mặc định là dữ liệu trong DB)
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Trang có 2 form (hồ sơ, đổi mật khẩu); trường ẩn "form" cho biết form nào vừa được gửi
+$formName = $_POST['form'] ?? 'profile';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formName === 'profile') {
     // Chống CSRF: form phải gửi kèm mã bí mật lưu trong session (xem includes/csrf.php)
     if (!verifyCsrf()) {
-        http_response_code(403);
-        exit('Yêu cầu không hợp lệ (sai mã bảo vệ). Hãy quay lại và thử lại.');
+        showCsrfError();
     }
 
     $fullName = trim($_POST['full_name'] ?? '');
@@ -156,6 +158,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// ===== Đổi mật khẩu (form thứ 2) =====
+$pwErrors = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formName === 'password') {
+    if (!verifyCsrf()) {
+        showCsrfError();
+    }
+
+    $currentPw = $_POST['current_password'] ?? '';
+    $newPw     = $_POST['new_password'] ?? '';
+    $confirmPw = $_POST['confirm_password'] ?? '';
+
+    // Phải nhập đúng mật khẩu hiện tại: nếu ai đó mượn máy đang đăng nhập thì cũng không đổi được mật khẩu
+    $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $hash = (string)$stmt->fetchColumn();
+
+    if ($currentPw === '' || !password_verify($currentPw, $hash)) {
+        $pwErrors[] = 'Mật khẩu hiện tại không đúng.';
+    } elseif (strlen($newPw) < 8) {
+        $pwErrors[] = 'Mật khẩu mới phải có ít nhất 8 ký tự.';
+    } elseif (strlen($newPw) > 72) {
+        // bcrypt chỉ dùng 72 byte đầu nên giới hạn như lúc đăng ký
+        $pwErrors[] = 'Mật khẩu mới tối đa 72 ký tự.';
+    } elseif ($newPw === $currentPw) {
+        $pwErrors[] = 'Mật khẩu mới phải khác mật khẩu hiện tại.';
+    } elseif ($newPw !== $confirmPw) {
+        $pwErrors[] = 'Nhập lại mật khẩu mới chưa khớp.';
+    }
+
+    if (empty($pwErrors)) {
+        $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+        $stmt->execute([password_hash($newPw, PASSWORD_DEFAULT), $userId]);
+
+        // Cấp mã phiên mới sau khi đổi mật khẩu để mã cũ (nếu bị lộ) không còn dùng được
+        session_regenerate_id(true);
+
+        header('Location: /profile.php?pw=1#doi-mat-khau');
+        exit;
+    }
+}
+
+// Biểu tượng con mắt của nút hiện/ẩn mật khẩu (js/password-toggle.js)
+$eyeSvg = '<svg class="pw__eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="pw__off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.9 17.9A10.9 10.9 0 0112 19c-6.4 0-10-7-10-7a18.5 18.5 0 015.1-5.9M9.9 5.2A10 10 0 0112 5c6.4 0 10 7 10 7a18.6 18.6 0 01-2.2 3.2M1 1l22 22"/><path d="M14.1 14.1a3 3 0 01-4.2-4.2"/></svg>';
+
+/** In một ô mật khẩu có nút hiện/ẩn. $id vừa là id vừa là name. */
+function pwField(string $id, string $label, string $autocomplete, string $eyeSvg, string $extra = ''): void
+{
+    echo '<div class="field"><label for="' . $id . '">' . htmlspecialchars($label) . '</label>'
+       . '<div class="pw"><input type="password" id="' . $id . '" name="' . $id . '" autocomplete="' . $autocomplete . '" required ' . $extra . '>'
+       . '<button type="button" class="pw__btn" data-pw-toggle="' . $id . '" aria-label="Hiện mật khẩu" aria-pressed="false">' . $eyeSvg . '</button>'
+       . '</div></div>';
+}
+
 $pageTitle = 'Hồ sơ cá nhân';
 include __DIR__ . '/includes/header.php';
 ?>
@@ -185,6 +240,7 @@ include __DIR__ . '/includes/header.php';
 
         <form method="post" action="/profile.php">
             <?= csrfField() ?>
+            <input type="hidden" name="form" value="profile">
 
             <fieldset class="form-sec">
                 <h2><i>1</i> Thông tin cơ bản</h2>
@@ -276,6 +332,40 @@ include __DIR__ . '/includes/header.php';
             </div>
         </form>
     </div>
+
+    <div class="card" id="doi-mat-khau">
+        <h2 class="card__head">Đổi mật khẩu</h2>
+        <p class="card__sub">Nhập mật khẩu hiện tại để xác nhận, sau đó chọn mật khẩu mới.</p>
+
+        <?php if (isset($_GET['pw'])): ?>
+            <div class="alert alert--ok" role="status">Đã đổi mật khẩu.</div>
+        <?php endif; ?>
+
+        <?php if (!empty($pwErrors)): ?>
+            <div class="alert alert--error" role="alert">
+                <ul>
+                    <?php foreach ($pwErrors as $error): ?>
+                        <li><?= htmlspecialchars($error) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
+
+        <form method="post" action="/profile.php#doi-mat-khau">
+            <?= csrfField() ?>
+            <input type="hidden" name="form" value="password">
+            <div class="form-grid">
+                <div class="span-2"><?php pwField('current_password', 'Mật khẩu hiện tại', 'current-password', $eyeSvg); ?></div>
+                <?php pwField('new_password', 'Mật khẩu mới', 'new-password', $eyeSvg, 'minlength="8" maxlength="72"'); ?>
+                <?php pwField('confirm_password', 'Nhập lại mật khẩu mới', 'new-password', $eyeSvg, 'minlength="8" maxlength="72"'); ?>
+            </div>
+            <p class="pw-rule">Mật khẩu từ 8 đến 72 ký tự.</p>
+            <div class="form-actions">
+                <button type="submit" class="btn">Đổi mật khẩu</button>
+            </div>
+        </form>
+    </div>
 </div>
 
+<script src="/js/password-toggle.js"></script>
 <?php include __DIR__ . '/includes/footer.php'; ?>
