@@ -32,6 +32,9 @@ Quy ước dùng chung:
 - [x] A-10 Quên mật khẩu: `forgot-password.php`, `reset-password.php`, bảng `password_resets` trong `sql/password_resets.sql` (báo D gộp vào `schema.sql` và `ERD.md`)
   - **Cách hoạt động:** mã ngẫu nhiên 32 byte, DB chỉ lưu bản băm SHA-256, hết hạn 30 phút, dùng một lần; trên localhost trang hiện link để demo, trên máy chủ thật gửi bằng `mail()` (cần `APP_URL` trong `config.php`)
 
+- [x] A-11 Thiết kế lại trang Dinh dưỡng (`nutrition.php`, `css/nutrition.css`, `js/nutrition.js`) và thêm `includes/meal-plan.php`: đổi mục tiêu tính lại macro, vòng tròn macro, kiểu ăn (cân bằng, giàu protein, ít tinh bột, tùy chỉnh %), gợi ý lịch ăn 3/4/5 bữa, bảng so sánh mục tiêu. Không sửa `tdee.php`
+- [x] A-12 Protein theo trình độ (người mới 1,6 g/kg, có kinh nghiệm 1,8 g/kg; `calculateTargets()` nhận thêm tham số `$experience`) và mục **Bài viết** trên navbar: `articles.php`, `article.php`, `includes/articles.php`, mỗi bài là một file trong `content/articles/` (thêm bài mới chỉ cần tạo thêm file, hướng dẫn ở đầu `includes/articles.php`)
+  - **Báo C:** `api/calculate-tdee.php` (nếu có) cũng cần truyền `experience_level` vào `calculateTargets()` để cùng kết quả với trang Dinh dưỡng
 ---
 
 ## B — Thư viện bài tập + Lịch tập

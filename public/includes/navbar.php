@@ -25,6 +25,7 @@ $navItems = [
     ['/workout-plan.php', 'Lịch tập',        ['workout-plan.php']],
     ['/nutrition.php',    'TDEE/Macro',      ['nutrition.php']],
     ['/progress.php',     'Tiến trình',      ['progress.php']],
+    ['/articles.php',     'Bài viết',        ['articles.php', 'article.php']],
     ['/profile.php',      'Hồ sơ',           ['profile.php']],
 ];
 $initial = '';

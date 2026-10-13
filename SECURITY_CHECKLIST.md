@@ -190,3 +190,12 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 | Gửi form đặt lại với mã bảo vệ sai | Trang "Phiên làm việc đã hết hạn" (403) |
 
 Giới hạn đã biết: trên localhost link hiện ngay trên màn hình để demo; khi triển khai thật phải cấu hình gửi email và đặt `APP_URL`.
+
+## Bổ sung: Bài viết (A-12)
+
+| Thử | Kết quả đúng |
+|---|---|
+| `/articles.php` và `/article.php?slug=...` khi chưa đăng nhập | Chuyển về đăng nhập |
+| `/article.php?slug=../../includes/db`, `?slug=abc`, `?slug[]=x`, `?slug=<script>` | Trang 404 đẹp, không lỗi PHP, không đọc được file lạ |
+| `/articles.php?cat=zzz` hoặc `?cat[]=x` | Hiện tất cả bài, không lỗi |
+| Thêm file bài mới có chữ `<b>` hoặc `<script>` trong nội dung | Hiện nguyên chữ, không chạy mã (mọi chữ đều qua htmlspecialchars) |
