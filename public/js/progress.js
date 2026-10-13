@@ -132,7 +132,10 @@
 
     // Đọc phản hồi dạng chữ rồi tự parse JSON, để khi server trả HTML (404, lỗi PHP, trang đăng nhập...) vẫn báo được nguyên nhân rõ ràng
     function getJson(url) {
-        return fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } }).then(function (res) {
+        var ctrl = window.AbortController ? new AbortController() : null;
+        var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 15000) : null; // 15 giây không phản hồi thì báo lỗi, không để trống mãi
+        return fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' }, signal: ctrl ? ctrl.signal : undefined }).then(function (res) {
+            if (timer) { clearTimeout(timer); }
             return res.text().then(function (text) {
                 var j = null;
                 try { j = JSON.parse(text); } catch (e) { /* không phải JSON */ }
@@ -163,13 +166,18 @@
     function start() {
         if (!window.Chart) { showStatus('Không tải được thư viện biểu đồ. Bạn vẫn xem được số liệu ở bảng bên dưới.'); return; }
         window.Chart.defaults.font.family = 'inherit';
+        showStatus('Đang tải biểu đồ...');
         getJson('/api/body-metrics.php').then(function (rows) {
+            showStatus('');
             data.body = rows;
             render();
         }).catch(function (err) {
-            showStatus('Không tải được dữ liệu biểu đồ: ' + err.message);
+            if (window.console) { console.error('progress.js:', err); }
+            showStatus('Không tải được dữ liệu biểu đồ: ' + (err && err.name === 'AbortError' ? 'máy chủ không phản hồi sau 15 giây' : err.message));
         });
     }
 
-    if (document.readyState === 'complete') { start(); } else { window.addEventListener('load', start); }
+    // Script này có thuộc tính defer và nằm sau Chart.js nên khi chạy tới đây thư viện đã sẵn sàng: chạy luôn,
+    // KHÔNG chờ sự kiện "load" (sự kiện này bị trễ nếu có tài nguyên nào đó trên trang tải chậm, làm biểu đồ trống mãi).
+    start();
 })();
