@@ -242,4 +242,32 @@ Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/t
 | Đăng nhập user khác rồi mở API | Chỉ thấy số đo của chính user đó |
 | Tài khoản chưa có số đo hoặc chưa tính TDEE | Biểu đồ hiện thông báo "Chưa có dữ liệu", không lỗi JS (F12 > Console) |
 | Đổi 30 ngày / 90 ngày / Tất cả | Biểu đồ vẽ lại theo khoảng chọn, không gọi lại API |
+<<<<<<< HEAD
 | Chặn tải `js/vendor/chart.umd.min.js` (DevTools) | Hiện dòng báo lỗi, bảng lịch sử vẫn dùng được |
+=======
+| Chặn tải `js/lib/chart.umd.min.js` (DevTools) | Hiện dòng báo lỗi, bảng lịch sử vẫn dùng được |
+
+### Hồ sơ và ảnh đại diện (A-15)
+| Cách thử | Kết quả mong đợi |
+|---|---|
+| Chọn file .txt/.php đổi tên thành .jpg rồi gửi (kể cả bỏ qua JS bằng DevTools) | Server báo "Chỉ nhận ảnh JPG, PNG hoặc WebP", không lưu gì |
+| Chọn ảnh lớn hơn 2 MB | Báo lỗi (JS chặn trước, server vẫn kiểm tra lại) |
+| Gửi form ảnh không kèm mã CSRF | Trang "Phiên làm việc đã hết hạn" (403) |
+| Gửi form ảnh không chọn file | Báo "Bạn chưa chọn ảnh" |
+| Tải ảnh mới | File cũ bị xóa, thư mục `uploads/avatars/` chỉ còn 1 ảnh của user |
+| Mở file ảnh trong `uploads/avatars/` bằng cách đổi đuôi .php | Không chạy được mã (xem `.htaccess` trong thư mục) |
+| Đổi `avatar` trong DB thành `../../config.php` rồi mở Hồ sơ | Bỏ qua đường dẫn lạ, hiện chữ cái đầu |
+| Chưa import `users_avatar.sql` | Trang vẫn mở được, nút đổi ảnh ẩn và có nhắc import |
+
+### Đăng ký 3 bước (A-16)
+| Cách thử | Kết quả mong đợi |
+|---|---|
+| Bấm Tiếp tục khi bỏ trống / email sai / nhập lại mật khẩu khác | Ở lại bước đó, báo lỗi ngay dưới từng ô |
+| Tắt JS hoặc dùng curl gửi thẳng form với tuổi 5, chiều cao 50, `goal=HACK` | Server từ chối, hiện lại form ở đúng bước có lỗi, giữ dữ liệu đã nhập |
+| Gửi form không kèm mã CSRF | Trang "Phiên làm việc đã hết hạn" (403) |
+| Đăng ký email đã tồn tại | Báo "Email này đã được sử dụng" |
+| Nhập `<script>alert(1)</script>` vào họ tên rồi để lỗi | Hiện nguyên chữ, không chạy script |
+| Gửi `full_name[]=x` (mảng) | Coi như trống, báo lỗi, không lỗi PHP |
+| Xem HTML trang sau khi lỗi | Không có mật khẩu đã nhập trong HTML |
+| Đăng ký xong, xem bảng users | `password_hash` bắt đầu bằng `$2y$`, có đủ age, height, weight, gender, activity, experience, goal |
+>>>>>>> 6b2d4ab (A-14: đưa Chart.js sang js/lib để không bị .gitignore vendor/ chặn)
