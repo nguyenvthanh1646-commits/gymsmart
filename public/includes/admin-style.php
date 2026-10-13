@@ -9,7 +9,7 @@
 ?>
 <style>
 .adm-wrap{--adm-accent:#ff5a1f;--adm-accent-dark:#e04a12;--adm-line:#e5e7eb;--adm-muted:#6b7280;--adm-danger:#b91c1c;
-  max-width:1040px;margin:0 auto;padding:24px 16px 96px}
+  max-width:1180px;margin:0 auto;padding:28px 20px 96px}
 .adm-wrap *{box-sizing:border-box}
 .adm-wrap [hidden]{display:none !important}
 .adm-head{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;justify-content:space-between;margin-bottom:20px}
@@ -34,6 +34,8 @@
 .adm-tools{display:grid;grid-template-columns:1fr 170px 170px;gap:10px;padding:14px;border-bottom:1px solid var(--adm-line)}
 .adm-input,.adm-select,.adm-textarea{width:100%;min-height:44px;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;
   font:inherit;font-size:16px;background:#fff;color:#111}
+.adm-input,.adm-select{height:46px;min-height:46px;padding-top:0;padding-bottom:0}
+.adm-select{appearance:none;-webkit-appearance:none;padding-right:38px;cursor:pointer;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 13px center}
 .adm-textarea{min-height:100px;resize:vertical;line-height:1.5}
 .adm-input:focus,.adm-select:focus,.adm-textarea:focus{outline:2px solid var(--adm-accent);outline-offset:1px;border-color:transparent}
 .adm-count{padding:10px 16px;color:var(--adm-muted);font-size:.9rem;border-bottom:1px solid var(--adm-line)}
@@ -108,14 +110,22 @@
 /* ===== Thanh điều hướng quản trị ===== */
 body{overflow-x:hidden}
 .container:has(> .adm-nav){max-width:none;padding:0}   /* khu quản trị dùng toàn bề ngang, thanh menu tối kéo hết chiều rộng */
-.adm-nav{background:#111827;color:#fff}
-.adm-nav-in{max-width:1040px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:4px;overflow-x:auto;white-space:nowrap}
-.adm-nav a.adm-nav-brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.78rem;color:#fdba74;margin-right:14px;padding:12px 0;border-bottom:0}
-.adm-nav a.adm-nav-brand:hover{color:#fff}
-.adm-nav a{color:#d1d5db;text-decoration:none;padding:14px 12px;font-size:.95rem;border-bottom:3px solid transparent}
+.adm-nav{position:sticky;top:0;z-index:60;background:#0b1020;color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
+.adm-nav-in{max-width:1180px;margin:0 auto;padding:0 20px;height:64px;display:flex;align-items:center;gap:6px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+.adm-nav-in::-webkit-scrollbar{display:none}
+.adm-nav a.adm-nav-brand{display:flex;align-items:center;gap:10px;flex:none;margin-right:18px;padding:0;border:0;color:#fff;font-weight:700;font-size:1.1rem;letter-spacing:-.01em}
+.adm-nav a.adm-nav-brand b{color:#ff8a3d;font-weight:700}
+.adm-nav-tag{display:inline-block;padding:3px 9px;border-radius:999px;background:rgba(255,90,31,.18);color:#ffa36b;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.adm-nav a{position:relative;flex:none;color:#aab4cf;text-decoration:none;padding:0 14px;height:64px;display:flex;align-items:center;font-size:.93rem;font-weight:500}
 .adm-nav a:hover{color:#fff}
-.adm-nav a.is-active{color:#fff;border-bottom-color:#ff5a1f}
-.adm-nav .adm-nav-out{margin-left:auto;font-size:.85rem;color:#9ca3af}
+.adm-nav a.is-active{color:#fff}
+.adm-nav a.is-active::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:#ff5a1f}
+.adm-nav-right{margin-left:auto;display:flex;align-items:center;gap:12px;flex:none;padding-left:16px}
+.adm-nav .adm-nav-site{height:auto;padding:8px 14px;border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:.85rem;color:#d6dcee}
+.adm-nav .adm-nav-site:hover{border-color:#ff8a3d;color:#fff}
+.adm-nav-av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ff8a3d,#ff5a1f);color:#fff;font-weight:700;font-size:.92rem}
+.adm-nav .adm-nav-out{height:auto;padding:8px 4px;font-size:.88rem;color:#aab4cf}
+@media (max-width:720px){.adm-nav-in{height:56px;padding:0 12px;gap:0}.adm-nav a{height:56px;padding:0 9px;font-size:.88rem}.adm-nav .adm-nav-site{display:none}.adm-nav a.adm-nav-brand{margin-right:4px;padding:0 6px 0 0}.adm-nav a.adm-nav-brand span{display:none}.adm-nav-av{display:none}.adm-nav-right{padding-left:4px}.adm-nav .adm-nav-out{padding:8px 2px;font-size:.82rem}}
 
 /* ===== Tổng quan: thẻ số liệu + biểu đồ thanh ===== */
 .adm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
@@ -163,4 +173,26 @@ body{overflow-x:hidden}
 .adm-stat-ico{flex:none;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#ff8a3d,#ff4b0f);box-shadow:0 8px 16px rgba(255,90,31,.25)}
 .adm-stat-warn .adm-stat-ico{background:linear-gradient(135deg,#fbbf24,#d97706);box-shadow:0 8px 16px rgba(217,119,6,.25)}
 @media (max-width:720px){.adm-hero{padding:22px 20px}.adm-hero__cta{width:100%}.adm-hero__cta .adm-btn{flex:1}.adm-stat{flex-direction:column;align-items:flex-start;gap:10px}}
+/* ===== Quản lý người dùng: chi tiết, nhãn "Bạn", liên kết ===== */
+.adm-tools--2{grid-template-columns:1fr 190px}
+@media (max-width:720px){.adm-tools--2{grid-template-columns:1fr}}
+.adm-self{background:#e0e7ff;color:#3730a3;margin-left:6px}
+.adm-link{color:inherit;text-decoration:none}
+.adm-link:hover{color:var(--adm-accent);text-decoration:underline}
+.adm-back{display:inline-block;margin-bottom:6px;color:var(--adm-muted);text-decoration:none;font-size:.9rem}
+.adm-back:hover{color:var(--adm-accent)}
+.adm-head h1 .adm-badge{vertical-align:middle;font-size:.78rem}
+.adm-kv{margin:0}
+.adm-kv>div{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid #f0f1f3}
+.adm-kv>div:last-child{border-bottom:0}
+.adm-kv dt{color:var(--adm-muted);font-size:.92rem}
+.adm-kv dd{margin:0;font-weight:600;text-align:right}
+.adm-kv small{font-weight:500;color:var(--adm-muted)}
+.adm-actions form{display:inline-block}
+@media (max-width:720px){.adm-actions form{flex:1}.adm-actions form .adm-btn{width:100%}}
+@media (max-width:720px){
+  .adm-btn{white-space:nowrap}
+  .adm-actions{flex-wrap:wrap}
+  .adm-hero__cta .adm-btn{padding:0 10px;font-size:.92rem}
+}
 </style>

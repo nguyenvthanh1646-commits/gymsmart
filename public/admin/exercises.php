@@ -22,6 +22,46 @@ $difficultyLabels = [
     'BEGINNER' => 'Dễ', 'INTERMEDIATE' => 'Trung bình', 'ADVANCED' => 'Khó',
 ];
 
+// ===== Xử lý nhân bản =====
+// Tạo bản sao của một bài (để sửa nhanh thành bài tương tự), rồi mở form sửa bản sao.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'duplicate') {
+    if (!verifyCsrf()) {
+        http_response_code(403);
+        exit('Yêu cầu không hợp lệ (sai mã bảo vệ). Hãy quay lại và thử lại.');
+    }
+
+    $id = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);
+    $row = false;
+    if ($id !== false && $id >= 1) {
+        $stmt = $pdo->prepare("SELECT * FROM exercises WHERE id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+    }
+
+    if (!$row) {
+        $_SESSION['flash'] = ['error', 'Không tìm thấy bài tập để nhân bản.'];
+        header('Location: /admin/exercises.php');
+        exit;
+    }
+
+    // Bỏ các cột tự sinh; giữ nguyên mọi cột còn lại (kể cả cột D thêm sau này nên không phải sửa code ở đây)
+    foreach (['id', 'created_at', 'updated_at'] as $auto) {
+        unset($row[$auto]);
+    }
+    $row = array_filter($row, 'is_string', ARRAY_FILTER_USE_KEY); // bỏ khóa số nếu PDO trả cả hai kiểu
+    $row['name'] = mb_substr((string)$row['name'], 0, 235) . ' (bản sao)';
+
+    // Tên cột lấy từ chính kết quả SELECT (do DB trả về, không phải từ người dùng); giá trị đi qua dấu ?
+    $columns = array_keys($row);
+    $sql = 'INSERT INTO exercises (' . implode(', ', $columns) . ') VALUES ('
+         . implode(', ', array_fill(0, count($columns), '?')) . ')'; // audit:ok tên cột lấy từ DB, giá trị dùng dấu ?
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(array_values($row));
+
+    header('Location: /admin/exercise-form.php?id=' . (int)$pdo->lastInsertId());
+    exit;
+}
+
 // ===== Xử lý xóa =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     if (!verifyCsrf()) {
@@ -76,7 +116,10 @@ include __DIR__ . '/../includes/admin-nav.php';
             <h1>Quản trị bài tập</h1>
             <p class="adm-sub">Thêm, sửa, xóa bài tập trong thư viện.</p>
         </div>
-        <a class="adm-btn" href="/admin/exercise-form.php">+ Thêm bài tập</a>
+        <div class="adm-actions">
+            <a class="adm-btn adm-btn-ghost" href="/admin/export.php?type=exercises">Xuất CSV</a>
+            <a class="adm-btn" href="/admin/exercise-form.php">+ Thêm bài tập</a>
+        </div>
     </div>
 
     <?php if ($flash): ?>
@@ -133,6 +176,12 @@ include __DIR__ . '/../includes/admin-nav.php';
                     <td class="adm-cell-actions">
                         <div class="adm-actions">
                             <a class="adm-btn adm-btn-ghost adm-btn-sm" href="/admin/exercise-form.php?id=<?= (int)$ex['id'] ?>">Sửa</a>
+                            <form method="post" action="/admin/exercises.php">
+                                <?= csrfField() ?>
+                                <input type="hidden" name="action" value="duplicate">
+                                <input type="hidden" name="id" value="<?= (int)$ex['id'] ?>">
+                                <button type="submit" class="adm-btn adm-btn-ghost adm-btn-sm">Nhân bản</button>
+                            </form>
                             <button type="button" class="adm-btn adm-btn-danger adm-btn-sm adm-del"
                                     data-id="<?= (int)$ex['id'] ?>"
                                     data-name="<?= htmlspecialchars($ex['name']) ?>">Xóa</button>

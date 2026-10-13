@@ -15,6 +15,9 @@ $isAdmin  = $loggedIn && (($_SESSION['role'] ?? '') === 'ADMIN');
 $navCurrent = basename($_SERVER['SCRIPT_NAME'] ?? '');
 // Trong khu quản trị đã có menu riêng (admin-nav.php) nên ẩn menu người dùng cho gọn
 $inAdmin  = strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') === 0;
+if ($inAdmin) {
+    return; // khu quản trị dùng thanh riêng (admin-nav.php), không vẽ navbar người dùng ở đây
+}
 
 // [đường dẫn, chữ hiển thị, các file thuộc mục này (để tô sáng mục đang mở)]
 $navItems = [
