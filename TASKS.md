@@ -68,8 +68,8 @@ Quy ước dùng chung:
 - [ ] C-2 Form nhập chỉ số và hiển thị kết quả TDEE/Macro
   - **File:** `tdee.php`, `api/calculate-tdee.php`
   - **Xong khi:** tính không reload trang (AJAX, trả JSON); đọc sẵn dữ liệu từ hồ sơ; lưu vào `nutrition_targets`
-- [ ] C-3 Bảng `body_metrics` và trang nhập số đo
-- [ ] C-4 Trang biểu đồ tiến trình (Chart.js qua CDN, dữ liệu từ `/api/*.php`)
+- [ ] C-3 (A nhận) Bảng `body_metrics` và trang nhập số đo
+- [ ] C-4 (A nhận) Trang biểu đồ tiến trình (Chart.js qua CDN, dữ liệu từ `/api/*.php`)
   - **Xong khi:** biểu đồ hiển thị đúng khi có và khi không có dữ liệu
 
 > Thứ tự merge các PR xếp chồng của C: #4 → #5 → #6.

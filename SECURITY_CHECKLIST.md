@@ -216,3 +216,19 @@ Giới hạn đã biết: trên localhost link hiện ngay trên màn hình đ�
 | `config.php` có trong `git status` | KHÔNG được xuất hiện (đã nằm trong `.gitignore`) |
 
 Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/trình độ/chiều cao/cân nặng được gửi tới Google Gemini (tên và email thì không). Lịch sử chat chỉ lưu trong `sessionStorage` của trình duyệt, không lưu DB.
+
+## Bổ sung: Tiến trình / số đo cơ thể (C-3)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Mở `/progress.php` khi chưa đăng nhập | Chuyển về đăng nhập |
+| User mới chưa có số đo | Hiện "Chưa có số đo nào", không lỗi PHP |
+| Nhập cân nặng `abc`, `-5`, `1e5`, `999`, bỏ trống | Báo lỗi tiếng Việt, giữ nguyên chữ đã gõ, không ghi DB |
+| Nhập ngày tương lai, `2026-02-31` hoặc trước năm 2000 | Báo lỗi, không ghi DB |
+| Gửi `weight_kg[]=1` bằng curl/DevTools | Coi như trống, báo "Vui lòng nhập cân nặng", không lỗi PHP |
+| Nhập lại cùng một ngày | Cập nhật bản ghi cũ, không tạo dòng trùng |
+| Sửa bản ghi sang ngày đã có bản ghi khác | Báo "Bạn đã có số đo ngày ..." |
+| Gửi form xóa/sửa với `id` của người khác (DevTools) | Không xóa/sửa được; xóa báo "Không tìm thấy", sửa quay về trang kèm báo lỗi |
+| Mở `/progress.php?edit=<id người khác>` hoặc `?edit=abc` | Mở form Thêm mới trống, không lộ dữ liệu người khác |
+| Gửi form không kèm mã CSRF | Trang "Phiên làm việc đã hết hạn" (403) |
+
