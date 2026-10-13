@@ -2,6 +2,7 @@
 <?php
 // footer.php — chân trang chung. Style nằm trong css/ui.css (class bắt đầu bằng "ft").
 require_once __DIR__ . '/logo.php';
+require_once __DIR__ . '/csrf.php';   // <-- THÊM: có hàm csrfToken()
 $ftLoggedIn = function_exists('isLoggedIn') && isLoggedIn();
 ?>
 <footer class="ft">
@@ -24,5 +25,9 @@ $ftLoggedIn = function_exists('isLoggedIn') && isLoggedIn();
     <div class="ft__copy">&copy; <?= date('Y') ?> GymSmart — Đồ án môn Phát triển ứng dụng Web</div>
 </footer>
 <script src="/js/main.js"></script>
+<?php if ($ftLoggedIn): ?>
+<link rel="stylesheet" href="/css/chatbot.css">
+<script src="/js/chatbot.js" data-csrf="<?= htmlspecialchars(csrfToken()) ?>"></script>
+<?php endif; ?>
 </body>
 </html>
