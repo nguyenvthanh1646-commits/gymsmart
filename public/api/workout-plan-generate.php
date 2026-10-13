@@ -1,0 +1,41 @@
+<?php
+// public/api/workout-plan-generate.php
+// POST: days_per_week, level  ->  JSON. user_id lấy từ $_SESSION, KHÔNG nhận từ client.
+session_start();
+header('Content-Type: application/json; charset=utf-8');
+
+function jsonResponse(int $status, array $body): void
+{
+    http_response_code($status);
+    echo json_encode($body, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    jsonResponse(405, ['success' => false, 'message' => 'Chỉ chấp nhận POST.']);
+}
+
+// Chưa đăng nhập -> 401 (API trả JSON, không redirect)
+// LƯU Ý: kiểm tra tên khóa session mà A dùng trong auth.php (ở đây giả định 'user_id')
+if (empty($_SESSION['user_id'])) {
+    jsonResponse(401, ['success' => false, 'message' => 'Bạn cần đăng nhập.']);
+}
+$userId = (int)$_SESSION['user_id'];
+
+require_once __DIR__ . '/../includes/db.php';              // giả định tạo biến $pdo
+require_once __DIR__ . '/../includes/workout-plan-db.php';
+
+$daysPerWeek = filter_var($_POST['days_per_week'] ?? null, FILTER_VALIDATE_INT);
+$level       = (string)($_POST['level'] ?? '');
+
+try {
+    $planId = createWorkoutPlanForUser($pdo, $userId, $daysPerWeek === false ? 0 : $daysPerWeek, $level);
+    jsonResponse(200, ['success' => true, 'plan_id' => $planId]);
+} catch (InvalidArgumentException $e) {
+    jsonResponse(422, ['success' => false, 'message' => $e->getMessage()]);
+} catch (RuntimeException $e) {
+    jsonResponse(409, ['success' => false, 'message' => $e->getMessage()]);
+} catch (Throwable $e) {
+    error_log('workout-plan-generate: ' . $e->getMessage());
+    jsonResponse(500, ['success' => false, 'message' => 'Lỗi hệ thống, vui lòng thử lại.']);
+}

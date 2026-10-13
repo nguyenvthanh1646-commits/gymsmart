@@ -222,7 +222,7 @@ include __DIR__ . '/includes/header.php';
         <?php endif; ?>
     </div>
 <?php else: ?>
-    <div class="ex-grid">
+    <div class="grid ex-grid">
         <?php foreach ($exercises as $ex): ?>
             <?php
             // ?? '...' : nếu giá trị trong DB không có trong bảng nhãn thì in luôn giá trị gốc
@@ -231,10 +231,10 @@ include __DIR__ . '/includes/header.php';
             $difficulty = $difficultyLabels[$ex['difficulty']] ?? $ex['difficulty'];
             ?>
             <!-- (int) ép id thành số nguyên để không chèn được ký tự lạ vào đường dẫn -->
-            <a class="ex-card" href="/exercise-detail.php?id=<?= (int)$ex['id'] ?>">
-                <div class="ex-card__media">
+            <a class="exercise-card ex-card" href="/exercise-detail.php?id=<?= (int)$ex['id'] ?>">
+                <div class="exercise-card__media ex-card__media">
                     <?php if (!empty($ex['image_url'])): ?>
-                        <img src="<?= htmlspecialchars($ex['image_url']) ?>"
+                        <img class="exercise-card__image" src="<?= htmlspecialchars($ex['image_url']) ?>"
                              alt="<?= htmlspecialchars($ex['name']) ?>" loading="lazy">
                     <?php else: ?>
                         <div class="ex-card__ph">Chưa có ảnh</div>
@@ -243,8 +243,8 @@ include __DIR__ . '/includes/header.php';
                 </div>
                 <div class="ex-card__body">
                     <!-- Tên dài tối đa 2 dòng (line-clamp), min-height giữ chỗ 2 dòng để các thẻ thẳng hàng -->
-                    <h3><?= htmlspecialchars($ex['name']) ?></h3>
-                    <div class="ex-meta">
+                    <h3 class="exercise-card__title"><?= htmlspecialchars($ex['name']) ?></h3>
+                    <div class="exercise-card__meta ex-meta">
                         <span class="tag"><?= htmlspecialchars($muscle) ?></span>
                         <span class="tag"><?= htmlspecialchars($type) ?></span>
                     </div>
