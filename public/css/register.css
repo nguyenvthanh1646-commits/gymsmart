@@ -1,0 +1,80 @@
+/* register.css — trang Đăng ký 3 bước (register.php). Class bắt đầu bằng "rg-". Dùng chung khung .auth trong ui.css. */
+.auth__box.rg { max-width: 470px; }
+.rg .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.rg .auth__box h1, .rg h1 { margin-bottom: 6px; }
+.rg .pg-sub { margin-bottom: 22px; }
+
+/* ----- thanh tiến độ ----- */
+.rg-steps { display: flex; margin: 0 0 24px; padding: 0; list-style: none; counter-reset: none; }
+.rg-steps li { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: .8rem; font-weight: 600; color: #98a2b3; }
+.rg-steps li::before { content: ""; position: absolute; top: 15px; right: 50%; width: 100%; height: 2px; background: #e4e8f1; z-index: 0; }
+.rg-steps li:first-child::before { display: none; }
+.rg-steps i { position: relative; z-index: 1; display: grid; place-items: center; width: 32px; height: 32px; font-style: normal; font-size: .85rem; font-weight: 700; color: #98a2b3; background: #fff; border: 2px solid #e4e8f1; border-radius: 50%; transition: all .2s; }
+.rg-steps li.is-current { color: var(--color-text); }
+.rg-steps li.is-current i { color: #fff; background: var(--color-accent); border-color: var(--color-accent); box-shadow: 0 0 0 4px rgba(255, 90, 31, .16); }
+.rg-steps li.is-done { color: #475467; }
+.rg-steps li.is-done i { font-size: 0; color: #fff; background: #12b76a; border-color: #12b76a; }
+.rg-steps li.is-done i::after { content: ""; width: 9px; height: 5px; margin-top: -3px; border-left: 2.5px solid #fff; border-bottom: 2.5px solid #fff; transform: rotate(-45deg); }
+.rg-steps li.is-done::before, .rg-steps li.is-current::before { background: #12b76a; }
+
+/* ----- các bước ----- */
+.rg-step { min-width: 0; margin: 0; padding: 0; border: 0; }
+.rg-step[hidden] { display: none; }
+.rg-step + .rg-step { margin-top: 6px; }
+.rg .field { margin-bottom: 16px; }
+.rg .field label em { font-style: normal; font-weight: 500; color: #98a2b3; }
+.rg .field :is(input, select), .rg .pw { box-sizing: border-box; width: 100%; max-width: 100%; }
+.rg .field :is(input, select) { height: 46px; padding-top: 0; padding-bottom: 0; }
+.rg .field .pw input { padding-right: 48px; }
+.rg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; align-items: start; }
+.rg-row > * { min-width: 0; }
+
+/* thông báo lỗi dưới từng ô */
+.rg-err { margin: 6px 0 0; font-size: .82rem; line-height: 1.4; color: #b42318; }
+.rg .has-err > :is(input, select), .rg .has-err .pw input { border-color: #f04438; background: #fffbfa; }
+.rg .has-err > :is(input, select):focus, .rg .has-err .pw input:focus { box-shadow: 0 0 0 4px rgba(240, 68, 56, .14); }
+.rg-seg.has-err .rg-seg__opt span { border-color: #fda29b; }
+
+/* thanh đo độ mạnh mật khẩu */
+.rg-meter { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+.rg-meter span { flex: none; width: 26px; height: 4px; background: #e4e8f1; border-radius: 4px; transition: background .2s; }
+.rg-meter em { margin-left: 6px; font-style: normal; font-size: .78rem; color: var(--color-text-muted); }
+.rg-meter[data-level="1"] span:nth-child(-n+1) { background: #f04438; }
+.rg-meter[data-level="2"] span:nth-child(-n+2) { background: #f79009; }
+.rg-meter[data-level="3"] span:nth-child(-n+3) { background: #12b76a; }
+.rg-meter[data-level="4"] span:nth-child(-n+4) { background: #12b76a; }
+
+/* BMI xem trước */
+.rg-bmi { margin: 0 0 4px; padding: 10px 14px; font-size: .88rem; color: #344054; background: #f8f9fc; border: 1px solid var(--ui-line); border-radius: 12px; }
+.rg-bmi[hidden] { display: none; }
+.rg-bmi b { font-size: 1rem; }
+
+/* nút chọn dạng viên */
+.rg-seg { min-width: 0; margin: 0 0 16px; padding: 0; border: 0; }
+.rg-seg legend { padding: 0; margin-bottom: 6px; font-size: .9rem; font-weight: 600; color: #2a3350; }
+.rg-seg__row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.rg-seg__opt { position: relative; display: block; min-width: 0; cursor: pointer; }
+.rg-seg__opt input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.rg-seg__opt span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 46px; padding: 6px 4px; text-align: center; background: #fff; border: 1px solid #d5dbe8; border-radius: 12px; transition: border-color .15s, background .15s, box-shadow .15s; }
+.rg-seg__opt b { font-size: .88rem; font-weight: 700; color: #1d2939; }
+.rg-seg__opt small { font-size: .7rem; line-height: 1.25; color: var(--color-text-muted); }
+.rg-seg__opt:hover span { border-color: #b8c1d6; }
+.rg-seg__opt input:checked + span { background: var(--ui-accent-soft); border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(255, 90, 31, .14); }
+.rg-seg__opt input:checked + span b { color: var(--ui-accent-dark); }
+.rg-seg__opt input:focus-visible + span { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.rg-row .rg-seg { margin-bottom: 16px; }
+.rg-row .rg-seg .rg-seg__opt span { min-height: 46px; }
+
+/* hàng nút */
+.rg-nav { display: flex; gap: 10px; margin-top: 8px; }
+.rg-nav .btn { flex: 1; justify-content: center; box-sizing: border-box; }
+.rg-nav .btn[hidden] { display: none; }
+.rg-nav #rg-back { flex: 0 0 auto; padding-left: 22px; padding-right: 22px; }
+
+@media (max-width: 520px) {
+    .rg-row { grid-template-columns: 1fr; }
+    .rg-seg__row { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: 1fr; }
+    .rg-row .rg-seg__row, .rg-seg:has(input[name="gender"]) .rg-seg__row { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 1fr; }
+    .rg-seg__opt span { flex-direction: row; gap: 8px; justify-content: flex-start; padding: 8px 14px; }
+    .rg-seg:has(input[name="gender"]) .rg-seg__opt span { justify-content: center; }
+}
