@@ -232,3 +232,14 @@ Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/t
 | Mở `/progress.php?edit=<id người khác>` hoặc `?edit=abc` | Mở form Thêm mới trống, không lộ dữ liệu người khác |
 | Gửi form không kèm mã CSRF | Trang "Phiên làm việc đã hết hạn" (403) |
 
+
+### Biểu đồ và API Tiến trình (C-4)
+| Cách thử | Kết quả mong đợi |
+|---|---|
+| Mở `/api/body-metrics.php` và `/api/nutrition-history.php` khi chưa đăng nhập | JSON `{"success":false}` kèm mã 401, không chuyển trang |
+| Gửi POST tới 2 API (curl) | 405, header `Allow: GET` |
+| `?from=abc` hoặc `?from=2026-02-01&to=2026-01-01` | 400 kèm thông báo lỗi tiếng Việt |
+| Đăng nhập user khác rồi mở API | Chỉ thấy số đo của chính user đó |
+| Tài khoản chưa có số đo hoặc chưa tính TDEE | Biểu đồ hiện thông báo "Chưa có dữ liệu", không lỗi JS (F12 > Console) |
+| Đổi 30 ngày / 90 ngày / Tất cả | Biểu đồ vẽ lại theo khoảng chọn, không gọi lại API |
+| Chặn tải `js/vendor/chart.umd.min.js` (DevTools) | Hiện dòng báo lỗi, bảng lịch sử vẫn dùng được |

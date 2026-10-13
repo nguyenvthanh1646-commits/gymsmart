@@ -427,6 +427,37 @@ include __DIR__ . '/includes/header.php';
         <?php else: ?>
             <p class="pr-target">Bạn chưa tính mục tiêu dinh dưỡng. <a href="/nutrition.php">Tính TDEE/Macro</a> để có calo và protein mỗi ngày.</p>
         <?php endif; ?>
+
+        <!-- ===== Biểu đồ (js/progress.js vẽ bằng Chart.js, dữ liệu từ /api/body-metrics.php) ===== -->
+        <section class="pr-charts" id="pr-charts" aria-labelledby="pr-charts-title">
+            <div class="pr-charts__head">
+                <h2 id="pr-charts-title">Biểu đồ tiến trình</h2>
+                <div class="pr-range" role="group" aria-label="Khoảng thời gian">
+                    <button type="button" class="pr-range__btn" data-days="30" aria-pressed="false">30 ngày</button>
+                    <button type="button" class="pr-range__btn" data-days="90" aria-pressed="true">90 ngày</button>
+                    <button type="button" class="pr-range__btn" data-days="0" aria-pressed="false">Tất cả</button>
+                </div>
+            </div>
+            <p class="pr-charts__status" id="pr-status" role="status" hidden></p>
+            <div class="pr-charts__grid">
+                <article class="pr-chart pr-chart--wide">
+                    <h3>Cân nặng <small>kg</small></h3>
+                    <div class="pr-chart__box"><canvas id="pr-c-weight" role="img" aria-label="Biểu đồ đường cân nặng theo ngày"></canvas></div>
+                    <p class="pr-chart__empty" hidden>Chưa có dữ liệu trong khoảng này.</p>
+                </article>
+                <article class="pr-chart">
+                    <h3>Mỡ cơ thể <small>%</small> và vòng eo <small>cm</small></h3>
+                    <div class="pr-chart__box"><canvas id="pr-c-body" role="img" aria-label="Biểu đồ đường tỉ lệ mỡ và vòng eo theo ngày"></canvas></div>
+                    <p class="pr-chart__empty" hidden>Chưa có số đo mỡ hoặc vòng eo trong khoảng này. Nhập thêm ở form bên dưới.</p>
+                </article>
+                <article class="pr-chart">
+                    <h3>Khối lượng cơ bắp <small>kg, ước tính</small></h3>
+                    <div class="pr-chart__box"><canvas id="pr-c-muscle" role="img" aria-label="Biểu đồ đường khối lượng nạc (cơ bắp ước tính) và khối lượng mỡ theo ngày"></canvas></div>
+                    <p class="pr-chart__empty" hidden>Cần số đo có cả cân nặng và % mỡ cơ thể trong khoảng này. Nhập thêm ở form bên dưới.</p>
+                    <p class="pr-chart__note">Ước tính: khối lượng nạc = cân nặng × (1 − % mỡ). Gồm cơ, xương và nước nên chỉ dùng để theo dõi xu hướng.</p>
+                </article>
+            </div>
+        </section>
     <?php endif; ?>
 
     <div class="pr-layout">
@@ -556,5 +587,6 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
+<script src="/js/vendor/chart.umd.min.js" defer></script>
 <script src="/js/progress.js" defer></script>
 <?php include __DIR__ . '/includes/footer.php'; ?>
