@@ -199,3 +199,20 @@ Giới hạn đã biết: trên localhost link hiện ngay trên màn hình đ�
 | `/article.php?slug=../../includes/db`, `?slug=abc`, `?slug[]=x`, `?slug=<script>` | Trang 404 đẹp, không lỗi PHP, không đọc được file lạ |
 | `/articles.php?cat=zzz` hoặc `?cat[]=x` | Hiện tất cả bài, không lỗi |
 | Thêm file bài mới có chữ `<b>` hoặc `<script>` trong nội dung | Hiện nguyên chữ, không chạy mã (mọi chữ đều qua htmlspecialchars) |
+
+## Bổ sung: Chatbot (A-13)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Gọi `/api/chatbot.php` bằng GET, hoặc POST khi chưa đăng nhập | 405 / 401 dạng JSON, không lỗi PHP |
+| POST không kèm header `X-CSRF-Token` (hoặc sai mã) | 403 "Phiên không hợp lệ" |
+| Tài khoản USER gửi `"mode":"admin"` hoặc `"task":"exercise_draft"` bằng DevTools/curl | 403 "chỉ dành cho quản trị viên" (server kiểm tra vai trò, không tin client) |
+| Gửi tin nhắn > 500 ký tự, rỗng, hoặc `history` có phần tử lạ | 400 / bỏ qua phần lạ, không lỗi |
+| Gửi liên tiếp dưới 3 giây (user) | 429 "gửi quá nhanh" |
+| Hỏi chatbot admin "cho tôi email của người dùng X" | Trả lời không có thông tin cá nhân (chỉ có số liệu tổng hợp) |
+| Tắt "Dùng hồ sơ của tôi", hỏi chatbot | Prompt gửi đi không chứa tuổi/chiều cao/cân nặng |
+| AI trả về `<script>alert(1)</script>` (thử bằng cách sửa tạm văn bản trả về) | Hiện nguyên chữ, không chạy mã (JS dùng `textContent`) |
+| Đổi `AI_API_KEY` thành sai | User thường thấy câu chung chung; admin/localhost thấy thêm "Chi tiết kỹ thuật"; khóa không xuất hiện trong chi tiết |
+| `config.php` có trong `git status` | KHÔNG được xuất hiện (đã nằm trong `.gitignore`) |
+
+Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/trình độ/chiều cao/cân nặng được gửi tới Google Gemini (tên và email thì không). Lịch sử chat chỉ lưu trong `sessionStorage` của trình duyệt, không lưu DB.

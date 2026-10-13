@@ -35,6 +35,11 @@ Quy ước dùng chung:
 - [x] A-11 Thiết kế lại trang Dinh dưỡng (`nutrition.php`, `css/nutrition.css`, `js/nutrition.js`) và thêm `includes/meal-plan.php`: đổi mục tiêu tính lại macro, vòng tròn macro, kiểu ăn (cân bằng, giàu protein, ít tinh bột, tùy chỉnh %), gợi ý lịch ăn 3/4/5 bữa, bảng so sánh mục tiêu. Không sửa `tdee.php`
 - [x] A-12 Protein theo trình độ (người mới 1,6 g/kg, có kinh nghiệm 1,8 g/kg; `calculateTargets()` nhận thêm tham số `$experience`) và mục **Bài viết** trên navbar: `articles.php`, `article.php`, `includes/articles.php`, mỗi bài là một file trong `content/articles/` (thêm bài mới chỉ cần tạo thêm file, hướng dẫn ở đầu `includes/articles.php`)
   - **Báo C:** `api/calculate-tdee.php` (nếu có) cũng cần truyền `experience_level` vào `calculateTargets()` để cùng kết quả với trang Dinh dưỡng
+
+- [x] A-13 Sửa và nâng cấp chatbot (làm lại phần của E-5): `api/chatbot.php` + `includes/ai.php` (gọi Gemini, báo lỗi có mã rõ ràng, không còn Fatal khi thiếu `AI_MODEL`), `includes/chatbot-widget.php` + `css/chatbot.css` + `js/chatbot.js` (logo, hiệu ứng, lịch sử hội thoại, gợi ý câu hỏi), `tools/chatbot-check.php` (chẩn đoán)
+  - **Hai trợ lý khác nhau:** trang người dùng = *GymSmart AI* (huấn luyện viên ảo, biết bài tập trong thư viện, công tắc "Dùng hồ sơ của tôi"); trong `/admin/` = *Trợ lý quản trị* (số liệu tổng hợp, bài tập thiếu video/ảnh, hướng dẫn trang quản trị, thẻ "Soạn bài tập" tạo bản nháp rồi điền vào form). Server tự quyết định theo `$_SESSION['role']`, không tin client
+  - **Cấu hình trong `config.php` (không commit):** `AI_API_KEY` (bắt buộc), `AI_MODEL` (tùy chọn), `AI_CA_BUNDLE` (chỉ khi XAMPP báo lỗi SSL)
+  - **Báo E:** chatbot do E làm đã được viết lại; xóa chỗ include/script/CSS cũ của E (nếu có) để khỏi hiện hai nút chat
 ---
 
 ## B — Thư viện bài tập + Lịch tập
