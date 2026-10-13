@@ -85,18 +85,34 @@ function calculateTDEE($bmr, $activityLevel) {
  * @param float  $tdee     TDEE (kcal/ngày)
  * @param float  $weightKg Cân nặng (kg)
  * @param string $goal     LOSE_FAT | MAINTAIN | GAIN_MUSCLE
+ * @param string|null $experience BEGINNER | INTERMEDIATE | ADVANCED (trình độ tập luyện); null = coi như người mới
  * @return array ['target_kcal', 'protein_g', 'carbs_g', 'fat_g']
  * @throws InvalidArgumentException nếu dữ liệu không hợp lệ
  */
-function calculateTargets($tdee, $weightKg, $goal) {
-    // Thông số theo goal: hệ số calo so với TDEE, g protein/kg, g fat/kg
-    // TODO: bạn tìm nguồn (VD: ISSN position stand về protein, ACSM)
-    // rồi ghi lý do chọn từng số vào comment.
+function calculateTargets($tdee, $weightKg, $goal, $experience = null) {
+    // Thông số theo goal: hệ số calo so với TDEE và g chất béo/kg
+    // TODO: bạn tìm nguồn (VD: ACSM) rồi ghi lý do chọn từng số vào comment.
     $profiles = [
-        'LOSE_FAT'    => ['kcal_factor' => 0.80, 'protein_per_kg' => 2.0, 'fat_per_kg' => 0.8], // giảm 20%
-        'MAINTAIN'    => ['kcal_factor' => 1.00, 'protein_per_kg' => 1.6, 'fat_per_kg' => 0.9],
-        'GAIN_MUSCLE' => ['kcal_factor' => 1.10, 'protein_per_kg' => 1.8, 'fat_per_kg' => 1.0], // tăng 10%
+        'LOSE_FAT'    => ['kcal_factor' => 0.80, 'fat_per_kg' => 0.8], // giảm 20%
+        'MAINTAIN'    => ['kcal_factor' => 1.00, 'fat_per_kg' => 0.9],
+        'GAIN_MUSCLE' => ['kcal_factor' => 1.10, 'fat_per_kg' => 1.0], // tăng 10%
     ];
+
+    // Protein (g/kg cân nặng) theo TRÌNH ĐỘ tập luyện, không theo mục tiêu:
+    //   người mới tập  : 1.6 g/kg (phân tích tổng hợp Morton 2018: lợi ích tăng cơ gần như đạt đỉnh quanh mức ~1.6 g/kg/ngày)
+    //   có kinh nghiệm : 1.8 g/kg (nằm trong khoảng 1.4-2.0 g/kg ISSN khuyến nghị cho người tập luyện; tập lâu cần nhiều hơn một chút để duy trì/xây cơ)
+    // Cao hơn mức này thường không mang lại thêm lợi ích rõ rệt mà còn đẩy calo ra khỏi tinh bột.
+    $proteinByExperience = [
+        'BEGINNER'     => 1.6,
+        'INTERMEDIATE' => 1.8,
+        'ADVANCED'     => 1.8,
+    ];
+    if ($experience === null || $experience === '') {
+        $experience = 'BEGINNER'; // chưa chọn trình độ thì dùng mức an toàn của người mới
+    }
+    if (!is_string($experience) || !array_key_exists($experience, $proteinByExperience)) {
+        throw new InvalidArgumentException('Trình độ tập luyện không hợp lệ');
+    }
 
     // Whitelist goal
     if (!is_string($goal) || !array_key_exists($goal, $profiles)) {
@@ -112,8 +128,8 @@ function calculateTargets($tdee, $weightKg, $goal) {
     // Calo mục tiêu = TDEE điều chỉnh theo mục tiêu
     $targetKcal = $tdee * $p['kcal_factor'];
 
-    // Protein và fat tính theo cân nặng
-    $proteinG = $p['protein_per_kg'] * $weightKg;
+    // Protein (theo trình độ) và fat (theo mục tiêu) đều tính theo cân nặng
+    $proteinG = $proteinByExperience[$experience] * $weightKg;
     $fatG     = $p['fat_per_kg'] * $weightKg;
 
     // Carb = phần calo còn lại sau khi trừ protein và fat, chia 4 kcal/g

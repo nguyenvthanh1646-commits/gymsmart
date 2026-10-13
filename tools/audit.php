@@ -33,7 +33,8 @@ foreach ($it as $file) {
     }
     $path  = str_replace('\\', '/', $file->getPathname());
     $base  = basename($path);
-    $inInc = strpos($path, '/includes/') !== false;
+    // includes/ (hàm dùng chung) và content/ (file dữ liệu bài viết, chỉ return mảng) không phải trang người dùng mở trực tiếp
+    $inInc = strpos($path, '/includes/') !== false || strpos($path, '/content/') !== false;
     $code  = file_get_contents($path);
     $lines = explode("\n", $code);
 

@@ -1,0 +1,65 @@
+/* articles.css — giao diện mục Bài viết (articles.php, article.php). Class bắt đầu bằng "ar-".
+   Màu theo chuyên mục: protein cam, carb xanh dương, fat xanh ngọc (cùng màu với vòng tròn macro), kiến thức chung xám xanh.
+   Thêm chuyên mục mới: thêm 1 dòng trong articleCategories() (includes/articles.php) và 1 khối màu ở đây. */
+
+:root { --c-protein: #ff5a1f; --c-carb: #3b5bdb; --c-fat: #12b5a2; --c-general: #475467; }   /* ở :root để cả trang đọc (.ar-read) dùng được */
+.ar { max-width: 1100px; margin: 0 auto; }
+.ar-protein { --ar-c: var(--c-protein); --ar-soft: #fff0e8; --ar-ink: #c2410c; }
+.ar-carb    { --ar-c: var(--c-carb);    --ar-soft: #e8edff; --ar-ink: #2b3fa8; }
+.ar-fat     { --ar-c: var(--c-fat);     --ar-soft: #dcf7f3; --ar-ink: #0b7c70; }
+.ar-general { --ar-c: var(--c-general); --ar-soft: #eef1f7; --ar-ink: #344054; }
+
+.ar-tag { display: inline-block; align-self: flex-start; padding: 3px 11px; border-radius: 999px; background: var(--ar-soft); color: var(--ar-ink); font-size: .78rem; font-weight: 700; }
+
+/* ===== Danh sách ===== */
+.ar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.ar-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.ar-card {
+    display: flex; gap: 16px; padding: 16px; background: #fff; border: 1px solid var(--ui-line); border-radius: 18px;
+    box-shadow: var(--ui-shadow-sm); text-decoration: none; color: var(--color-text);
+    transition: transform .15s var(--ui-ease), box-shadow .15s var(--ui-ease), border-color .15s;
+}
+.ar-card:hover { transform: translateY(-2px); box-shadow: var(--ui-shadow-md); border-color: #ffc4a8; }
+.ar-card__cover {
+    flex: none; width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center;
+    background: var(--ar-c); color: #fff; font-size: 1.7rem; font-weight: 800;
+}
+.ar-card__body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ar-card h2 { margin: 0; font-size: 1.08rem; line-height: 1.35; color: var(--color-text); }
+.ar-card__sum { font-size: .9rem; line-height: 1.5; color: #475467; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ar-card__meta { font-size: .8rem; color: var(--color-text-muted); margin-top: auto; }
+
+/* ===== Trang đọc ===== */
+.ar-read { max-width: 760px; margin: 0 auto; }
+.ar-back { display: inline-block; margin-bottom: 14px; font-size: .92rem; font-weight: 600; text-decoration: none; }
+.ar-back:hover { text-decoration: underline; }
+.ar-head { margin-bottom: 22px; display: flex; flex-direction: column; gap: 10px; }
+.ar-head h1 { margin: 0; font-size: clamp(1.7rem, 3.6vw, 2.4rem); line-height: 1.25; }
+.ar-lead { margin: 0; font-size: 1.1rem; line-height: 1.6; color: #475467; }
+.ar-meta { margin: 0; font-size: .86rem; color: var(--color-text-muted); }
+
+.ar-body { background: #fff; border: 1px solid var(--ui-line); border-radius: 18px; padding: 8px 28px 24px; box-shadow: var(--ui-shadow-sm); font-size: 1.02rem; line-height: 1.75; }
+.ar-body h2 { margin: 28px 0 8px; font-size: 1.3rem; }
+.ar-body p { margin: 10px 0; }
+.ar-body ul, .ar-body ol { margin: 10px 0; padding-left: 22px; }
+.ar-body li { margin: 6px 0; }
+.ar-body strong { color: #0b1020; }
+.ar-tip { margin: 18px 0; padding: 14px 18px; border-radius: 14px; background: #fffaeb; border: 1px solid #fedf89; color: #93370d; }
+.ar-tip b { display: block; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.ar-tip p { margin: 0; line-height: 1.6; }
+.ar-table-wrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--ui-line); border-radius: 12px; }
+.ar-table { width: 100%; border-collapse: collapse; font-size: .95rem; line-height: 1.5; }
+.ar-table th { text-align: left; padding: 10px 14px; background: #f7f8fc; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-muted); }
+.ar-table td { padding: 10px 14px; border-top: 1px solid #f0f2f7; }
+
+.ar-cta { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; justify-content: space-between; margin: 22px 0; padding: 20px 24px; border-radius: 18px; background: linear-gradient(135deg, #0b1020, #1a2447); color: #fff; }
+.ar-cta b { font-size: 1.1rem; }
+.ar-cta p { margin: 4px 0 0; color: #c7d0e6; font-size: .93rem; }
+.ar-related > h2 { margin: 28px 0 12px; font-size: 1.2rem; }
+
+@media (max-width: 700px) {
+    .ar-grid, .ar-grid--2 { grid-template-columns: 1fr; }
+    .ar-body { padding: 4px 18px 18px; }
+    .ar-card__cover { width: 54px; height: 54px; font-size: 1.4rem; }
+    .ar-cta .btn { width: 100%; }
+}
