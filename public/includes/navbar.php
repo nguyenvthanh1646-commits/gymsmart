@@ -34,7 +34,19 @@ if ($loggedIn) {
     // lấy chữ cái đầu của TÊN (từ cuối trong họ tên Việt Nam), viết hoa
     $parts = $name === '' ? [] : preg_split('/\s+/u', $name);
     $initial = $parts ? mb_strtoupper(mb_substr(end($parts), 0, 1)) : '?';
+
+    // Ảnh đại diện (cột users.avatar): đọc 1 lần rồi nhớ trong session. Nếu chưa có cột hoặc lỗi DB thì dùng chữ cái đầu.
+    if (!array_key_exists('avatar', $_SESSION)) {
+        $_SESSION['avatar'] = null;
+        try {
+            if (!isset($pdo)) { require_once __DIR__ . '/db.php'; }
+            $st = $pdo->prepare('SELECT avatar FROM users WHERE id = ?');
+            $st->execute([(int)($_SESSION['user_id'] ?? 0)]);
+            $_SESSION['avatar'] = $st->fetchColumn() ?: null;
+        } catch (Throwable $e) { /* chưa import sql/users_avatar.sql: bỏ qua */ }
+    }
 }
+$navAvatar = ($loggedIn && is_string($_SESSION['avatar'] ?? null) && preg_match('#^uploads/avatars/[A-Za-z0-9._-]+\.jpg$#', $_SESSION['avatar'])) ? $_SESSION['avatar'] : null;
 ?>
 <header class="nb" id="nb">
     <div class="nb__in">
@@ -59,7 +71,7 @@ if ($loggedIn) {
                     <?php if ($isAdmin): ?>
                         <a class="nb__btn nb__btn--admin" href="/admin/dashboard.php">Quản trị</a>
                     <?php endif; ?>
-                    <a class="nb__avatar" href="/profile.php" title="Hồ sơ" aria-label="Hồ sơ"><?= htmlspecialchars($initial) ?></a>
+                    <a class="nb__avatar" href="/profile.php" title="Hồ sơ" aria-label="Hồ sơ"><?php if ($navAvatar): ?><img src="/<?= htmlspecialchars($navAvatar) ?>" alt="" width="38" height="38"><?php else: ?><?= htmlspecialchars($initial) ?><?php endif; ?></a>
                     <a class="nb__btn nb__btn--ghost" href="/api/logout.php">Đăng xuất</a>
                 <?php else: ?>
                     <a class="nb__btn nb__btn--ghost" href="/login.php">Đăng nhập</a>

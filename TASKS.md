@@ -69,7 +69,7 @@ Quy ước dùng chung:
   - **File:** `tdee.php`, `api/calculate-tdee.php`
   - **Xong khi:** tính không reload trang (AJAX, trả JSON); đọc sẵn dữ liệu từ hồ sơ; lưu vào `nutrition_targets`
 - [ ] C-3 (A nhận) Bảng `body_metrics` và trang nhập số đo
-- [ ] C-4 (A nhận) Trang biểu đồ tiến trình (Chart.js qua CDN, dữ liệu từ `/api/*.php`)
+- [ ] C-4 (A nhận) Trang biểu đồ tiến trình (Chart.js (cân nặng, mỡ + vòng eo, khối lượng cơ bắp ước tính), file tự host ở `js/vendor/`, không dùng CDN, dữ liệu từ `/api/*.php`)
   - **Xong khi:** biểu đồ hiển thị đúng khi có và khi không có dữ liệu
 
 > Thứ tự merge các PR xếp chồng của C: #4 → #5 → #6.
@@ -106,3 +106,4 @@ Quy ước dùng chung:
 | M1 (giữa kỳ) | Đăng ký → nhập hồ sơ → xem bài tập và video → nhận lịch tập → xem TDEE/Macro | Cả luồng chạy trên máy 1 người lạ trong nhóm, không cần người làm ra nó chỉnh tay |
 | M2 | Check-in buổi tập, biểu đồ tiến trình | B, C hoàn tất giai đoạn 2 |
 | M3 | Báo cáo và demo | Mỗi người tự giải thích được phần của mình |
+- [ ] A-15 Giao diện Hồ sơ mới + ảnh đại diện đổi được (`profile.php`, `css/profile.css`, `js/profile.js`, `sql/users_avatar.sql`; ảnh lưu ở `public/uploads/avatars/`)
