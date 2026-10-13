@@ -216,3 +216,54 @@ Giới hạn đã biết: trên localhost link hiện ngay trên màn hình đ�
 | `config.php` có trong `git status` | KHÔNG được xuất hiện (đã nằm trong `.gitignore`) |
 
 Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/trình độ/chiều cao/cân nặng được gửi tới Google Gemini (tên và email thì không). Lịch sử chat chỉ lưu trong `sessionStorage` của trình duyệt, không lưu DB.
+
+## Bổ sung: Tiến trình / số đo cơ thể (C-3)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Mở `/progress.php` khi chưa đăng nhập | Chuyển về đăng nhập |
+| User mới chưa có số đo | Hiện "Chưa có số đo nào", không lỗi PHP |
+| Nhập cân nặng `abc`, `-5`, `1e5`, `999`, bỏ trống | Báo lỗi tiếng Việt, giữ nguyên chữ đã gõ, không ghi DB |
+| Nhập ngày tương lai, `2026-02-31` hoặc trước năm 2000 | Báo lỗi, không ghi DB |
+| Gửi `weight_kg[]=1` bằng curl/DevTools | Coi như trống, báo "Vui lòng nhập cân nặng", không lỗi PHP |
+| Nhập lại cùng một ngày | Cập nhật bản ghi cũ, không tạo dòng trùng |
+| Sửa bản ghi sang ngày đã có bản ghi khác | Báo "Bạn đã có số đo ngày ..." |
+| Gửi form xóa/sửa với `id` của người khác (DevTools) | Không xóa/sửa được; xóa báo "Không tìm thấy", sửa quay về trang kèm báo lỗi |
+| Mở `/progress.php?edit=<id người khác>` hoặc `?edit=abc` | Mở form Thêm mới trống, không lộ dữ liệu người khác |
+| Gửi form không kèm mã CSRF | Trang "Phiên làm việc đã hết hạn" (403) |
+
+
+### Biểu đồ và API Tiến trình (C-4)
+| Cách thử | Kết quả mong đợi |
+|---|---|
+| Mở `/api/body-metrics.php` và `/api/nutrition-history.php` khi chưa đăng nhập | JSON `{"success":false}` kèm mã 401, không chuyển trang |
+| Gửi POST tới 2 API (curl) | 405, header `Allow: GET` |
+| `?from=abc` hoặc `?from=2026-02-01&to=2026-01-01` | 400 kèm thông báo lỗi tiếng Việt |
+| Đăng nhập user khác rồi mở API | Chỉ thấy số đo của chính user đó |
+| Tài khoản chưa có số đo hoặc chưa tính TDEE | Biểu đồ hiện thông báo "Chưa có dữ liệu", không lỗi JS (F12 > Console) |
+| Đổi 30 ngày / 90 ngày / Tất cả | Biểu đồ vẽ lại theo khoảng chọn, không gọi lại API |
+| Chặn tải `js/lib/chart.umd.min.js` (DevTools) | Hiện dòng báo lỗi, bảng lịch sử vẫn dùng được |
+
+### Hồ sơ và ảnh đại diện (A-15)
+| Cách thử | Kết quả mong đợi |
+|---|---|
+| Chọn file .txt/.php đổi tên thành .jpg rồi gửi (kể cả bỏ qua JS bằng DevTools) | Server báo "Chỉ nhận ảnh JPG, PNG hoặc WebP", không lưu gì |
+| Chọn ảnh lớn hơn 2 MB | Báo lỗi (JS chặn trước, server vẫn kiểm tra lại) |
+| Gửi form ảnh không kèm mã CSRF | Trang "Phiên làm việc đã hết hạn" (403) |
+| Gửi form ảnh không chọn file | Báo "Bạn chưa chọn ảnh" |
+| Tải ảnh mới | File cũ bị xóa, thư mục `uploads/avatars/` chỉ còn 1 ảnh của user |
+| Mở file ảnh trong `uploads/avatars/` bằng cách đổi đuôi .php | Không chạy được mã (xem `.htaccess` trong thư mục) |
+| Đổi `avatar` trong DB thành `../../config.php` rồi mở Hồ sơ | Bỏ qua đường dẫn lạ, hiện chữ cái đầu |
+| Chưa import `users_avatar.sql` | Trang vẫn mở được, nút đổi ảnh ẩn và có nhắc import |
+
+### Đăng ký 3 bước (A-16)
+| Cách thử | Kết quả mong đợi |
+|---|---|
+| Bấm Tiếp tục khi bỏ trống / email sai / nhập lại mật khẩu khác | Ở lại bước đó, báo lỗi ngay dưới từng ô |
+| Tắt JS hoặc dùng curl gửi thẳng form với tuổi 5, chiều cao 50, `goal=HACK` | Server từ chối, hiện lại form ở đúng bước có lỗi, giữ dữ liệu đã nhập |
+| Gửi form không kèm mã CSRF | Trang "Phiên làm việc đã hết hạn" (403) |
+| Đăng ký email đã tồn tại | Báo "Email này đã được sử dụng" |
+| Nhập `<script>alert(1)</script>` vào họ tên rồi để lỗi | Hiện nguyên chữ, không chạy script |
+| Gửi `full_name[]=x` (mảng) | Coi như trống, báo lỗi, không lỗi PHP |
+| Xem HTML trang sau khi lỗi | Không có mật khẩu đã nhập trong HTML |
+| Đăng ký xong, xem bảng users | `password_hash` bắt đầu bằng `$2y$`, có đủ age, height, weight, gender, activity, experience, goal |

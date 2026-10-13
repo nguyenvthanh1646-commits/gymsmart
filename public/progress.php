@@ -587,6 +587,6 @@ include __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<script src="/js/vendor/chart.umd.min.js" defer></script>
+<script src="/js/lib/chart.umd.min.js" defer></script>
 <script src="/js/progress.js" defer></script>
 <?php include __DIR__ . '/includes/footer.php'; ?>
