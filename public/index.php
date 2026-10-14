@@ -35,6 +35,7 @@ function hmIcon(string $name, int $size = 24): string
         'chart'    => '<path d="M4 19V5M4 19h16M8 15l3.5-4 3 2.5L19 8"/>',
         'user'     => '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.7-5.5 7-5.5s6.2 1.9 7 5.5"/>',
         'bolt'     => '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>',
+        'book'     => '<path d="M5 4.5h10a3 3 0 013 3V20H8a3 3 0 01-3-3V4.5zM5 17a3 3 0 013-3h10"/>',
         'target'   => '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
     ];
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" fill="none" '
@@ -130,6 +131,32 @@ if ($loggedIn) {
     $firstName = $parts ? end($parts) : '';
 }
 
+// Số liệu và bài viết nổi bật cho trang giới thiệu (khách). Lỗi database thì dùng giá trị mặc định, trang vẫn chạy.
+$exerciseCount = 0;
+$articleTeasers = [];
+$articleCount = 0;
+if (!$loggedIn) {
+    try {
+        $exerciseCount = (int)$pdo->query('SELECT COUNT(*) FROM exercises')->fetchColumn();
+    } catch (Throwable $e) {
+        $exerciseCount = 0;
+    }
+    require_once __DIR__ . '/includes/articles.php';
+    $allArticles = loadArticles();
+    $articleCount = count($allArticles);
+    foreach (['bao-nhieu-buoc-moi-ngay', 'protein-bao-nhieu-la-du', 'ta-nang-hay-ta-nhe'] as $s) {
+        if (isset($allArticles[$s])) {
+            $articleTeasers[$s] = $allArticles[$s];
+        }
+    }
+    if (count($articleTeasers) < 3) { // thiếu bài mong muốn thì lấy bài đầu danh sách cho đủ 3
+        foreach ($allArticles as $s => $a) {
+            if (count($articleTeasers) >= 3) { break; }
+            $articleTeasers[$s] = $articleTeasers[$s] ?? $a;
+        }
+    }
+}
+
 $pageTitle = 'Trang chủ';
 include __DIR__ . '/includes/header.php';
 ?>
@@ -138,102 +165,200 @@ include __DIR__ . '/includes/header.php';
 <?php if (!$loggedIn): ?>
 
 <!-- ================= KHÁCH CHƯA ĐĂNG NHẬP ================= -->
-<section class="hm-hero">
-    <div class="hm-wrap hm-hero__in">
-        <div>
-            <span class="hm-chip"><i></i> Nền tảng tập luyện thông minh</span>
-            <h1 class="hm-h1">Train Harder<br>&amp; <em>Smarter</em></h1>
-            <p class="hm-lead">
-                Thư viện bài tập có video chuẩn kỹ thuật, lịch tập cá nhân hóa theo trình độ,
-                tính TDEE và macro khoa học, theo dõi tiến trình, tất cả trong một nơi.
+<section class="tp">
+    <?php include __DIR__ . "/includes/hero-bg.php"; ?>
+    <div class="hm-wrap">
+        <div class="tp-copy">
+            <h1 class="tp-h1">Train Harder &amp; Smarter</h1>
+            <p class="tp-lead">
+                Học đúng kỹ thuật qua video, nhận lịch tập chia theo trình độ và số buổi bạn có,
+                tính calo và macro, rồi ghi lại từng buổi tập để thấy mình tiến bộ.
             </p>
-            <div class="hm-cta">
-                <a class="hm-btn hm-btn--solid" href="/register.php">Bắt đầu miễn phí <?= hmIcon('bolt', 18) ?></a>
-                <a class="hm-btn hm-btn--ghost" href="/login.php">Tôi đã có tài khoản</a>
+            <div class="tp-cta">
+                <a class="hm-btn hm-btn--solid" href="/register.php">Tạo tài khoản miễn phí</a>
+                <a class="hm-btn hm-btn--line" href="/login.php">Đăng nhập</a>
             </div>
-            <ul class="hm-points">
-                <li><?= hmIcon('check', 18) ?> Video hướng dẫn từng bài</li>
-                <li><?= hmIcon('check', 18) ?> Cá nhân hóa theo hồ sơ</li>
-                <li><?= hmIcon('check', 18) ?> Công thức Mifflin-St Jeor</li>
-            </ul>
+            <p class="tp-fine">Miễn phí, chỉ cần email để đăng ký.</p>
         </div>
 
-        <div class="hm-visual" aria-hidden="true">
-            <span class="hm-note">Minh họa giao diện</span>
-            <div class="hm-card hm-card--plan">
-                <h3>Kế hoạch hôm nay · Ngực &amp; tay</h3>
-                <div class="hm-row"><span class="hm-dot"><?= hmIcon('dumbbell', 18) ?></span><div><b>Đẩy ngực tạ đòn</b><small>Ngực · Kháng lực</small></div><span class="hm-tag">4 × 8</span></div>
-                <div class="hm-row"><span class="hm-dot"><?= hmIcon('dumbbell', 18) ?></span><div><b>Đẩy tạ đôi ghế dốc</b><small>Ngực trên · Kháng lực</small></div><span class="hm-tag">3 × 10</span></div>
-                <div class="hm-row"><span class="hm-dot"><?= hmIcon('dumbbell', 18) ?></span><div><b>Gập bụng</b><small>Bụng · Kháng lực</small></div><span class="hm-tag">3 × 15</span></div>
+    </div>
+
+    <!-- Nền xám nhạt bắt đầu từ giữa cửa sổ ứng dụng, nên cửa sổ vắt ngang ranh giới trắng/xám -->
+    <div class="tp-stage"><div class="hm-wrap">
+        <!-- Cửa sổ ứng dụng minh họa: bấm vào từng hiệp ở ô "Hôm nay" để thử -->
+        <div class="app" role="group" aria-label="Ví dụ giao diện GymSmart (minh họa)">
+            <div class="app-bar">
+                <span class="app-bar__name">Tuần này</span>
+                <span class="app-bar__note">Minh họa giao diện, số liệu mẫu</span>
             </div>
-            <div class="hm-card hm-card--macro">
-                <h3>Mục tiêu dinh dưỡng</h3>
-                <div class="hm-ringbox">
-                    <div class="hm-ring"><span><div>2.650<small>KCAL</small></div></span></div>
-                    <div class="hm-macros">
-                        <div>Đạm 165 g<i style="--w:78%;--c:#ff5a1f"></i></div>
-                        <div>Tinh bột 300 g<i style="--w:92%;--c:#ffa36b"></i></div>
-                        <div>Béo 70 g<i style="--w:55%;--c:#7c8cff"></i></div>
+            <div class="app-grid">
+
+                <div class="pn pn--log">
+                    <div class="pn-head"><h2>Hôm nay: buổi Trên</h2><span class="pn-meta"><b id="lg-done">0</b>/13 hiệp</span></div>
+                    <?php
+                    // [tên bài, nhóm cơ, số hiệp, số lần, kg, số hiệp đã tick sẵn]
+                    $log = [
+                        ['Đẩy ngực tạ đòn', 'Ngực', 4, 8, 50, 4],
+                        ['Kéo cáp ngồi', 'Lưng', 3, 10, 45, 1],
+                        ['Đẩy vai tạ đơn ngồi', 'Vai', 3, 10, 14, 0],
+                        ['Cuốn tạ đòn bắp tay', 'Tay trước', 3, 10, 25, 0],
+                    ];
+                    foreach ($log as [$name, $muscle, $sets, $reps, $kg, $pre]): ?>
+                        <div class="lg-ex">
+                            <div class="lg-name"><b><?= htmlspecialchars($name) ?></b><small><?= htmlspecialchars($muscle) ?> · <?= $sets ?> × <?= $reps ?> · <?= $kg ?> kg</small></div>
+                            <div class="lg-sets">
+                                <?php for ($i = 1; $i <= $sets; $i++): $on = $i <= $pre; ?>
+                                    <button type="button" class="lg-set<?= $on ? ' is-on' : '' ?>" aria-pressed="<?= $on ? 'true' : 'false' ?>"
+                                            aria-label="<?= htmlspecialchars($name) ?>, hiệp <?= $i ?>" data-vol="<?= $reps * $kg ?>"><?= $i ?></button>
+                                <?php endfor; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <div class="lg-vol"><span>Khối lượng đã nâng</span><b><span id="lg-vol">0</span> kg</b></div>
+                </div>
+
+                <div class="pn pn--week">
+                    <div class="pn-head"><h2>Lịch 4 buổi mỗi tuần</h2><span class="pn-meta">Trên / Dưới</span></div>
+                    <?php
+                    $days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+                    $matrix = [
+                        'Ngực' => [1, 0, 0, 1, 0, 0, 0], 'Lưng' => [1, 0, 0, 1, 0, 0, 0], 'Vai' => [1, 0, 0, 1, 0, 0, 0],
+                        'Tay'  => [1, 0, 0, 1, 0, 0, 0], 'Chân' => [0, 1, 0, 0, 1, 0, 0], 'Bụng' => [0, 1, 0, 0, 1, 0, 0],
+                    ];
+                    ?>
+                    <div class="mx" role="img" aria-label="Mỗi nhóm cơ được tập 2 lần mỗi tuần">
+                        <div class="mx-row mx-row--head"><span></span><?php foreach ($days as $d): ?><span><?= $d ?></span><?php endforeach; ?><span></span></div>
+                        <?php foreach ($matrix as $muscle => $cells): ?>
+                            <div class="mx-row"><b><?= $muscle ?></b><?php foreach ($cells as $c): ?><span class="mx-cell<?= $c ? ' is-on' : '' ?>"></span><?php endforeach; ?><span class="mx-sum"><?= array_sum($cells) ?>×</span></div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
+
+                <div class="pn pn--nut">
+                    <div class="pn-head"><h2>Dinh dưỡng và cân nặng</h2><span class="pn-meta">Hôm nay</span></div>
+                    <div class="nut">
+                        <div class="nut-ring"><div><b>2.650</b><small>kcal</small></div></div>
+                        <ul class="nut-legend">
+                            <li><i style="background:#ff5a1f"></i>Đạm <b>165 g</b></li>
+                            <li><i style="background:#ffb27a"></i>Tinh bột <b>330 g</b></li>
+                            <li><i style="background:#5b7cfa"></i>Béo <b>74 g</b></li>
+                        </ul>
+                    </div>
+                    <div class="spark">
+                        <div class="spark-top"><span>Cân nặng 8 tuần</span><b>68,0 → 65,4 kg</b></div>
+                        <svg viewBox="0 0 240 56" preserveAspectRatio="none" aria-hidden="true">
+                            <polyline points="0,8 34,12 68,20 102,22 136,30 170,36 204,42 240,48" fill="none" stroke="#ff5a1f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+                        </svg>
+                    </div>
+                </div>
+
             </div>
         </div>
-    </div>
+
+        <div class="facts" aria-label="Số liệu về GymSmart">
+            <div><b><?= $exerciseCount > 0 ? (int)$exerciseCount : 40 ?></b><span>bài tập, mỗi bài một kiểu chuyển động</span></div>
+            <div><b>7</b><span>nhóm cơ, từ ngực đến toàn thân</span></div>
+            <div><b>2×</b><span>mỗi nhóm cơ chính tập ít nhất 2 lần mỗi tuần</span></div>
+            <div><b><?= $articleCount > 0 ? (int)$articleCount : 14 ?></b><span>bài viết có dẫn nghiên cứu</span></div>
+        </div>
+    </div></div>
 </section>
 
-<!-- Dải số liệu nổi lên trên mép dưới của hero -->
-<div class="hm-statsbar"><div class="hm-wrap">
-    <div class="hm-stats">
-        <div><b>7</b><span>nhóm cơ chính</span></div>
-        <div><b>3</b><span>mức độ, từ mới tập đến nâng cao</span></div>
-        <div><b>Video</b><span>hướng dẫn từng bài tập</span></div>
-        <div><b>0đ</b><span>miễn phí hoàn toàn</span></div>
-    </div>
-</div></div>
-
-<section class="hm-section hm-section--after-stats">
+<section class="sec">
     <div class="hm-wrap">
-        <div class="hm-head">
-            <div class="hm-eyebrow">Tính năng</div>
-            <h2 class="hm-title">Mọi thứ bạn cần để tập đúng cách</h2>
-            <p class="hm-sub">Từ học kỹ thuật, lên lịch, ăn đủ chất đến theo dõi kết quả, một hành trình liền mạch.</p>
+        <div class="sec-head">
+            <h2>Mọi thứ bạn cần để tập đúng cách</h2>
+            <p>Hồ sơ của bạn quyết định lịch tập, lịch tập tạo ra buổi ghi log, log tạo ra biểu đồ tiến trình.</p>
         </div>
-        <div class="hm-grid4">
-            <?php foreach ($features as $f): ?>
-                <?php $tag = $f['ready'] ? 'a' : 'div'; ?>
-                <<?= $tag ?> class="hm-feature" <?= $f['ready'] ? 'href="' . htmlspecialchars($f['href']) . '"' : '' ?>>
-                    <span class="hm-icon"><?= hmIcon($f['icon'], 26) ?></span>
+        <div class="bento">
+            <?php
+            $cards = $features;
+            $cards[] = ['icon' => 'book', 'title' => 'Bài viết có nguồn nghiên cứu', 'href' => '/articles.php',
+                'text' => 'Dinh dưỡng, sức khỏe và tập luyện, nêu rõ mức độ bằng chứng. Chỉ để tham khảo.', 'ready' => true];
+            foreach ($cards as $i => $f):
+                $tag = $f['ready'] ? 'a' : 'div';
+                $wide = $i === 1 ? ' bento-card--wide' : '';
+            ?>
+                <<?= $tag ?> class="bento-card<?= $wide ?>" <?= $f['ready'] ? 'href="' . htmlspecialchars($f['href']) . '"' : '' ?>>
+                    <span class="bento-icon"><?= hmIcon($f['icon'], 26) ?></span>
                     <h3><?= htmlspecialchars($f['title']) ?></h3>
                     <p><?= htmlspecialchars($f['text']) ?></p>
-                    <span class="hm-badge <?= $f['ready'] ? 'hm-badge--ready' : 'hm-badge--soon' ?>">
-                        <?= $f['ready'] ? 'Sẵn sàng' : 'Đang phát triển' ?>
-                    </span>
+                    <span class="bento-foot"><?= $f['ready'] ? 'Xem chi tiết' : 'Sắp có' ?></span>
                 </<?= $tag /* audit:ok $tag chỉ là 'a' hoặc 'div' do mình đặt */ ?>>
             <?php endforeach; ?>
         </div>
     </div>
 </section>
 
-<section class="hm-section hm-section--soft">
+<?php if (!empty($articleTeasers)): ?>
+<section class="sec sec--dark">
     <div class="hm-wrap">
-        <div class="hm-head">
-            <div class="hm-eyebrow">Cách hoạt động</div>
-            <h2 class="hm-title">Bắt đầu chỉ với 3 bước</h2>
+        <div class="sec-head">
+            <h2>Đọc trước khi tập</h2>
+            <p>Mỗi bài nêu rõ mức độ bằng chứng và dẫn nguồn nghiên cứu. Chỉ để tham khảo, không thay tư vấn y tế.</p>
         </div>
-        <div class="hm-steps">
-            <div class="hm-step"><h3>Tạo tài khoản và hồ sơ</h3><p>Nhập tuổi, chiều cao, cân nặng, trình độ và mục tiêu. Chỉ mất vài phút.</p></div>
-            <div class="hm-step"><h3>Nhận kế hoạch của bạn</h3><p>Hệ thống gợi ý lịch tập và mục tiêu dinh dưỡng phù hợp với hồ sơ của bạn.</p></div>
-            <div class="hm-step"><h3>Tập, ghi nhận, tiến bộ</h3><p>Làm theo video hướng dẫn, ghi lại buổi tập và xem mình tiến bộ qua từng tuần.</p></div>
+        <div class="arts">
+            <?php foreach ($articleTeasers as $s => $a): ?>
+                <a class="art" href="/article.php?slug=<?= htmlspecialchars(rawurlencode($s)) ?>">
+                    <span class="art-img"><?php if ($a['image'] !== ''): ?><img src="<?= htmlspecialchars($a['image']) ?>" alt="" loading="lazy"><?php endif; ?></span>
+                    <span class="art-body">
+                        <b><?= htmlspecialchars($a['title']) ?></b>
+                        <small><?= htmlspecialchars($a['summary']) ?></small>
+                    </span>
+                </a>
+            <?php endforeach; ?>
+        </div>
+        <div class="sec-more"><a class="hm-btn hm-btn--ghost" href="/articles.php">Xem tất cả bài viết</a></div>
+    </div>
+</section>
+<?php endif; ?>
+
+<section class="sec">
+    <div class="hm-wrap">
+        <div class="sec-head"><h2>Bắt đầu chỉ với 3 bước</h2></div>
+        <ol class="steps">
+            <li><h3>Tạo tài khoản và hồ sơ</h3><p>Nhập tuổi, chiều cao, cân nặng, trình độ và mục tiêu. Chỉ mất vài phút.</p></li>
+            <li><h3>Nhận kế hoạch của bạn</h3><p>Hệ thống gợi ý lịch tập và mục tiêu dinh dưỡng phù hợp với hồ sơ của bạn.</p></li>
+            <li><h3>Tập, ghi lại, tiến bộ</h3><p>Làm theo video hướng dẫn, ghi lại buổi tập và xem mình tiến bộ qua từng tuần.</p></li>
+        </ol>
+    </div>
+</section>
+
+<section class="sec sec--tight">
+    <div class="hm-wrap">
+        <div class="final">
+            <h2>Sẵn sàng tập nặng hơn, thông minh hơn?</h2>
+            <p>Tạo tài khoản miễn phí và có kế hoạch của riêng bạn ngay hôm nay.</p>
+            <a class="hm-btn hm-btn--solid" href="/register.php">Tạo tài khoản miễn phí</a>
         </div>
     </div>
 </section>
 
-<section class="hm-band">
-    <?= gsLogo('light', true, 52) ?>
-    <h2>Sẵn sàng tập nặng hơn, thông minh hơn?</h2>
-    <p>Tạo tài khoản miễn phí và có kế hoạch của riêng bạn ngay hôm nay.</p>
-    <a class="hm-btn hm-btn--solid" href="/register.php">Đăng ký miễn phí</a>
-</section>
+<script>
+// Ô "Hôm nay" minh họa: bấm một hiệp để đánh dấu xong hoặc bỏ đánh dấu, số hiệp và khối lượng tự cập nhật.
+(function () {
+    var sets = document.querySelectorAll('.lg-set');
+    var doneEl = document.getElementById('lg-done');
+    var volEl = document.getElementById('lg-vol');
+    if (!sets.length || !doneEl || !volEl) { return; }
+    function update() {
+        var n = 0, vol = 0;
+        sets.forEach(function (b) {
+            if (b.classList.contains('is-on')) { n++; vol += Number(b.dataset.vol) || 0; }
+        });
+        doneEl.textContent = n;
+        volEl.textContent = vol.toLocaleString('vi-VN');
+    }
+    sets.forEach(function (b) {
+        b.addEventListener('click', function () {
+            var on = b.classList.toggle('is-on');
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            update();
+        });
+    });
+    update();
+})();
+</script>
 
 <?php else: ?>
 
