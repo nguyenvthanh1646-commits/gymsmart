@@ -1,0 +1,49 @@
+<?php
+/**
+ * includes/audit-log.php — ghi "nhật ký hoạt động" của admin vào bảng admin_audit_log.
+ *
+ * Dùng: auditLog($pdo, 'user.delete', 'user', $id, 'Xóa tài khoản "Nguyễn A"');
+ * Gọi SAU khi hành động thành công (không ghi những lần bị từ chối).
+ * Ghi log lỗi thì bỏ qua (chỉ ghi vào log máy chủ): chức năng chính của admin không được hỏng chỉ vì nhật ký.
+ * Không bao giờ ghi mật khẩu hay dữ liệu nhạy cảm vào cột detail.
+ */
+
+/** Các loại hành động: khóa => nhãn hiển thị. Trang nhật ký chỉ nhận đúng các khóa này khi lọc. */
+function auditActions(): array
+{
+    return [
+        'user.set_role'      => 'Đổi vai trò người dùng',
+        'user.delete'        => 'Xóa người dùng',
+        'exercise.create'    => 'Thêm bài tập',
+        'exercise.update'    => 'Sửa bài tập',
+        'exercise.duplicate' => 'Nhân bản bài tập',
+        'exercise.delete'    => 'Xóa bài tập',
+        'article.create'     => 'Thêm bài viết',
+        'article.update'     => 'Sửa bài viết',
+        'article.publish'    => 'Đăng bài viết',
+        'article.unpublish'  => 'Gỡ bài viết về nháp',
+        'article.delete'     => 'Xóa bài viết',
+    ];
+}
+
+function auditLog(PDO $pdo, string $action, string $targetType, $targetId, string $detail = ''): void
+{
+    try {
+        $stmt = $pdo->prepare(
+            'INSERT INTO admin_audit_log (admin_id, admin_name, action, target_type, target_id, detail, ip, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([
+            isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null,
+            mb_substr((string)($_SESSION['full_name'] ?? 'Không rõ'), 0, 100),
+            mb_substr($action, 0, 40),
+            mb_substr($targetType, 0, 30),
+            $targetId === null ? null : mb_substr((string)$targetId, 0, 40),
+            mb_substr($detail, 0, 255),
+            mb_substr((string)($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45), // chỉ tin REMOTE_ADDR, không tin X-Forwarded-For
+            date('Y-m-d H:i:s'),
+        ]);
+    } catch (Throwable $e) {
+        error_log('auditLog: ' . $e->getMessage());
+    }
+}

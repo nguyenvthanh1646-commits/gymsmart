@@ -11,6 +11,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/csrf.php';
+require_once __DIR__ . '/../includes/audit-log.php';
 
 requireAdmin();
 
@@ -130,6 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
             );
             $stmt->execute($params);
+            auditLog($pdo, 'exercise.create', 'exercise', $pdo->lastInsertId(), 'Thêm bài tập "' . $form['name'] . '"');
             $_SESSION['flash'] = ['ok', 'Đã thêm bài tập.'];
         } else {
             $stmt = $pdo->prepare(
@@ -140,6 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $params[] = $editId;
             $stmt->execute($params);
+            auditLog($pdo, 'exercise.update', 'exercise', $editId, 'Sửa bài tập "' . $form['name'] . '"');
             $_SESSION['flash'] = ['ok', 'Đã cập nhật bài tập.'];
         }
 

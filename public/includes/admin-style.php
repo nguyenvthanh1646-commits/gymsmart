@@ -113,18 +113,19 @@ body{overflow-x:hidden}
 .adm-nav{position:sticky;top:0;z-index:60;background:#0b1020;color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
 .adm-nav-in{max-width:1180px;margin:0 auto;padding:0 20px;height:64px;display:flex;align-items:center;gap:6px;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
 .adm-nav-in::-webkit-scrollbar{display:none}
-.adm-nav a.adm-nav-brand{display:flex;align-items:center;gap:10px;flex:none;margin-right:18px;padding:0;border:0;color:#fff;font-weight:700;font-size:1.1rem;letter-spacing:-.01em}
+.adm-nav a.adm-nav-brand{display:flex;align-items:center;gap:10px;flex:none;margin-right:12px;padding:0;border:0;color:#fff;font-weight:700;font-size:1.1rem;letter-spacing:-.01em}
 .adm-nav a.adm-nav-brand b{color:#ff8a3d;font-weight:700}
 .adm-nav-tag{display:inline-block;padding:3px 9px;border-radius:999px;background:rgba(255,90,31,.18);color:#ffa36b;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-.adm-nav a{position:relative;flex:none;color:#aab4cf;text-decoration:none;padding:0 14px;height:64px;display:flex;align-items:center;font-size:.93rem;font-weight:500}
+.adm-nav a{position:relative;flex:none;color:#aab4cf;text-decoration:none;padding:0 10px;height:64px;display:flex;align-items:center;font-size:.93rem;font-weight:500}
 .adm-nav a:hover{color:#fff}
 .adm-nav a.is-active{color:#fff}
-.adm-nav a.is-active::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:#ff5a1f}
+.adm-nav a.is-active::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:#ff5a1f}
 .adm-nav-right{margin-left:auto;display:flex;align-items:center;gap:12px;flex:none;padding-left:16px}
 .adm-nav .adm-nav-site{height:auto;padding:8px 14px;border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:.85rem;color:#d6dcee}
 .adm-nav .adm-nav-site:hover{border-color:#ff8a3d;color:#fff}
 .adm-nav-av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ff8a3d,#ff5a1f);color:#fff;font-weight:700;font-size:.92rem}
 .adm-nav .adm-nav-out{height:auto;padding:8px 4px;font-size:.88rem;color:#aab4cf}
+@media (max-width:1240px){.adm-nav .adm-nav-site{display:none}}   /* menu có 6 mục: ẩn nút "Xem trang người dùng" trên màn hình hẹp để không bị cắt mất chữ Đăng xuất */
 @media (max-width:720px){.adm-nav-in{height:56px;padding:0 12px;gap:0}.adm-nav a{height:56px;padding:0 9px;font-size:.88rem}.adm-nav .adm-nav-site{display:none}.adm-nav a.adm-nav-brand{margin-right:4px;padding:0 6px 0 0}.adm-nav a.adm-nav-brand span{display:none}.adm-nav-av{display:none}.adm-nav-right{padding-left:4px}.adm-nav .adm-nav-out{padding:8px 2px;font-size:.82rem}}
 
 /* ===== Tổng quan: thẻ số liệu + biểu đồ thanh ===== */
