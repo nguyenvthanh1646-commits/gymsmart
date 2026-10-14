@@ -4,7 +4,11 @@ return [
     'title'    => 'Calo, BMR và TDEE: con số đầu tiên bạn cần biết',
     'category' => 'general',
     'summary'  => 'BMR là calo cơ thể đốt khi nghỉ, TDEE là tổng calo đốt mỗi ngày. Hiểu hai con số này là bước đầu để giảm mỡ hay tăng cơ.',
-    'date'     => '2026-10-13',
+    'tags'     => ['Năng lượng', 'Kiến thức nền'],
+    'quick'    => '**BMR** là calo cơ thể đốt khi nghỉ, **TDEE** là tổng calo đốt mỗi ngày (BMR x hệ số vận động). Đây là ước lượng, có thể lệch khoảng 10% so với thực tế.',
+    'image'    => '/img/articles/calo-bmr-tdee-la-gi.svg',
+    'imageAlt' => 'Ảnh minh họa: tính calo và năng lượng tiêu hao',
+    'date'     => '2026-10-14',
     'order'    => 4,
     'content'  => [
         ['p', 'Calo (kcal) là đơn vị đo năng lượng. Cân nặng của bạn thay đổi theo cân bằng năng lượng: ăn vào nhiều hơn lượng đốt thì tăng cân, ít hơn thì giảm cân, bằng nhau thì giữ nguyên.'],
@@ -40,5 +44,16 @@ return [
             '**Tăng cơ:** ăn nhiều hơn TDEE khoảng 10%.',
         ]],
         ['tip', 'Các con số này chỉ là ước lượng, có thể lệch khoảng 10% so với thực tế. Hãy theo dõi cân nặng trung bình mỗi tuần trong 2 đến 3 tuần rồi điều chỉnh nếu chưa thấy thay đổi như mong muốn.'],
+
+        ['evidence', ['level' => 'basic', 'text' => 'Công thức Mifflin-St Jeor và các hệ số vận động là cách tính phổ biến. Bài này chưa dẫn nghiên cứu gốc và chưa kiểm chứng độ chính xác ở từng nhóm người; hãy xem là điểm xuất phát rồi điều chỉnh theo cân nặng thực tế.']],
+        ['faq', [
+            ['Vì sao kết quả có thể lệch?', 'Mỗi người có chuyển hóa và mức vận động khác nhau; công thức chỉ cho con số trung bình.'],
+            ['Nên theo dõi trong bao lâu?', 'Khoảng 2 đến 3 tuần cân nặng trung bình mỗi tuần, rồi điều chỉnh lượng ăn nếu chưa đúng mục tiêu.'],
+        ]],
+        ['summary', [
+            'BMR là calo khi nghỉ, TDEE là tổng calo đốt mỗi ngày.',
+            'Giảm mỡ ăn ít hơn TDEE khoảng 20%, tăng cơ nhiều hơn khoảng 10%.',
+            'Đây là ước lượng, hãy điều chỉnh theo thực tế.',
+        ]],
     ],
 ];

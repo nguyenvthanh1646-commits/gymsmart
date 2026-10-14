@@ -4,7 +4,11 @@ return [
     'title'    => 'Carb (tinh bột): nhiên liệu chính cho buổi tập',
     'category' => 'carb',
     'summary'  => 'Carb cho bạn sức để tập nặng và phục hồi. Biết chọn loại carb và thời điểm ăn quan trọng hơn việc cắt carb.',
-    'date'     => '2026-10-13',
+    'tags'     => ['Năng lượng', 'Kiến thức nền'],
+    'quick'    => 'Carb là nguồn năng lượng chính khi tập nặng. Nên chọn carb ít chế biến, ăn quanh buổi tập, và đừng cắt hẳn vì lo bị béo: mỡ tăng khi thừa calo.',
+    'image'    => '/img/articles/carb-nhien-lieu-cho-buoi-tap.svg',
+    'imageAlt' => 'Ảnh minh họa: thực phẩm giàu tinh bột',
+    'date'     => '2026-10-14',
     'order'    => 2,
     'content'  => [
         ['p', 'Carb (carbohydrate, gồm tinh bột và đường) là nguồn năng lượng ưu tiên của cơ thể, đặc biệt khi vận động mạnh. Mỗi gram carb cung cấp 4 kcal.'],
@@ -51,5 +55,16 @@ return [
             '**"Ăn carb buổi tối là béo":** tổng calo cả ngày mới là yếu tố quyết định.',
         ]],
         ['tip', 'Kiểu ăn "Ít tinh bột" trên trang Dinh dưỡng phù hợp nếu bạn thích ăn ít cơm, bún, bánh mì. Với người tập nặng, tinh bột quá thấp có thể làm bạn nhanh mệt.'],
+
+        ['evidence', ['level' => 'basic', 'text' => 'Bài này tổng hợp kiến thức dinh dưỡng nền. Chúng tôi chưa dẫn nghiên cứu riêng và chưa kiểm chứng số liệu cụ thể (ví dụ ngưỡng 130 g hay 25 g chất xơ); hãy xem đây là hướng dẫn tham khảo.']],
+        ['faq', [
+            ['Có nên ăn carb trước khi tập?', 'Nhiều người thấy tập tốt hơn khi đã ăn một bữa có carb 1 đến 3 giờ trước. Mức đáp ứng khác nhau giữa mỗi người.'],
+            ['Người tiểu đường ăn carb thế nào?', 'Cần theo hướng dẫn của bác sĩ hoặc chuyên gia dinh dưỡng, bài này không thay thế.'],
+        ]],
+        ['summary', [
+            'Carb nuôi buổi tập nặng và giúp phục hồi.',
+            'Ưu tiên carb ít chế biến, hạn chế đường thêm vào.',
+            'Mỡ tăng do thừa calo, không phải do riêng carb.',
+        ]],
     ],
 ];

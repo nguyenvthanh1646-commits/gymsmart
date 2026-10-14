@@ -27,7 +27,7 @@ include __DIR__ . '/includes/header.php';
     <div class="pg-head">
         <div>
             <h1>Bài viết</h1>
-            <p class="pg-sub">Kiến thức dinh dưỡng ngắn gọn, dễ hiểu: vai trò của protein, carb, chất béo và cách ăn cho từng mục tiêu.</p>
+            <p class="pg-sub">Kiến thức dinh dưỡng, sức khỏe và tập luyện, có dẫn nghiên cứu và nêu rõ mức độ bằng chứng. Chỉ để tham khảo, không thay thế tư vấn y tế.</p>
         </div>
         <span class="pg-count"><b><?= count($articles) ?></b> bài viết</span>
     </div>
@@ -45,17 +45,30 @@ include __DIR__ . '/includes/header.php';
             <a class="btn btn--ghost" href="/articles.php">Xem tất cả bài viết</a>
         </div>
     <?php else: ?>
-        <div class="ar-grid">
+        <div class="ar-grid ar-grid--cards">
             <?php foreach ($articles as $slug => $a):
                 [$catLabel, $catLetter, $catClass] = $categories[$a['category']];
             ?>
-                <a class="ar-card" href="/article.php?slug=<?= htmlspecialchars(rawurlencode($slug)) ?>">
-                    <span class="ar-card__cover <?= htmlspecialchars($catClass) ?>" aria-hidden="true"><?= htmlspecialchars($catLetter) ?></span>
+                <a class="ar-card ar-card--img" href="/article.php?slug=<?= htmlspecialchars(rawurlencode($slug)) ?>">
+                    <span class="ar-card__media <?= htmlspecialchars($catClass) ?>">
+                        <?php if ($a['image'] !== ''): ?>
+                            <img src="<?= htmlspecialchars($a['image']) ?>" alt="" loading="lazy">
+                        <?php else: ?>
+                            <span class="ar-card__letter" aria-hidden="true"><?= htmlspecialchars($catLetter) ?></span>
+                        <?php endif; ?>
+                        <span class="ar-card__over">
+                            <span class="ar-tags">
+                                <span class="ar-tag ar-tag--glass"><?= htmlspecialchars($catLabel) ?></span>
+                                <?php foreach (array_slice($a['tags'], 0, 1) as $tag): ?>
+                                    <span class="ar-tag ar-tag--glass"><?= htmlspecialchars($tag) ?></span>
+                                <?php endforeach; ?>
+                            </span>
+                            <h2><?= htmlspecialchars($a['title']) ?></h2>
+                        </span>
+                    </span>
                     <span class="ar-card__body">
-                        <span class="ar-tag <?= htmlspecialchars($catClass) ?>"><?= htmlspecialchars($catLabel) ?></span>
-                        <h2><?= htmlspecialchars($a['title']) ?></h2>
                         <span class="ar-card__sum"><?= htmlspecialchars($a['summary']) ?></span>
-                        <span class="ar-card__meta"><?= articleReadingMinutes($a) ?> phút đọc<?= $a['date'] !== '' ? ' · ' . htmlspecialchars(articleDate($a['date'])) : '' ?></span>
+                        <span class="ar-card__meta"><?= articleReadingMinutes($a) ?> phút đọc<?= $a['date'] !== '' ? ' · ' . htmlspecialchars(articleDate($a['date'])) : '' ?><b class="ar-card__more">Đọc tiếp →</b></span>
                     </span>
                 </a>
             <?php endforeach; ?>
