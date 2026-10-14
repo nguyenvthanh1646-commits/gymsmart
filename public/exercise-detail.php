@@ -47,6 +47,18 @@ function splitLines(?string $text): array {
 $steps    = $exercise ? splitLines($exercise['instructions'] ?? '') : [];
 $mistakes = $exercise ? splitLines($exercise['common_mistakes'] ?? '') : [];
 
+// Gợi ý 3 bài cùng nhóm cơ (chỉ khi bài hiện tại tồn tại)
+$related = [];
+if ($exercise) {
+    $stmt = $pdo->prepare(
+        'SELECT id, name, difficulty FROM exercises
+         WHERE muscle_group = ? AND id <> ?
+         ORDER BY RAND() LIMIT 3'
+    );
+    $stmt->execute([$exercise['muscle_group'], $exercise['id']]);
+    $related = $stmt->fetchAll(PDO::FETCH_ASSOC); // mảng rỗng nếu không có bài nào
+}
+
 if (!$exercise) {
     http_response_code(404); // báo cho trình duyệt là không tìm thấy
 }
@@ -116,6 +128,21 @@ include __DIR__ . '/includes/header.php';
             <ul>
                 <?php foreach ($mistakes as $m): ?>
                     <li><?= htmlspecialchars($m) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+
+        <?php if ($related): // chỉ hiện khi có bài gợi ý ?>
+            <h2>Bài tập cùng nhóm cơ</h2>
+            <ul>
+                <?php foreach ($related as $r): ?>
+                    <li>
+                        <!-- (int) ép id thành số nguyên cho an toàn -->
+                        <a href="exercise-detail.php?id=<?= (int)$r['id'] ?>">
+                            <?= htmlspecialchars($r['name']) ?>
+                        </a>
+                        (<?= htmlspecialchars($difficultyLabels[$r['difficulty']] ?? $r['difficulty']) ?>)
+                    </li>
                 <?php endforeach; ?>
             </ul>
         <?php endif; ?>
