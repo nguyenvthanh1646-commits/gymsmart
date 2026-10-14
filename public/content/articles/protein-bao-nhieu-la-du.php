@@ -9,8 +9,15 @@ return [
     'title'    => 'Protein: cơ thể cần gì và ăn bao nhiêu là đủ',
     'category' => 'protein',
     'summary'  => 'Protein xây cơ, giúp no lâu và giữ cơ khi giảm mỡ. Người mới tập chỉ cần khoảng 1,6 g/kg, người có kinh nghiệm khoảng 1,8 g/kg.',
-    'date'     => '2026-10-13',
+    'tags'     => ['Tăng cơ', 'Phân tích gộp'],
+    'quick'    => 'Mức khuyến nghị của GymSmart là khoảng **1,6 g/kg/ngày** (người mới) đến **1,8 g/kg** (người có kinh nghiệm). Phân tích gộp 49 thử nghiệm cho thấy trên khoảng 1,62 g/kg/ngày thì không thấy thêm lợi ích về khối nạc.',
+    'image'    => '/img/articles/protein-bao-nhieu-la-du.svg',
+    'imageAlt' => 'Ảnh minh họa: thực phẩm giàu protein',
+    'date'     => '2026-10-14',
     'order'    => 1,
+    'sources'  => [
+        ['authors' => 'Morton RW, Murphy KT, McKellar SR và cs.', 'year' => 2018, 'title' => 'A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults', 'journal' => 'Br J Sports Med', 'detail' => '52(6):376-384', 'pmid' => '28698222', 'doi' => '10.1136/bjsports-2017-097608'],
+    ],
     'content'  => [
         ['p', 'Protein (chất đạm) là nguyên liệu để cơ thể sửa chữa và xây dựng các mô, trong đó có cơ bắp. Mỗi gram protein cung cấp 4 kcal.'],
 
@@ -67,5 +74,25 @@ return [
             '**"Ăn nhiều đạm là có cơ":** cơ chỉ lớn khi bạn tập kháng lực đều và ăn đủ calo.',
         ]],
         ['tip', 'Nếu bạn có bệnh thận, gout hoặc đang điều trị bệnh, hãy hỏi bác sĩ trước khi thay đổi lượng protein.'],
+
+        ['h2', 'Cơ sở khoa học (chỉ để tham khảo)'],
+        ['p', 'Mức 1,6 g/kg gần với điểm mà phân tích gộp của Morton và cs. (49 thử nghiệm, 1.863 người) thấy lợi ích về khối nạc ngừng tăng thêm: khoảng 1,62 g/kg/ngày. Bài này nói về người khỏe mạnh tập kháng lực.'],
+        ['evidence', ['level' => 'strong', 'text' => 'Nhiều thử nghiệm ngẫu nhiên được gộp. Các ý còn lại trong bài (vai trò protein, mức no, hiểu lầm) là kiến thức nền, không dẫn nghiên cứu riêng.']],
+        ['study', ['title' => 'Morton và cs., Br J Sports Med 2018', 'rows' => [
+            ['Thiết kế phương pháp', 'ok', 'Phân tích gộp 49 thử nghiệm ngẫu nhiên có đối chứng, tìm trên 4 cơ sở dữ liệu.'],
+            ['Tính lặp lại, kiểm chứng', 'ok', 'Gộp nhiều thử nghiệm độc lập; bài mở (PMC) để kiểm tra.'],
+            ['Phản biện độc lập', 'ok', 'Đăng trên Br J Sports Med, có trên PubMed. Chỉ số ảnh hưởng: chưa kiểm chứng.'],
+            ['Minh bạch, đạo đức', 'part', 'Có tuyên bố xung đột lợi ích: tác giả cuối nhận tài trợ từ National Dairy Council Hoa Kỳ, tổ chức cũng tài trợ một số thử nghiệm được gộp.'],
+            ['Thống kê (p, KTC, hiệu ứng)', 'part', 'Có KTC 95% (khối nạc +0,30 kg, 0,09 đến 0,52). P-value cụ thể: chưa kiểm chứng.'],
+        ]]],
+        ['faq', [
+            ['Người tập nặng có cần hơn 1,8 g/kg không?', 'Bài này không kết luận điều đó. Nếu bạn muốn ăn nhiều hơn vì no hoặc khẩu vị thì không sao, nhưng không có bằng chứng ở đây rằng sẽ tăng thêm cơ.'],
+            ['Có cần bột protein không?', 'Xem bài **Bột protein (whey) có thực sự cần để tăng cơ không?**'],
+        ]],
+        ['summary', [
+            'Khoảng 1,6 g/kg/ngày cho người mới, 1,8 g/kg cho người có kinh nghiệm.',
+            'Trên khoảng 1,62 g/kg không thấy thêm lợi ích khối nạc trong phân tích gộp.',
+            'Chia đều 3 đến 5 bữa; người có bệnh thận, gout nên hỏi bác sĩ.',
+        ]],
     ],
 ];

@@ -1,6 +1,6 @@
 <?php
 /**
- * article.php — đọc một bài viết: /article.php?slug=protein-bao-nhieu-la-du
+ * article.php — đọc một bài viết: /article.php?slug=bao-nhieu-buoc-moi-ngay
  * Slug chỉ được dùng để TRA trong danh sách bài đã nạp (loadArticles), không bao giờ ghép vào đường dẫn file,
  * nên không thể đọc file lạ bằng cách sửa URL.
  */
@@ -43,16 +43,55 @@ include __DIR__ . '/includes/header.php';
 <article class="ar-read">
     <a class="ar-back" href="/articles.php">&larr; Tất cả bài viết</a>
 
+    <?php if ($a['image'] !== ''): ?>
+        <figure class="ar-hero">
+            <img src="<?= htmlspecialchars($a['image']) ?>" alt="<?= htmlspecialchars($a['imageAlt']) ?>">
+        </figure>
+    <?php endif; ?>
+
     <header class="ar-head">
-        <span class="ar-tag <?= htmlspecialchars($catClass) ?>"><?= htmlspecialchars($catLabel) ?></span>
+        <div class="ar-tags">
+            <span class="ar-tag <?= htmlspecialchars($catClass) ?>"><?= htmlspecialchars($catLabel) ?></span>
+            <?php foreach ($a['tags'] as $tag): ?>
+                <span class="ar-tag ar-tag--plain"><?= htmlspecialchars($tag) ?></span>
+            <?php endforeach; ?>
+        </div>
         <h1><?= htmlspecialchars($a['title']) ?></h1>
-        <p class="ar-lead"><?= htmlspecialchars($a['summary']) ?></p>
         <p class="ar-meta"><?= articleReadingMinutes($a) ?> phút đọc<?= $a['date'] !== '' ? ' · ' . htmlspecialchars(articleDate($a['date'])) : '' ?></p>
     </header>
+
+    <?php if ($a['quick'] !== ''): ?>
+        <aside class="ar-quick">
+            <b>Trả lời nhanh:</b>
+            <p><?= articleText($a['quick']) ?></p>
+        </aside>
+    <?php else: ?>
+        <p class="ar-lead"><?= htmlspecialchars($a['summary']) ?></p>
+    <?php endif; ?>
+
+    <p class="ar-ref-note"><b>Chỉ để tham khảo.</b> Nội dung là thông tin chung, không thay thế tư vấn của bác sĩ hoặc chuyên gia dinh dưỡng.</p>
 
     <div class="ar-body">
         <?php renderArticleBlocks($a['content']); ?>
     </div>
+
+    <?php if (!empty($a['sources'])): ?>
+        <section class="ar-refs">
+            <h2>Nguồn tham khảo</h2>
+            <?php renderArticleSources($a['sources']); ?>
+            <details class="ar-legend">
+                <summary>Cách đọc “Mức độ bằng chứng”</summary>
+                <ul>
+                    <?php foreach (articleLevels() as [$lvLabel, $lvDesc]): ?>
+                        <li><b><?= htmlspecialchars($lvLabel) ?>:</b> <?= htmlspecialchars($lvDesc) ?>.</li>
+                    <?php endforeach; ?>
+                </ul>
+            </details>
+            <p class="ar-verify">Các con số nghiên cứu trong bài lấy từ bản ghi PubMed và Europe PMC của từng bài báo. Chỗ nào ghi “Chưa kiểm chứng” nghĩa là bản tóm tắt không nêu thông tin đó, bạn hãy mở bài gốc để xem. Thấy sai sót, hãy báo cho nhóm GymSmart để sửa.</p>
+        </section>
+    <?php endif; ?>
+
+    <p class="ar-disclaimer">Bài viết chỉ mang tính thông tin và tham khảo, không thay thế chẩn đoán, tư vấn hay điều trị y khoa. Nếu bạn có bệnh nền (tim mạch, tiểu đường, bệnh thận, rối loạn ăn uống...), đang mang thai, đang dùng thuốc hoặc chấn thương, hãy hỏi bác sĩ trước khi thay đổi chế độ ăn hoặc tập luyện. Kết quả nghiên cứu mô tả nhóm người tham gia, không đảm bảo cho từng cá nhân.</p>
 
     <div class="ar-cta">
         <div>
@@ -70,7 +109,11 @@ include __DIR__ . '/includes/header.php';
                     [$rLabel, $rLetter, $rClass] = $categories[$r['category']];
                 ?>
                     <a class="ar-card" href="/article.php?slug=<?= htmlspecialchars(rawurlencode($s)) ?>">
-                        <span class="ar-card__cover <?= htmlspecialchars($rClass) ?>" aria-hidden="true"><?= htmlspecialchars($rLetter) ?></span>
+                        <?php if ($r['image'] !== ''): ?>
+                            <img class="ar-card__thumb" src="<?= htmlspecialchars($r['image']) ?>" alt="" loading="lazy">
+                        <?php else: ?>
+                            <span class="ar-card__cover <?= htmlspecialchars($rClass) ?>" aria-hidden="true"><?= htmlspecialchars($rLetter) ?></span>
+                        <?php endif; ?>
                         <span class="ar-card__body">
                             <span class="ar-tag <?= htmlspecialchars($rClass) ?>"><?= htmlspecialchars($rLabel) ?></span>
                             <h2><?= htmlspecialchars($r['title']) ?></h2>
