@@ -14,6 +14,7 @@
  */
 
 require_once __DIR__ . '/csrf.php';
+require_once __DIR__ . '/audit-log.php';
 
 /**
  * Gọi ở đầu trang, sau requireAdmin(). Nếu không phải POST của các hành động trên thì không làm gì.
@@ -57,6 +58,7 @@ function handleUserAction(PDO $pdo, string $redirectOther, string $redirectOnDel
             } else {
                 $stmt = $pdo->prepare("UPDATE users SET role = ? WHERE id = ?");
                 $stmt->execute([$newRole, $target]);
+                auditLog($pdo, 'user.set_role', 'user', $target, 'Đổi vai trò "' . $user['full_name'] . '": ' . $user['role'] . ' -> ' . $newRole);
                 $_SESSION['flash'] = ['ok', 'Đã đổi vai trò của "' . $user['full_name'] . '" thành ' . $newRole . '.'];
             }
         } else { // delete
@@ -65,6 +67,7 @@ function handleUserAction(PDO $pdo, string $redirectOther, string $redirectOnDel
             } else {
                 $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
                 $stmt->execute([$target]);
+                auditLog($pdo, 'user.delete', 'user', $target, 'Xóa tài khoản "' . $user['full_name'] . '"');
                 $_SESSION['flash'] = ['ok', 'Đã xóa tài khoản "' . $user['full_name'] . '" cùng dữ liệu của họ.'];
                 $go = $redirectOnDelete;
             }

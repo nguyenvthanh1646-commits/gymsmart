@@ -10,6 +10,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/csrf.php';
+require_once __DIR__ . '/../includes/audit-log.php';
 
 requireAdmin(); // kiểm tra ở PHP, không chỉ ẩn nút ở giao diện
 
@@ -56,8 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'dupli
          . implode(', ', array_fill(0, count($columns), '?')) . ')'; // audit:ok tên cột lấy từ DB, giá trị dùng dấu ?
     $stmt = $pdo->prepare($sql);
     $stmt->execute(array_values($row));
+    $newId = (int)$pdo->lastInsertId();
+    auditLog($pdo, 'exercise.duplicate', 'exercise', $newId, 'Nhân bản bài #' . $id . ' thành "' . $row['name'] . '"');
 
-    header('Location: /admin/exercise-form.php?id=' . (int)$pdo->lastInsertId());
+    header('Location: /admin/exercise-form.php?id=' . $newId);
     exit;
 }
 
@@ -72,8 +75,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
         $_SESSION['flash'] = ['error', 'Id bài tập không hợp lệ.'];
     } else {
         try {
+            $stmt = $pdo->prepare("SELECT name FROM exercises WHERE id = ?"); // lấy tên trước khi xóa để ghi nhật ký
+            $stmt->execute([$id]);
+            $exName = (string)$stmt->fetchColumn();
             $stmt = $pdo->prepare("DELETE FROM exercises WHERE id = ?");
             $stmt->execute([$id]);
+            if ($stmt->rowCount() > 0) {
+                auditLog($pdo, 'exercise.delete', 'exercise', $id, 'Xóa bài tập "' . $exName . '"');
+            }
             $_SESSION['flash'] = $stmt->rowCount() > 0
                 ? ['ok', 'Đã xóa bài tập.']
                 : ['error', 'Không tìm thấy bài tập để xóa.'];

@@ -43,6 +43,11 @@
  * Muốn thêm chuyên mục mới: thêm một dòng vào articleCategories() và một màu trong css/articles.css.
  */
 
+// Nếu dự án có includes/db.php thì nạp để đọc bài do admin soạn (bảng articles). Phải nạp ở phạm vi toàn cục để có biến $pdo.
+if (is_file(__DIR__ . '/db.php')) {
+    require_once __DIR__ . '/db.php';
+}
+
 /** Chuyên mục: khóa => [tên hiển thị, chữ cái trên thẻ, tên class màu] */
 function articleCategories(): array
 {
@@ -87,9 +92,89 @@ function articleImageOk($src): bool
     return is_string($src) && (bool)preg_match('#^/img/articles/[a-z0-9-]+\.(svg|png|jpg|jpeg|webp)$#', $src);
 }
 
+/** Chuẩn hóa một bài (từ file hoặc từ database): điền giá trị mặc định, bỏ giá trị không hợp lệ. Trả về null nếu thiếu trường bắt buộc. */
+function articleNormalize(array $article): ?array
+{
+    $categories = articleCategories();
+    $slug = $article['slug'] ?? '';
+    // Slug chỉ gồm a-z, 0-9, gạch ngang: an toàn để đưa lên URL
+    if (!is_string($slug) || !preg_match('/^[a-z0-9-]+$/', $slug)) {
+        return null;
+    }
+    if (empty($article['title']) || empty($article['content']) || !is_array($article['content'])) {
+        return null;
+    }
+    if (!isset($categories[$article['category'] ?? ''])) {
+        $article['category'] = 'general';
+    }
+    $article['summary']  = (string)($article['summary'] ?? '');
+    $article['quick']    = (string)($article['quick'] ?? '');
+    $article['date']     = (string)($article['date'] ?? '');
+    $article['order']    = (int)($article['order'] ?? 100);
+    $article['imageAlt'] = (string)($article['imageAlt'] ?? '');
+    $article['image']    = articleImageOk($article['image'] ?? null) ? $article['image'] : '';
+    $article['tags']     = array_values(array_filter((array)($article['tags'] ?? []), 'is_string'));
+    $article['sources']  = is_array($article['sources'] ?? null) ? $article['sources'] : [];
+    return $article;
+}
+
+/** Bài viết dạng FILE trong content/articles/ (bài hệ thống, chỉ sửa bằng cách sửa file). Trả về [slug => bài], chưa sắp xếp. */
+function loadFileArticles(): array
+{
+    $list = [];
+    foreach (glob(__DIR__ . '/../content/articles/*.php') ?: [] as $file) {
+        $article = include $file;
+        if (!is_array($article)) {
+            continue;
+        }
+        $article = articleNormalize($article);
+        if ($article !== null) {
+            $list[$article['slug']] = $article;
+        }
+    }
+    return $list;
+}
+
+/** Biến một dòng trong bảng articles (do admin soạn) thành mảng bài viết cùng dạng với bài file. */
+function articleFromDbRow(array $row): ?array
+{
+    require_once __DIR__ . '/article-markup.php';
+    return articleNormalize([
+        'slug'     => (string)$row['slug'],
+        'title'    => (string)$row['title'],
+        'category' => (string)$row['category'],
+        'tags'     => array_values(array_filter(array_map('trim', explode(',', (string)($row['tags'] ?? ''))), 'strlen')),
+        'summary'  => (string)($row['summary'] ?? ''),
+        'quick'    => (string)($row['quick'] ?? ''),
+        'image'    => (string)($row['image'] ?? ''),
+        'imageAlt' => (string)($row['image_alt'] ?? ''),
+        'date'     => (string)($row['published_date'] ?? ''),
+        'order'    => (int)($row['sort_order'] ?? 100),
+        'sources'  => articleParseSources((string)($row['sources'] ?? '')),
+        'content'  => articleParseMarkup((string)($row['body'] ?? '')),
+    ]);
+}
+
+/** Tìm một bài do admin soạn theo slug (kể cả bản nháp). Dùng cho xem trước. Không có bảng hoặc không thấy thì trả về null. */
+function articleDbBySlug(string $slug): ?array
+{
+    global $pdo;
+    if (!($pdo instanceof PDO)) {
+        return null;
+    }
+    try {
+        $stmt = $pdo->prepare('SELECT * FROM articles WHERE slug = ?');
+        $stmt->execute([$slug]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? articleFromDbRow($row) : null;
+    } catch (Throwable $e) {
+        return null; // bảng articles chưa được import: bỏ qua
+    }
+}
+
 /**
- * Đọc tất cả file trong content/articles/, trả về mảng [slug => bài viết], đã sắp xếp.
- * File lỗi hoặc thiếu trường bắt buộc sẽ bị bỏ qua (không làm sập trang).
+ * Tất cả bài người đọc thấy: bài file + bài admin đã ĐĂNG (bảng articles), đã sắp xếp.
+ * Bảng articles chưa import hoặc lỗi database thì chỉ dùng bài file (trang vẫn chạy).
  */
 function loadArticles(): array
 {
@@ -98,33 +183,21 @@ function loadArticles(): array
         return $cache;
     }
 
-    $categories = articleCategories();
-    $list = [];
-    foreach (glob(__DIR__ . '/../content/articles/*.php') ?: [] as $file) {
-        $article = include $file;
-        if (!is_array($article)) {
-            continue;
+    $list = loadFileArticles();
+
+    global $pdo;
+    if ($pdo instanceof PDO) {
+        try {
+            $rows = $pdo->query("SELECT * FROM articles WHERE status = 'PUBLISHED'")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($rows as $row) {
+                $article = articleFromDbRow($row);
+                if ($article !== null && !isset($list[$article['slug']])) { // bài file luôn được ưu tiên khi trùng slug
+                    $list[$article['slug']] = $article;
+                }
+            }
+        } catch (Throwable $e) {
+            // chưa import sql/admin_features.sql: bỏ qua
         }
-        $slug = $article['slug'] ?? '';
-        // Slug chỉ gồm a-z, 0-9, gạch ngang: an toàn để đưa lên URL
-        if (!is_string($slug) || !preg_match('/^[a-z0-9-]+$/', $slug)) {
-            continue;
-        }
-        if (empty($article['title']) || empty($article['content']) || !is_array($article['content'])) {
-            continue;
-        }
-        if (!isset($categories[$article['category'] ?? ''])) {
-            $article['category'] = 'general';
-        }
-        $article['summary']  = (string)($article['summary'] ?? '');
-        $article['quick']    = (string)($article['quick'] ?? '');
-        $article['date']     = (string)($article['date'] ?? '');
-        $article['order']    = (int)($article['order'] ?? 100);
-        $article['imageAlt'] = (string)($article['imageAlt'] ?? '');
-        $article['image']    = articleImageOk($article['image'] ?? null) ? $article['image'] : '';
-        $article['tags']     = array_values(array_filter((array)($article['tags'] ?? []), 'is_string'));
-        $article['sources']  = is_array($article['sources'] ?? null) ? $article['sources'] : [];
-        $list[$slug] = $article;
     }
 
     // Số thứ tự nhỏ trước; bằng nhau thì ngày mới hơn trước
@@ -133,6 +206,26 @@ function loadArticles(): array
     });
 
     return $cache = $list;
+}
+
+/** Ghi nhận 1 lượt xem bài (đếm theo ngày, mỗi phiên đăng nhập chỉ đếm 1 lần cho mỗi bài). Lỗi thì bỏ qua, không ảnh hưởng người đọc. */
+function articleRecordView(string $slug): void
+{
+    global $pdo;
+    if (!($pdo instanceof PDO) || isset($_SESSION['ar_seen'][$slug])) {
+        return;
+    }
+    $_SESSION['ar_seen'][$slug] = true;
+    try {
+        $today = date('Y-m-d');
+        $stmt = $pdo->prepare('UPDATE article_views SET views = views + 1 WHERE slug = ? AND view_date = ?');
+        $stmt->execute([$slug, $today]);
+        if ($stmt->rowCount() === 0) {
+            $pdo->prepare('INSERT INTO article_views (slug, view_date, views) VALUES (?, ?, 1)')->execute([$slug, $today]);
+        }
+    } catch (Throwable $e) {
+        // bảng article_views chưa import hoặc 2 lượt xem trùng cùng lúc: bỏ qua
+    }
 }
 
 /** Số phút đọc ước tính (khoảng 180 từ mỗi phút), tối thiểu 1 phút. */

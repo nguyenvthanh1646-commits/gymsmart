@@ -13,8 +13,22 @@ requireLogin();
 $slug = $_GET['slug'] ?? '';
 $all = loadArticles();
 
+// Admin xem trước bản nháp: /article.php?slug=...&preview=1 (người dùng thường không thấy bản nháp)
+$isPreview = false;
+if (is_string($slug) && !isset($all[$slug]) && ($_GET['preview'] ?? '') === '1' && ($_SESSION['role'] ?? '') === 'ADMIN') {
+    $draft = articleDbBySlug($slug);
+    if ($draft !== null) {
+        $all[$slug] = $draft;
+        $isPreview = true;
+    }
+}
+
 if (!is_string($slug) || !isset($all[$slug])) {
     showError(404, 'Không tìm thấy bài viết', 'Bài viết này không tồn tại hoặc đã bị gỡ.', [['/articles.php', 'Xem tất cả bài viết']]);
+}
+
+if (!$isPreview) {
+    articleRecordView($slug); // đếm lượt xem cho trang thống kê của admin
 }
 
 $categories = articleCategories();
