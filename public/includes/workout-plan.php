@@ -1,63 +1,160 @@
 <?php
 // public/includes/workout_plan.php
 // Hàm THUẦN: không truy vấn DB, không đọc $_SESSION/$_GET. Cùng đầu vào -> cùng đầu ra.
-// Quy tắc được giải thích trong docs/workout-split-rules.md (B7).
+// Lịch được chia theo các mẫu buổi tập (template): PPL, Upper/Lower, Anterior/Posterior, Toàn thân.
+// Mỗi buổi ghi rõ cần bao nhiêu bài cho từng "vai trò" (ngực ngang, ngực trên, vai sau, đùi sau...).
 
 // ===== WHITELIST ĐẦU VÀO =====
 const WORKOUT_GOALS  = ['LOSE_FAT', 'MAINTAIN', 'GAIN_MUSCLE'];
 const WORKOUT_LEVELS = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
 
-// ===== QUY TẮC SPLIT (theo số ngày/tuần) =====
-// Tên nhóm cơ là MÃ lưu trong cột exercises.muscle_group (xem $muscleLabels trong exercises.php): CHEST, BACK, SHOULDERS, LEGS, ARMS.
-// ABS và FULL_BODY có trong thư viện nhưng planner chưa dùng.
-// Nguyên tắc: mỗi nhóm cơ lớn xuất hiện >= 2 buổi/tuần; không xếp cùng nhóm ở 2 ngày liên tiếp.
-const WORKOUT_SPLIT_RULES = [
-    2 => ['split_type' => 'FULL_BODY', 'days' => [
-        ['day_of_week' => 1, 'groups' => ['LEGS', 'CHEST', 'BACK', 'SHOULDERS', 'ARMS']],
-        ['day_of_week' => 4, 'groups' => ['LEGS', 'CHEST', 'BACK', 'SHOULDERS', 'ARMS']],
-    ]],
-    3 => ['split_type' => 'FULL_BODY', 'days' => [
-        ['day_of_week' => 1, 'groups' => ['LEGS', 'CHEST', 'BACK', 'SHOULDERS', 'ARMS']],
-        ['day_of_week' => 3, 'groups' => ['LEGS', 'CHEST', 'BACK', 'SHOULDERS', 'ARMS']],
-        ['day_of_week' => 5, 'groups' => ['LEGS', 'CHEST', 'BACK', 'SHOULDERS', 'ARMS']],
-    ]],
-    4 => ['split_type' => 'UPPER_LOWER', 'days' => [
-        ['day_of_week' => 1, 'groups' => ['CHEST', 'BACK', 'SHOULDERS', 'ARMS']], // Upper
-        ['day_of_week' => 2, 'groups' => ['LEGS']],                      // Lower
-        ['day_of_week' => 4, 'groups' => ['CHEST', 'BACK', 'SHOULDERS', 'ARMS']],
-        ['day_of_week' => 5, 'groups' => ['LEGS']],
-    ]],
-    5 => ['split_type' => 'PPL', 'days' => [                             // PPL + Upper/Lower
-        ['day_of_week' => 1, 'groups' => ['CHEST', 'SHOULDERS']],               // Push
-        ['day_of_week' => 2, 'groups' => ['BACK', 'ARMS']],               // Pull
-        ['day_of_week' => 3, 'groups' => ['LEGS']],                      // Legs
-        ['day_of_week' => 5, 'groups' => ['CHEST', 'BACK', 'SHOULDERS', 'ARMS']], // Upper
-        ['day_of_week' => 6, 'groups' => ['LEGS']],                      // Lower
-    ]],
-    6 => ['split_type' => 'PPL', 'days' => [
-        ['day_of_week' => 1, 'groups' => ['CHEST', 'SHOULDERS']],
-        ['day_of_week' => 2, 'groups' => ['BACK', 'ARMS']],
-        ['day_of_week' => 3, 'groups' => ['LEGS']],
-        ['day_of_week' => 4, 'groups' => ['CHEST', 'SHOULDERS']],
-        ['day_of_week' => 5, 'groups' => ['BACK', 'ARMS']],
-        ['day_of_week' => 6, 'groups' => ['LEGS']],
-    ]],
-];
-// Chỉ dùng 3 kiểu split (đã thống nhất với A: bỏ BRO_SPLIT, lịch 5 ngày dùng PPL).
-const WORKOUT_SPLIT_TYPES = ['FULL_BODY', 'UPPER_LOWER', 'PPL'];
-
-// ===== KHỐI LƯỢNG & MỎI =====
-// Thứ tự ưu tiên nhóm cơ: nhóm lớn tập trước; khi buổi quá dài thì cắt từ cuối danh sách
 // Nhãn tiếng Việt để hiển thị (cùng nội dung với $muscleLabels của exercises.php)
 const WORKOUT_MUSCLE_LABELS = ['CHEST' => 'Ngực', 'BACK' => 'Lưng', 'SHOULDERS' => 'Vai', 'LEGS' => 'Chân', 'ARMS' => 'Tay', 'ABS' => 'Bụng', 'FULL_BODY' => 'Toàn thân'];
-const WORKOUT_GROUP_PRIORITY = ['LEGS', 'CHEST', 'BACK', 'SHOULDERS', 'ARMS'];
-// Ngân sách: số bài mỗi nhóm cơ mỗi TUẦN (x 3 set = 9 / 12 / 15 set/nhóm/tuần)
-const WORKOUT_WEEKLY_EXERCISES_PER_GROUP = ['BEGINNER' => 3, 'INTERMEDIATE' => 4, 'ADVANCED' => 5];
-// Trần số bài mỗi buổi (giới hạn mỏi / thời lượng)
-const WORKOUT_MAX_EXERCISES_PER_SESSION = ['BEGINNER' => 5, 'INTERMEDIATE' => 6, 'ADVANCED' => 8];
-const WORKOUT_SETS_PER_EXERCISE = 3;
-// Mục tiêu -> số lặp
-const WORKOUT_REPS_BY_GOAL = ['LOSE_FAT' => 15, 'MAINTAIN' => 12, 'GAIN_MUSCLE' => 10];
+
+// ===== VAI TRÒ CỦA TỪNG BÀI =====
+// id theo sql/seed_exercises_v2.sql. Bài không có trong bảng này (VD admin thêm sau) sẽ KHÔNG được
+// hàm sinh lịch chọn, cho tới khi thêm id của nó vào đây. Người dùng vẫn tự thêm bài đó vào lịch được.
+const WORKOUT_EXERCISE_ROLES = [
+    // Ngực
+    1 => 'CHEST_FLAT', 2 => 'CHEST_FLAT', 3 => 'CHEST_FLAT', 4 => 'CHEST_INCLINE', 5 => 'CHEST_FLAT', 6 => 'CHEST_FLAT',
+    // Lưng (11 nhún vai tính là cầu vai -> đi cùng vai sau; 12 siêu nhân chưa dùng trong template)
+    7 => 'BACK', 8 => 'BACK', 9 => 'BACK', 10 => 'BACK', 11 => 'DELT_REAR', 12 => 'LOWER_BACK', 13 => 'HINGE',
+    // Vai
+    14 => 'DELT_FRONT', 15 => 'DELT_SIDE', 16 => 'DELT_REAR', 17 => 'DELT_FRONT',
+    // Chân (25 bước ngang dây kháng lực là dạng háng -> xếp vào mông; thư viện CHƯA có bài khép háng và RDL)
+    18 => 'SQUAT', 19 => 'SQUAT', 20 => 'SQUAT', 21 => 'LEG_EXTENSION', 22 => 'LEG_CURL', 23 => 'GLUTE', 24 => 'CALF', 25 => 'GLUTE',
+    // Tay (31 cuốn cổ tay là cẳng tay, chưa dùng)
+    26 => 'BICEPS', 27 => 'BICEPS', 28 => 'TRICEPS', 29 => 'TRICEPS', 30 => 'TRICEPS', 31 => 'FOREARM',
+    // Bụng: thẳng bụng / liên sườn
+    32 => 'ABS', 33 => 'ABS', 34 => 'ABS', 35 => 'OBLIQUE', 36 => 'OBLIQUE',
+];
+
+// Vai trò -> cơ được tính khối lượng (để kiểm tra số set/tuần). Đùi trước, đùi sau, mông... tính riêng,
+// không gộp hết vào "Chân", vì một buổi chân có tới 7 bài cho 5 cơ khác nhau.
+const WORKOUT_ROLE_MUSCLE = [
+    'CHEST_FLAT' => 'CHEST', 'CHEST_INCLINE' => 'CHEST', 'BACK' => 'BACK', 'LOWER_BACK' => 'BACK',
+    'DELT_FRONT' => 'DELT_FRONT', 'DELT_SIDE' => 'DELT_SIDE', 'DELT_REAR' => 'DELT_REAR',
+    'BICEPS' => 'BICEPS', 'TRICEPS' => 'TRICEPS', 'FOREARM' => 'FOREARM',
+    'SQUAT' => 'QUADS', 'LEG_EXTENSION' => 'QUADS', 'HINGE' => 'HAMSTRINGS', 'LEG_CURL' => 'HAMSTRINGS',
+    'GLUTE' => 'GLUTES', 'ADDUCTOR' => 'ADDUCTORS', 'CALF' => 'CALVES', 'ABS' => 'ABS', 'OBLIQUE' => 'ABS',
+];
+
+// Nhãn hiển thị cho cơ (theo WORKOUT_ROLE_MUSCLE) và cho vai trò, dùng ở trang lịch tập
+const WORKOUT_MUSCLE_DETAIL_LABELS = [
+    'CHEST' => 'Ngực', 'BACK' => 'Lưng', 'DELT_FRONT' => 'Vai trước', 'DELT_SIDE' => 'Vai giữa', 'DELT_REAR' => 'Vai sau',
+    'BICEPS' => 'Tay trước', 'TRICEPS' => 'Tay sau', 'FOREARM' => 'Cẳng tay', 'QUADS' => 'Đùi trước', 'HAMSTRINGS' => 'Đùi sau',
+    'GLUTES' => 'Mông', 'ADDUCTORS' => 'Khép háng', 'CALVES' => 'Bắp chân', 'ABS' => 'Bụng',
+];
+const WORKOUT_ROLE_LABELS = [
+    'CHEST_FLAT' => 'Ngực', 'CHEST_INCLINE' => 'Ngực trên', 'BACK' => 'Lưng', 'LOWER_BACK' => 'Lưng dưới',
+    'DELT_FRONT' => 'Vai trước', 'DELT_SIDE' => 'Vai giữa', 'DELT_REAR' => 'Vai sau · cầu vai',
+    'BICEPS' => 'Tay trước', 'TRICEPS' => 'Tay sau', 'FOREARM' => 'Cẳng tay',
+    'SQUAT' => 'Đùi trước · squat', 'LEG_EXTENSION' => 'Đùi trước', 'HINGE' => 'Đùi sau · gập hông', 'LEG_CURL' => 'Đùi sau',
+    'GLUTE' => 'Mông', 'ADDUCTOR' => 'Khép háng', 'CALF' => 'Bắp chân', 'ABS' => 'Bụng', 'OBLIQUE' => 'Liên sườn',
+];
+
+// ===== MẪU BUỔI TẬP =====
+// Mỗi dòng: [danh sách vai trò, số bài tối thiểu, số bài tối đa]. Số bài như "1-2" thì
+// người mới / trung bình lấy số nhỏ, nâng cao lấy số lớn. Nhiều vai trò trong một dòng = chọn xoay vòng trong đó.
+const WORKOUT_SESSION_TEMPLATES = [
+    'PUSH' => ['label' => 'Đẩy', 'slots' => [
+        [['CHEST_FLAT'], 1, 2], [['CHEST_INCLINE'], 1, 1],          // 2-3 ngực
+        [['DELT_FRONT'], 1, 1], [['DELT_SIDE'], 1, 1],              // 2 vai (trước, giữa)
+        [['TRICEPS'], 1, 2],                                        // 1-2 tay sau
+    ]],
+    'PULL' => ['label' => 'Kéo', 'slots' => [
+        [['BACK'], 3, 3],                                           // 3 lưng
+        [['DELT_REAR'], 1, 2],                                      // 1-2 vai sau (tính cả cầu vai)
+        [['BICEPS'], 1, 2],                                         // 1-2 tay trước
+    ]],
+    'LEGS' => ['label' => 'Chân', 'slots' => [
+        [['SQUAT'], 1, 1], [['LEG_EXTENSION'], 1, 1],               // 2 đùi trước
+        [['HINGE'], 1, 1], [['LEG_CURL'], 1, 1],                    // 2 đùi sau
+        [['GLUTE'], 1, 2], [['ADDUCTOR'], 1, 1], [['CALF'], 1, 1],  // 1-2 mông, 1 khép háng, 1 bắp chân
+    ]],
+    'UPPER' => ['label' => 'Thân trên', 'slots' => [
+        [['CHEST_FLAT'], 1, 1], [['CHEST_INCLINE'], 1, 1],
+        [['BACK'], 2, 2],
+        [['DELT_SIDE'], 1, 1], [['DELT_REAR'], 1, 1],
+        [['BICEPS'], 1, 1], [['TRICEPS'], 1, 1],                    // 1 tay trước, 1 tay sau
+    ]],
+    'LOWER' => ['label' => 'Thân dưới', 'slots' => [
+        [['SQUAT'], 1, 1], [['LEG_EXTENSION'], 1, 1],               // 1 squat, 1 leg extension
+        [['HINGE'], 1, 1], [['LEG_CURL'], 1, 1],                    // 1 SLDL/RDL, 1 leg curl
+        [['GLUTE'], 1, 2], [['ADDUCTOR'], 1, 1], [['CALF'], 1, 1],  // 1-2 mông, 1 khép háng, 1 calf raise
+    ]],
+    'ANTERIOR' => ['label' => 'Mặt trước', 'slots' => [
+        [['CHEST_FLAT'], 1, 2], [['CHEST_INCLINE'], 1, 1],          // 2-3 ngực
+        [['DELT_FRONT'], 1, 1], [['DELT_SIDE'], 1, 1],              // 2 vai (trước, giữa)
+        [['TRICEPS'], 1, 2],                                        // 1-2 tay sau
+        [['SQUAT'], 1, 1], [['LEG_EXTENSION'], 1, 1],               // 2 đùi trước
+        [['ABS'], 1, 1], [['OBLIQUE'], 1, 1],                       // bụng: thẳng bụng + liên sườn
+    ]],
+    'POSTERIOR' => ['label' => 'Mặt sau', 'slots' => [
+        [['BACK'], 3, 3],                                           // 3 lưng
+        [['DELT_REAR'], 1, 1],                                      // 1 vai sau
+        [['BICEPS'], 1, 2],                                         // 1-2 tay trước
+        [['HINGE'], 1, 1], [['LEG_CURL'], 1, 1],                    // 2 đùi sau
+        [['GLUTE'], 1, 2], [['ADDUCTOR'], 1, 1], [['CALF'], 1, 1],  // 1-2 mông, 1 khép háng, 1 bắp chân
+    ]],
+    'FULL_BODY' => ['label' => 'Toàn thân', 'slots' => [
+        [['CHEST_FLAT', 'CHEST_INCLINE'], 1, 1],
+        [['BACK'], 1, 1],
+        [['DELT_FRONT', 'DELT_SIDE', 'DELT_REAR'], 1, 1],
+        [['SQUAT', 'LEG_EXTENSION'], 1, 1],
+        [['HINGE', 'LEG_CURL'], 1, 1],                             // đùi sau mỗi buổi (không xoay sang mông, kẻo đùi sau chỉ còn 1 buổi/tuần)
+        [['BICEPS'], 1, 1], [['TRICEPS'], 1, 1],
+    ]],
+];
+
+// ===== KIỂU CHIA THEO SỐ NGÀY/TUẦN =====
+// Mỗi cơ được tập >= 2 buổi/tuần. Lịch 3, 4, 5 ngày có nhiều kiểu để chọn (kể cả lịch kết hợp).
+const WORKOUT_SPLITS = [
+    'FULL_BODY' => [
+        2 => [[1, 'FULL_BODY'], [4, 'FULL_BODY']],
+        3 => [[1, 'FULL_BODY'], [3, 'FULL_BODY'], [5, 'FULL_BODY']],
+        4 => [[1, 'FULL_BODY'], [3, 'FULL_BODY'], [5, 'FULL_BODY'], [7, 'FULL_BODY']], // cách ngày, mỗi buổi xoay bài khác
+    ],
+    'UPPER_LOWER' => [
+        4 => [[1, 'UPPER'], [2, 'LOWER'], [4, 'UPPER'], [5, 'LOWER']],
+    ],
+    'ANTERIOR_POSTERIOR' => [
+        4 => [[1, 'ANTERIOR'], [2, 'POSTERIOR'], [4, 'ANTERIOR'], [5, 'POSTERIOR']],
+    ],
+    'PPL' => [
+        6 => [[1, 'PUSH'], [2, 'PULL'], [3, 'LEGS'], [4, 'PUSH'], [5, 'PULL'], [6, 'LEGS']],
+    ],
+    // ----- Lịch kết hợp: hết vòng kiểu chia thứ nhất rồi chuyển sang kiểu thứ hai -----
+    'PPL_UL' => [                                                     // Đẩy, Kéo, Chân rồi Trên, Dưới
+        5 => [[1, 'PUSH'], [2, 'PULL'], [3, 'LEGS'], [5, 'UPPER'], [6, 'LOWER']],
+    ],
+    'UL_FULL_BODY' => [                                               // Trên, Dưới rồi Toàn thân
+        3 => [[1, 'UPPER'], [3, 'LOWER'], [5, 'FULL_BODY']],
+        5 => [[1, 'UPPER'], [2, 'LOWER'], [4, 'FULL_BODY'], [5, 'UPPER'], [6, 'LOWER']],
+    ],
+    'AP_FULL_BODY' => [                                               // Mặt trước, Mặt sau rồi Toàn thân
+        3 => [[1, 'ANTERIOR'], [3, 'POSTERIOR'], [5, 'FULL_BODY']],
+        // Không có bản 5 ngày: Mặt trước/Mặt sau x2 + Toàn thân vượt 18 set/tuần cho ngực và lưng (nâng cao)
+    ],
+];
+// Kiểu chia mặc định khi người dùng không chọn
+const WORKOUT_DEFAULT_SPLIT = [2 => 'FULL_BODY', 3 => 'FULL_BODY', 4 => 'UPPER_LOWER', 5 => 'PPL_UL', 6 => 'PPL'];
+const WORKOUT_SPLIT_TYPES = ['UPPER_LOWER', 'ANTERIOR_POSTERIOR', 'FULL_BODY', 'PPL', 'PPL_UL', 'UL_FULL_BODY', 'AP_FULL_BODY']; // thứ tự hiện trên form: kiểu đầu tiên dùng được là mặc định
+const WORKOUT_SPLIT_LABELS = [
+    'FULL_BODY' => 'Toàn thân', 'UPPER_LOWER' => 'Trên / Dưới',
+    'ANTERIOR_POSTERIOR' => 'Mặt trước / Mặt sau', 'PPL' => 'Đẩy / Kéo / Chân',
+    'PPL_UL' => 'PPL + Trên / Dưới', 'UL_FULL_BODY' => 'Trên / Dưới + Toàn thân', 'AP_FULL_BODY' => 'Mặt trước / Mặt sau + Toàn thân',
+];
+
+// ===== KHỐI LƯỢNG =====
+// Theo mẫu: 1-3 set mỗi bài, 6-8 lặp, nghỉ 3-4 phút giữa các set (tập nặng, ít set).
+const WORKOUT_SETS_BY_LEVEL = ['BEGINNER' => 2, 'INTERMEDIATE' => 2, 'ADVANCED' => 3];
+const WORKOUT_REP_RANGE     = [6, 8];
+const WORKOUT_REST_MINUTES  = [3, 4];
+// Số lặp lưu vào DB là mức trên của khoảng: làm được 8 lặp thì lần sau tăng tạ.
+const WORKOUT_TARGET_REPS   = WORKOUT_REP_RANGE[1];
+// Mặc định cho ô "Set" khi người dùng tự thêm bài
+const WORKOUT_SETS_PER_EXERCISE = 2;
 // Trình độ -> độ khó bài được phép chọn
 const WORKOUT_LEVEL_DIFFICULTIES = [
     'BEGINNER'     => ['BEGINNER'],
@@ -66,16 +163,17 @@ const WORKOUT_LEVEL_DIFFICULTIES = [
 ];
 
 /**
- * @param int    $daysPerWeek      2..6
- * @param string $goal             LOSE_FAT | MAINTAIN | GAIN_MUSCLE
- * @param string $level            BEGINNER | INTERMEDIATE | ADVANCED
- * @param array  $exercisesByGroup ['CHEST' => [['id'=>1,'difficulty'=>'BEGINNER'], ...], ...]
- * @return array ['split_type','days_per_week','days'=>[['day_of_week','groups','exercises'=>[...]]]]
+ * @param int         $daysPerWeek      2..6
+ * @param string      $goal             LOSE_FAT | MAINTAIN | GAIN_MUSCLE
+ * @param string      $level            BEGINNER | INTERMEDIATE | ADVANCED
+ * @param array       $exercisesByGroup ['CHEST' => [['id'=>1,'difficulty'=>'BEGINNER'], ...], ...]
+ * @param string|null $splitType        null = mặc định theo số ngày; các kiểu dùng được xem WORKOUT_SPLITS
+ * @return array ['split_type','days_per_week','days'=>[['day_of_week','groups','session','exercises'=>[...]]]]
  * @throws InvalidArgumentException khi đầu vào ngoài whitelist
  */
-function generateWorkoutPlan(int $daysPerWeek, string $goal, string $level, array $exercisesByGroup): array
+function generateWorkoutPlan(int $daysPerWeek, string $goal, string $level, array $exercisesByGroup, ?string $splitType = null): array
 {
-    if (!isset(WORKOUT_SPLIT_RULES[$daysPerWeek])) {
+    if (!isset(WORKOUT_DEFAULT_SPLIT[$daysPerWeek])) {
         throw new InvalidArgumentException('Số ngày/tuần phải từ 2 đến 6.');
     }
     if (!in_array($goal, WORKOUT_GOALS, true)) {
@@ -84,143 +182,120 @@ function generateWorkoutPlan(int $daysPerWeek, string $goal, string $level, arra
     if (!in_array($level, WORKOUT_LEVELS, true)) {
         throw new InvalidArgumentException('Trình độ không hợp lệ.');
     }
+    $splitType = $splitType ?? WORKOUT_DEFAULT_SPLIT[$daysPerWeek];
+    if (!isset(WORKOUT_SPLITS[$splitType][$daysPerWeek])) {
+        throw new InvalidArgumentException('Kiểu chia lịch này không dùng được với số ngày đã chọn.');
+    }
 
-    $rule  = WORKOUT_SPLIT_RULES[$daysPerWeek];
-    $reps  = WORKOUT_REPS_BY_GOAL[$goal];
-    $pools = buildExercisePools($exercisesByGroup, WORKOUT_LEVEL_DIFFICULTIES[$level]);
-    $slots = planSessionSlots(
-        $rule['days'],
-        WORKOUT_WEEKLY_EXERCISES_PER_GROUP[$level],
-        WORKOUT_MAX_EXERCISES_PER_SESSION[$level]
-    );
+    $sets  = WORKOUT_SETS_BY_LEVEL[$level];
+    $pools = buildRolePools($exercisesByGroup, WORKOUT_LEVEL_DIFFICULTIES[$level]);
 
-    $cursors = []; // con trỏ xoay vòng theo nhóm cơ, giữ qua các ngày để các buổi dùng bài khác nhau
+    $cursors = []; // con trỏ xoay vòng theo vai trò, giữ qua các ngày để các buổi dùng bài khác nhau
     $days = [];
-    foreach ($rule['days'] as $dayIndex => $day) {
+    foreach (WORKOUT_SPLITS[$splitType][$daysPerWeek] as [$dayOfWeek, $sessionKey]) {
+        $session = WORKOUT_SESSION_TEMPLATES[$sessionKey];
         $rows = [];
-        foreach (WORKOUT_GROUP_PRIORITY as $group) {
-            $count = $slots[$dayIndex][$group] ?? 0;
-            if ($count === 0 || empty($pools[$group])) {
-                continue; // thiếu bài của nhóm này -> bỏ qua, không lỗi
+        $usedToday = [];
+        foreach ($session['slots'] as [$roles, $min, $max]) {
+            $count = $level === 'ADVANCED' ? $max : $min;
+            $pool  = mergeRolePools($pools, $roles);
+            if (empty($pool)) {
+                continue; // thư viện chưa có bài cho vai trò này -> bỏ qua, không lỗi
             }
-            $cursors[$group] = $cursors[$group] ?? 0;
-            foreach (takeExercises($pools[$group], $cursors[$group], $count) as $ex) {
+            $key = implode('|', $roles);
+            $cursors[$key] = $cursors[$key] ?? 0;
+            foreach (takeExercises($pool, $cursors[$key], $count, $usedToday) as $ex) {
+                $usedToday[$ex['id']] = true;
                 $rows[] = [
                     'exercise_id' => (int)$ex['id'],
-                    'sets'        => WORKOUT_SETS_PER_EXERCISE,
-                    'reps'        => $reps,
+                    'sets'        => $sets,
+                    'reps'        => WORKOUT_TARGET_REPS,
                     'order_index' => count($rows) + 1,
                 ];
             }
         }
         $days[] = [
-            'day_of_week' => $day['day_of_week'],
-            'groups'      => $day['groups'],
+            'day_of_week' => $dayOfWeek,
+            'session'     => $sessionKey,
+            'groups'      => [$session['label']],
             'exercises'   => $rows,
         ];
     }
 
     return [
-        'split_type'    => $rule['split_type'],
+        'split_type'    => $splitType,
         'days_per_week' => $daysPerWeek,
         'days'          => $days,
     ];
 }
 
-/** Lọc bài theo độ khó cho từng nhóm cơ. */
-function buildExercisePools(array $exercisesByGroup, array $allowedDifficulties): array
+/**
+ * Tên buổi theo ngày cho một lịch đã lưu, VD [1 => 'Đẩy', 2 => 'Kéo', ...] (để trang lịch tập hiển thị).
+ * Lịch cũ / kiểu chia không còn trong WORKOUT_SPLITS thì trả mảng rỗng.
+ */
+function workoutSessionLabels(string $splitType, int $daysPerWeek): array
+{
+    $labels = [];
+    foreach (WORKOUT_SPLITS[$splitType][$daysPerWeek] ?? [] as [$dayOfWeek, $sessionKey]) {
+        $labels[$dayOfWeek] = WORKOUT_SESSION_TEMPLATES[$sessionKey]['label'];
+    }
+    return $labels;
+}
+
+/** Các kiểu chia dùng được với từng số ngày, VD [4 => ['UPPER_LOWER', 'ANTERIOR_POSTERIOR', 'FULL_BODY'], ...] */
+function workoutSplitOptions(): array
+{
+    $options = [];
+    foreach (WORKOUT_SPLITS as $splitType => $byDays) {
+        foreach ($byDays as $days => $_) {
+            $options[$days][] = $splitType;
+        }
+    }
+    ksort($options);
+    return $options;
+}
+
+/** Lọc bài theo độ khó rồi chia theo vai trò. Bài không có trong WORKOUT_EXERCISE_ROLES bị bỏ qua. */
+function buildRolePools(array $exercisesByGroup, array $allowedDifficulties): array
 {
     $pools = [];
-    foreach ($exercisesByGroup as $group => $list) {
+    foreach ($exercisesByGroup as $list) {
         foreach ($list as $ex) {
-            if (in_array($ex['difficulty'] ?? '', $allowedDifficulties, true)) {
-                $pools[$group][] = $ex;
+            $role = WORKOUT_EXERCISE_ROLES[(int)$ex['id']] ?? null;
+            if ($role !== null && in_array($ex['difficulty'] ?? '', $allowedDifficulties, true)) {
+                $pools[$role][] = $ex;
             }
         }
     }
     return $pools;
 }
 
-/**
- * Chia ngân sách tuần của mỗi nhóm cơ cho các buổi có nhóm đó, rồi cắt theo trần mỗi buổi.
- * Ví dụ: ngân sách 4 bài/tuần, nhóm xuất hiện 3 buổi -> 2 + 1 + 1.
- * @return array [dayIndex => ['LEGS' => 2, 'CHEST' => 1, ...]]
- */
-function planSessionSlots(array $days, int $weeklyPerGroup, int $maxPerSession): array
+/** Gộp bài của nhiều vai trò thành một danh sách, sắp theo id để kết quả ổn định. */
+function mergeRolePools(array $pools, array $roles): array
 {
-    $sessionsOfGroup = [];
-    foreach ($days as $i => $day) {
-        foreach ($day['groups'] as $group) {
-            $sessionsOfGroup[$group][] = $i;
+    $merged = [];
+    foreach ($roles as $role) {
+        foreach ($pools[$role] ?? [] as $ex) {
+            $merged[] = $ex;
         }
     }
-
-    $slots = array_fill(0, count($days), []);
-    $groupNo = 0;
-    foreach ($sessionsOfGroup as $group => $dayIdxs) {
-        $f    = count($dayIdxs);
-        $base = intdiv($weeklyPerGroup, $f);
-        $rem  = $weeklyPerGroup % $f;
-        foreach ($dayIdxs as $k => $dayIdx) {
-            // phần dư rải bắt đầu từ vị trí khác nhau theo từng nhóm để các buổi không lệch tải
-            $extra = ((($k - $groupNo) % $f + $f) % $f) < $rem ? 1 : 0;
-            $slots[$dayIdx][$group] = $base + $extra;
-        }
-        $groupNo++;
-    }
-
-    foreach ($slots as $i => $s) {
-        $slots[$i] = trimSessionSlots($s, $maxPerSession);
-    }
-    return $slots;
-}
-
-/**
- * Buổi quá dài thì giảm dần: trước hết bớt nhóm đang có nhiều bài nhất (hòa thì bớt nhóm ưu tiên thấp),
- * khi mọi nhóm chỉ còn 1 bài mà vẫn vượt trần thì bỏ nhóm ưu tiên thấp nhất.
- */
-function trimSessionSlots(array $slots, int $max): array
-{
-    $lowToHigh = array_reverse(WORKOUT_GROUP_PRIORITY);
-    while (array_sum($slots) > $max) {
-        $target = null;
-        $best = 1;
-        foreach ($lowToHigh as $g) {
-            if (($slots[$g] ?? 0) > $best) {
-                $best = $slots[$g];
-                $target = $g;
-            }
-        }
-        if ($target === null) {
-            foreach ($lowToHigh as $g) {
-                if (($slots[$g] ?? 0) > 0) {
-                    $target = $g;
-                    break;
-                }
-            }
-        }
-        if ($target === null) {
-            break;
-        }
-        $slots[$target]--;
-    }
-    return $slots;
+    usort($merged, fn($a, $b) => (int)$a['id'] <=> (int)$b['id']);
+    return $merged;
 }
 
 /**
  * Lấy $count bài kế tiếp từ $pool theo con trỏ xoay vòng (không random -> ổn định, dễ test).
- * Không trả trùng bài trong cùng một lần gọi; pool nhỏ hơn $count thì trả ít hơn.
+ * Không lấy bài đã có trong buổi ($usedToday); pool nhỏ hơn $count thì trả ít hơn.
  */
-function takeExercises(array $pool, int &$cursor, int $count): array
+function takeExercises(array $pool, int &$cursor, int $count, array $usedToday = []): array
 {
     $n = count($pool);
     $picked = [];
-    $used = [];
     for ($tries = 0; $tries < $n && count($picked) < $count; $tries++) {
         $ex = $pool[$cursor % $n];
         $cursor++;
-        if (!isset($used[$ex['id']])) {
-            $used[$ex['id']] = true;
+        if (!isset($usedToday[$ex['id']])) {
+            $usedToday[$ex['id']] = true;
             $picked[] = $ex;
         }
     }

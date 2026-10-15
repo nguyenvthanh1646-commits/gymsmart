@@ -1,6 +1,6 @@
 <?php
 // public/api/workout-plan-generate.php
-// POST: days_per_week, level  ->  JSON. user_id lấy từ $_SESSION, KHÔNG nhận từ client.
+// POST: days_per_week, level, split_type (tùy chọn)  ->  JSON. user_id lấy từ $_SESSION, KHÔNG nhận từ client.
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
@@ -27,9 +27,11 @@ require_once __DIR__ . '/../includes/workout-plan-db.php';
 
 $daysPerWeek = filter_var($_POST['days_per_week'] ?? null, FILTER_VALIDATE_INT);
 $level       = (string)($_POST['level'] ?? '');
+// Kiểu chia (tùy chọn): rỗng = mặc định theo số ngày. Giá trị lạ bị generateWorkoutPlan từ chối (whitelist).
+$splitType   = (string)($_POST['split_type'] ?? '');
 
 try {
-    $planId = createWorkoutPlanForUser($pdo, $userId, $daysPerWeek === false ? 0 : $daysPerWeek, $level);
+    $planId = createWorkoutPlanForUser($pdo, $userId, $daysPerWeek === false ? 0 : $daysPerWeek, $level, $splitType === '' ? null : $splitType);
     jsonResponse(200, ['success' => true, 'plan_id' => $planId]);
 } catch (InvalidArgumentException $e) {
     jsonResponse(422, ['success' => false, 'message' => $e->getMessage()]);

@@ -53,7 +53,7 @@ function saveWorkoutPlan(PDO $pdo, int $userId, array $plan): int
         throw new RuntimeException('Chưa đủ bài tập trong thư viện để tạo lịch.');
     }
 
-    $name = 'Lịch ' . $plan['split_type'] . ' ' . $plan['days_per_week'] . ' ngày/tuần';
+    $name = 'Lịch ' . (WORKOUT_SPLIT_LABELS[$plan['split_type']] ?? $plan['split_type']) . ' ' . $plan['days_per_week'] . ' ngày/tuần';
 
     $pdo->beginTransaction();
     try {
@@ -93,14 +93,14 @@ function saveWorkoutPlan(PDO $pdo, int $userId, array $plan): int
  * Luồng đầy đủ: lấy goal + bài tập từ DB -> B8 sinh lịch -> lưu.
  * $userId PHẢI lấy từ $_SESSION ở nơi gọi, không nhận từ form/URL.
  */
-function createWorkoutPlanForUser(PDO $pdo, int $userId, int $daysPerWeek, string $level): int
+function createWorkoutPlanForUser(PDO $pdo, int $userId, int $daysPerWeek, string $level, ?string $splitType = null): int
 {
     $goal = fetchUserGoal($pdo, $userId);
     if ($goal === null) {
         throw new InvalidArgumentException('Bạn chưa chọn mục tiêu trong hồ sơ.');
     }
     $exercises = fetchExercisesGroupedByMuscle($pdo);
-    $plan = generateWorkoutPlan($daysPerWeek, $goal, $level, $exercises); // ném InvalidArgumentException nếu sai đầu vào
+    $plan = generateWorkoutPlan($daysPerWeek, $goal, $level, $exercises, $splitType); // ném InvalidArgumentException nếu sai đầu vào
     return saveWorkoutPlan($pdo, $userId, $plan);
 }
 

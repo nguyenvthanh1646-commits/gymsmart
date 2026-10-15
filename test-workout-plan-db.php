@@ -17,14 +17,11 @@ function makeDb(): PDO {
     $pdo->exec('CREATE TABLE workout_plans (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, name TEXT, split_type TEXT, days_per_week INTEGER, status TEXT)');
     $pdo->exec('CREATE TABLE workout_plan_exercises (id INTEGER PRIMARY KEY AUTOINCREMENT, workout_plan_id INTEGER, exercise_id INTEGER NOT NULL, day_of_week INTEGER, sets INTEGER, reps INTEGER, order_index INTEGER)');
     $pdo->exec("INSERT INTO users (id, goal) VALUES (1,'GAIN_MUSCLE'), (2,'LOSE_FAT'), (3,NULL)");
-    $id = 1;
-    foreach (['CHEST', 'BACK', 'SHOULDERS', 'LEGS', 'ARMS'] as $g) {
-        foreach (['BEGINNER', 'INTERMEDIATE', 'BEGINNER', 'ADVANCED'] as $d) {
-            $pdo->exec("INSERT INTO exercises (id, name, muscle_group, type, difficulty) VALUES ($id, 'Bài $id', '$g', 'RESISTANCE', '$d')");
-            $id++;
-        }
+    // 40 bài thật của seed_exercises_v2.sql (id 37-39 là cardio)
+    $insert = $pdo->prepare('INSERT INTO exercises (id, name, muscle_group, type, difficulty) VALUES (?, ?, ?, ?, ?)');
+    foreach (require __DIR__ . '/test-exercises-fixture.php' as $ex) {
+        $insert->execute([$ex['id'], $ex['name'], $ex['muscle_group'], $ex['type'], $ex['difficulty']]);
     }
-    $pdo->exec("INSERT INTO exercises (id, name, muscle_group, type, difficulty) VALUES ($id, 'Chạy bộ', 'Tim mạch', 'CARDIO', 'BEGINNER')");
     return $pdo;
 }
 function count1(PDO $pdo, string $sql): int { return (int)$pdo->query($sql)->fetchColumn(); }
@@ -36,7 +33,7 @@ $p1 = createWorkoutPlanForUser($pdo, 1, 3, 'BEGINNER');
 check('Tạo lịch lần 1: trả về id', $p1 > 0);
 check('Có đúng 1 lịch ACTIVE', count1($pdo, "SELECT COUNT(*) FROM workout_plans WHERE user_id=1 AND status='ACTIVE'") === 1);
 check('Có dòng bài tập cho lịch', count1($pdo, "SELECT COUNT(*) FROM workout_plan_exercises WHERE workout_plan_id=$p1") > 0);
-check('Không lấy bài CARDIO', count1($pdo, "SELECT COUNT(*) FROM workout_plan_exercises WHERE exercise_id = 21") === 0);
+check('Không lấy bài CARDIO', count1($pdo, "SELECT COUNT(*) FROM workout_plan_exercises WHERE exercise_id IN (37, 38, 39)") === 0);
 
 // 2. Tạo lịch lần 2: lịch cũ -> ARCHIVED, vẫn chỉ 1 ACTIVE
 $p2 = createWorkoutPlanForUser($pdo, 1, 4, 'INTERMEDIATE');
@@ -116,7 +113,7 @@ $taken = array_map('intval', $edit->query("SELECT exercise_id FROM workout_plan_
 $free = (int)$edit->query('SELECT id FROM exercises WHERE type=\'RESISTANCE\' AND id NOT IN (' . implode(',', $taken) . ') ORDER BY id LIMIT 1')->fetchColumn();
 replacePlanExercise($edit, 1, $rowA, $free);
 check('Đổi bài thành công', count1($edit, "SELECT exercise_id FROM workout_plan_exercises WHERE id=$rowA") === $free);
-check('Từ chối đổi sang bài cardio', expectThrow(fn() => replacePlanExercise($edit, 1, $rowA, 21), InvalidArgumentException::class));
+check('Từ chối đổi sang bài cardio', expectThrow(fn() => replacePlanExercise($edit, 1, $rowA, 37), InvalidArgumentException::class));
 check('Từ chối đổi sang bài không tồn tại', expectThrow(fn() => replacePlanExercise($edit, 1, $rowA, 99999), InvalidArgumentException::class));
 $otherInDay = (int)$edit->query("SELECT exercise_id FROM workout_plan_exercises WHERE workout_plan_id=$planA AND day_of_week=$day AND id<>$rowA LIMIT 1")->fetchColumn();
 check('Từ chối đổi thành bài đã có trong ngày', expectThrow(fn() => replacePlanExercise($edit, 1, $rowA, $otherInDay), RuntimeException::class));
@@ -126,7 +123,8 @@ $freeAdd = (int)$edit->query("SELECT id FROM exercises WHERE type='RESISTANCE' O
 $newId = addPlanExercise($edit, 1, 7, $freeAdd, 3, 10);
 check('Thêm bài vào ngày trống: có id', $newId > 0);
 check('Bài mới có order_index = 1 ở ngày trống', count1($edit, "SELECT order_index FROM workout_plan_exercises WHERE id=$newId") === 1);
-$newId2 = addPlanExercise($edit, 1, 7, $freeAdd - 1, 3, 10);
+$freeAdd2 = (int)$edit->query("SELECT id FROM exercises WHERE type='RESISTANCE' AND id <> $freeAdd ORDER BY id DESC LIMIT 1")->fetchColumn();
+$newId2 = addPlanExercise($edit, 1, 7, $freeAdd2, 3, 10);
 check('Bài thứ hai cùng ngày có order_index = 2', count1($edit, "SELECT order_index FROM workout_plan_exercises WHERE id=$newId2") === 2);
 check('Từ chối thêm bài trùng trong ngày', expectThrow(fn() => addPlanExercise($edit, 1, 7, $freeAdd, 3, 10), RuntimeException::class));
 check('Từ chối ngày = 8', expectThrow(fn() => addPlanExercise($edit, 1, 8, $freeAdd, 3, 10), InvalidArgumentException::class));
@@ -144,7 +142,7 @@ check('Dòng của lịch ARCHIVED không sửa được', expectThrow(fn() => u
 // 8g. fetchActivePlan trả row_id; thư viện bài
 $act = fetchActivePlan($edit, 1);
 check('fetchActivePlan có row_id', isset(current($act['days'])[0]['row_id']));
-check('fetchExerciseLibrary chỉ trả bài kháng lực', count(fetchExerciseLibrary($edit)) === 20);
+check('fetchExerciseLibrary chỉ trả bài kháng lực', count(fetchExerciseLibrary($edit)) === 37); // 40 bài - 3 cardio
 
 echo PHP_EOL . ($fails === 0 ? 'TẤT CẢ ĐỀU PASS' : "$fails TEST FAIL") . PHP_EOL;
 exit($fails === 0 ? 0 : 1);
