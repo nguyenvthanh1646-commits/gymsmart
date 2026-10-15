@@ -10,6 +10,7 @@
  *   2. Sửa các trường:
  *        slug      : trùng tên file (không có .php), dùng trong đường dẫn /article.php?slug=...
  *        title     : tiêu đề
+ *        mustRead  : (tuỳ chọn) true = bài nền tảng cần đọc trước khi tập, có nhãn riêng và hiện ở đầu trang Bài viết
  *        category  : protein | carb | fat | nutrition | training | health | general   (xem articleCategories())
  *        tags      : (tùy chọn) danh sách nhãn phụ hiện cạnh chuyên mục, ví dụ ['Khoa học thể thao']
  *        summary   : 1 đến 2 câu tóm tắt, hiện ở thẻ ngoài danh sách
@@ -111,6 +112,7 @@ function articleNormalize(array $article): ?array
     $article['quick']    = (string)($article['quick'] ?? '');
     $article['date']     = (string)($article['date'] ?? '');
     $article['order']    = (int)($article['order'] ?? 100);
+    $article['mustRead'] = !empty($article['mustRead']); // true = bài nền tảng, hiện nhãn "Đọc trước khi tập"
     $article['imageAlt'] = (string)($article['imageAlt'] ?? '');
     $article['image']    = articleImageOk($article['image'] ?? null) ? $article['image'] : '';
     $article['tags']     = array_values(array_filter((array)($article['tags'] ?? []), 'is_string'));

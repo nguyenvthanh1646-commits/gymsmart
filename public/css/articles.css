@@ -146,3 +146,17 @@
     .ar-study li { grid-template-columns: 1fr; gap: 6px; }
     .ar-refs { padding: 4px 16px 16px; }
 }
+
+/* ===== Nhãn "Đọc trước khi tập" cho bài nền tảng ===== */
+.ar-tag--must { background: #ff5a1f; color: #fff; text-transform: uppercase; letter-spacing: .04em; font-size: .7rem; font-weight: 700; }
+.ar-must { margin: 0 0 14px; padding: 16px 20px; border-radius: 16px; background: #fff4ee; border: 1px solid #ffd2bd; border-left: 5px solid #ff5a1f; }
+.ar-must b { display: block; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: #c2410c; margin-bottom: 4px; }
+.ar-must p { margin: 0; font-size: .98rem; line-height: 1.6; color: #1d2433; }
+.ar-must .ar-must__next { margin-top: 8px; font-size: .92rem; }
+.ar-must a { color: #c2410c; font-weight: 600; }
+.ar-mustlist { margin: 0 0 22px; padding: 18px 22px; border-radius: 16px; background: #fff4ee; border: 1px solid #ffd2bd; }
+.ar-mustlist h2 { margin: 0 0 4px; font-size: 1.05rem; color: #c2410c; }
+.ar-mustlist p { margin: 0 0 8px; font-size: .92rem; color: #475467; }
+.ar-mustlist ul { margin: 0; padding-left: 20px; }
+.ar-mustlist li { margin: 4px 0; }
+.ar-mustlist a { color: #1d2433; font-weight: 600; }

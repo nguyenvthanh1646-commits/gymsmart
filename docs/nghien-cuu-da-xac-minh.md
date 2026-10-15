@@ -25,3 +25,19 @@ Mục "Chưa kiểm chứng" nghĩa là bản tóm tắt không nêu, cần mở
 
 ## Lưu ý về 5 tiêu chí
 Phân tích gộp không có "phê duyệt đạo đức" riêng (dùng dữ liệu đã công bố). Bản ghi cũng thường không nêu số người, khoảng tin cậy hay tài trợ ở phần tóm tắt. Bảng đánh giá trong bài sẽ ghi rõ từng tiêu chí là Đạt, Không áp dụng hoặc Chưa kiểm chứng, không ghi "đạt" khi chưa đọc được.
+
+## Bổ sung 15/10/2026: hai bài nền tảng (gồng core, thở cơ hoành)
+
+Nguồn kiểm tra: đọc được nội dung trang/bản PDF của từng nguồn (không phải trí nhớ). PubMed và PMC bị chặn kiểm tra trình duyệt nên PMID chỉ ghi khi đã thấy, còn lại ghi DOI hoặc không ghi.
+
+| # | Nghiên cứu | Tạp chí, năm | Thiết kế và quy mô | Số liệu dùng trong bài |
+|---|---|---|---|---|
+| 10 | Grenier SG, McGill SM. Quantification of lumbar stability by using 2 different abdominal activation strategies | Arch Phys Med Rehabil 2007;88(1):54-62 | Trong cùng người, 8 nam khỏe mạnh 20 đến 33 tuổi, cộng mô phỏng | Ổn định (Nm/rad): gồng 511,3 / 527,3 / 555,0 / 546,1 so với hóp 474,6 / 495,6 / 517,7 / 533,4 (không tải / hai tay / tay trái / tay phải), P < 0,001; lực nén P = 0,54; mô phỏng +32% ổn định, +15% lực nén. Tài trợ NSERC Canada, không có lợi ích thương mại. PMID, DOI: chưa kiểm chứng (không ghi trong bài) |
+| 11 | Blazek D và cs. Systematic review of intra-abdominal and intrathoracic pressures... Valsalva | Biol Sport 2019;36(4):373-386, DOI 10.5114/biolsport.2019.88759 | Tổng quan hệ thống, tìm đến 1/11/2018, 16 trong 1.125 nghiên cứu | IAP: squat > 200 mmHg; deadlift, slide row, leg press 161 đến 176; đẩy ngực 79 ± 44. Tài trợ, xung đột: chưa kiểm chứng |
+| 12 | MacDougall JD và cs. Arterial blood pressure response to heavy resistance exercise | J Appl Physiol 1985;58(3):785-790, DOI 10.1152/jappl.1985.58.3.785 | 5 vận động viên thể hình, ống thông động mạch | Đạp đùi hai chân 320/250 mmHg (1 người > 480/350); cuốn tạ một tay 255/190. Tài trợ, đạo đức: chưa kiểm chứng |
+| 13 | Kolář P và cs. Postural function of the diaphragm in persons with and without chronic low back pain | J Orthop Sports Phys Ther 2012;42(4):352-362, DOI 10.2519/jospt.2012.3830 | Bệnh chứng, 18 đau lưng mạn tính và 29 khỏe mạnh | Thở bình thường: không khác biệt; khi gồng đẳng trường tay/chân, nhóm đau lưng có biên độ cơ hoành nhỏ hơn và vị trí hít vào cao hơn. Tài trợ: quỹ Movement without Help (Praha). P, KTC: chưa kiểm chứng |
+| 14 | Hamasaki H. Effects of diaphragmatic breathing on health: a narrative review | Medicines 2020;7(10):65, DOI 10.3390/medicines7100065 | Tổng quan tường thuật | Chỉ nêu lại số liệu của nghiên cứu được trích (Wang 2010 n=22; Hopper 2019; Chen 2017 n=30; Holland 2012, 16 thử nghiệm). Chưa mở các nghiên cứu gốc. Tài trợ, xung đột: chưa kiểm chứng |
+
+Không đưa vào bài: Hackett và Chow 2013 (J Strength Cond Res, nghiệm pháp Valsalva và áp lực ổ bụng): chỉ thấy tiêu đề, không đọc được nội dung nên không dùng số liệu nào.
+Chưa có nguồn đã kiểm chứng cho: tác dụng của thở cơ hoành lên sức mạnh/chấn thương khi tập tạ; đai lưng; thời lượng luyện thở tối ưu. Bài ghi rõ là chưa có bằng chứng.
+Hình trong bài là hình tự vẽ (SVG), biểu đồ vẽ lại từ số liệu trong bảng trên, không sao chép hình từ bài báo.

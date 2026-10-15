@@ -16,6 +16,7 @@ $cat = $_GET['cat'] ?? '';
 if (!is_string($cat) || !isset($categories[$cat])) {
     $cat = ''; // không hợp lệ thì hiện tất cả
 }
+$mustRead = array_filter($all, fn($a) => $a['mustRead']);
 $articles = $cat === '' ? $all : array_filter($all, fn($a) => $a['category'] === $cat);
 
 $pageTitle = 'Bài viết';
@@ -31,6 +32,18 @@ include __DIR__ . '/includes/header.php';
         </div>
         <span class="pg-count"><b><?= count($articles) ?></b> bài viết</span>
     </div>
+
+    <?php if (!empty($mustRead) && $cat === ''): ?>
+        <section class="ar-mustlist">
+            <h2>Đọc trước khi bắt đầu tập</h2>
+            <p>Hai kỹ thuật nền tảng nên học trước mọi chương trình tập.</p>
+            <ul>
+                <?php foreach ($mustRead as $ms => $m): ?>
+                    <li><a href="/article.php?slug=<?= htmlspecialchars(rawurlencode($ms)) ?>"><?= htmlspecialchars($m['title']) ?></a></li>
+                <?php endforeach; ?>
+            </ul>
+        </section>
+    <?php endif; ?>
 
     <div class="chips" role="group" aria-label="Chuyên mục">
         <a class="chip<?= $cat === '' ? ' is-active' : '' ?>" href="/articles.php">Tất cả</a>
@@ -58,8 +71,9 @@ include __DIR__ . '/includes/header.php';
                         <?php endif; ?>
                         <span class="ar-card__over">
                             <span class="ar-tags">
+                                <?php if ($a['mustRead']): ?><span class="ar-tag ar-tag--must">Đọc trước khi tập</span><?php endif; ?>
                                 <span class="ar-tag ar-tag--glass"><?= htmlspecialchars($catLabel) ?></span>
-                                <?php foreach (array_slice($a['tags'], 0, 1) as $tag): ?>
+                                <?php foreach (array_slice($a['tags'], 0, $a['mustRead'] ? 0 : 1) as $tag): ?>
                                     <span class="ar-tag ar-tag--glass"><?= htmlspecialchars($tag) ?></span>
                                 <?php endforeach; ?>
                             </span>
