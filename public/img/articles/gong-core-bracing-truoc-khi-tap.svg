@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="t d">
+<title id="t">Bìa bài gồng core đúng cách</title><desc id="d">Ảnh bìa minh họa: mặt cắt ngang thân người, cơ thành bụng siết đều 360 độ quanh cột sống</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e6b8a"/><stop offset="1" stop-color="#0b2f4d"/></linearGradient>
+<pattern id="p" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="#ffffff" fill-opacity=".10"/></pattern></defs>
+<rect width="1200" height="675" fill="url(#g)"/><rect width="1200" height="675" fill="url(#p)"/>
+<circle cx="1080" cy="90" r="210" fill="#ffffff" fill-opacity=".06"/>
+<g transform="translate(1000 260) scale(0.55)" fill="none"><ellipse rx="190" ry="140" stroke="#fff" stroke-opacity=".25" stroke-width="6"/><ellipse rx="160" ry="112" stroke="#fff" stroke-opacity=".55" stroke-width="26"/><circle cy="96" r="26" fill="#fff" fill-opacity=".85"/><g stroke="#ffb27a" stroke-width="7" stroke-linecap="round"><path d="M0 -60 L0 -110"/><path d="M-90 -40 L-130 -70"/><path d="M90 -40 L130 -70"/><path d="M-110 20 L-160 30"/><path d="M110 20 L160 30"/></g></g>
+<g font-family="Inter, 'Segoe UI', Roboto, Arial, sans-serif" fill="#ffffff">
+<rect x="70" y="64" rx="19" width="295" height="38" fill="#ff5a1f"/>
+<text x="90" y="90" font-size="21" font-weight="700" letter-spacing="1">KỸ THUẬT NỀN TẢNG</text>
+<text x="66" y="285" font-size="150" font-weight="800" letter-spacing="-2">Gồng core</text><text x="70" y="352" font-size="40" font-weight="800" fill="#ffd27a">360° quanh cột sống</text>
+<text x="70" y="410" font-size="28" font-weight="500" fill-opacity=".92">Bracing: nền tảng ổn định thân mình khi nâng tạ</text>
+</g></svg>

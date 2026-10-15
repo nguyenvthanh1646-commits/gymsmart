@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="t d">
+<title id="t">Bìa bài thở bằng cơ hoành</title><desc id="d">Ảnh bìa minh họa: hai lá phổi và cơ hoành hạ xuống khi hít vào</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b3fd0"/><stop offset="1" stop-color="#1f1a6b"/></linearGradient>
+<pattern id="p" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.6" fill="#ffffff" fill-opacity=".10"/></pattern></defs>
+<rect width="1200" height="675" fill="url(#g)"/><rect width="1200" height="675" fill="url(#p)"/>
+<circle cx="1080" cy="90" r="210" fill="#ffffff" fill-opacity=".06"/>
+<g transform="translate(60 -120) scale(.9)" fill="none" stroke="#fff" stroke-linecap="round"><path d="M930 190 C 860 190 820 260 830 360 C 836 420 880 440 920 420 L920 230 Z" fill="#ffffff" fill-opacity=".18" stroke-opacity=".7" stroke-width="5"/><path d="M950 190 C 1020 190 1060 260 1050 360 C 1044 420 1000 440 960 420 L960 230 Z" fill="#ffffff" fill-opacity=".18" stroke-opacity=".7" stroke-width="5"/><path d="M790 430 Q940 330 1090 430" stroke="#ffb27a" stroke-width="10"/><path d="M940 460 L940 540" stroke="#ffb27a" stroke-width="8"/><path d="M915 515 L940 545 L965 515" stroke="#ffb27a" stroke-width="8"/></g>
+<g font-family="Inter, 'Segoe UI', Roboto, Arial, sans-serif" fill="#ffffff">
+<rect x="70" y="64" rx="19" width="295" height="38" fill="#ff5a1f"/>
+<text x="90" y="90" font-size="21" font-weight="700" letter-spacing="1">KỸ THUẬT NỀN TẢNG</text>
+<text x="66" y="285" font-size="150" font-weight="800" letter-spacing="-2">Cơ hoành</text><text x="70" y="352" font-size="40" font-weight="800" fill="#ffd27a">Thở bằng bụng, không bằng vai</text>
+<text x="70" y="410" font-size="28" font-weight="500" fill-opacity=".92">Bước đầu tiên trước mọi buổi tập</text>
+</g></svg>

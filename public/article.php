@@ -48,6 +48,8 @@ foreach ($all as $s => $other) {
     }
 }
 $related = array_slice($related, 0, 2, true);
+// Các bài nền tảng khác (nhãn "Đọc trước khi tập"), để gợi ý đọc cả bộ
+$mustOthers = array_filter($all, fn($x, $k) => $x['mustRead'] && $k !== $slug, ARRAY_FILTER_USE_BOTH);
 
 $pageTitle = $a['title'];
 include __DIR__ . '/includes/header.php';
@@ -73,6 +75,16 @@ include __DIR__ . '/includes/header.php';
         <h1><?= htmlspecialchars($a['title']) ?></h1>
         <p class="ar-meta"><?= articleReadingMinutes($a) ?> phút đọc<?= $a['date'] !== '' ? ' · ' . htmlspecialchars(articleDate($a['date'])) : '' ?></p>
     </header>
+
+    <?php if ($a['mustRead']): ?>
+        <aside class="ar-must">
+            <b>Đọc trước khi bắt đầu tập</b>
+            <p>Đây là bài kỹ thuật nền tảng. Hãy đọc và tập thử với không tạ hoặc tạ rất nhẹ trước khi vào chương trình tập chính.</p>
+            <?php foreach ($mustOthers as $ms => $m): ?>
+                <p class="ar-must__next">Bài nền tảng còn lại: <a href="/article.php?slug=<?= htmlspecialchars(rawurlencode($ms)) ?>"><?= htmlspecialchars($m['title']) ?></a></p>
+            <?php endforeach; ?>
+        </aside>
+    <?php endif; ?>
 
     <?php if ($a['quick'] !== ''): ?>
         <aside class="ar-quick">
