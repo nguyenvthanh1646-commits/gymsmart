@@ -1,60 +1,71 @@
 /* nutrition.css — giao diện trang Dinh dưỡng (nutrition.php). Class bắt đầu bằng "nt-".
-   Nạp sau ui.css nên dùng lại các biến màu và thành phần chung (.card, .btn, .chip, .alert, .field). */
+   Nạp sau ui.css và brand.css nên dùng lại biến màu (--gs-*, --ui-*) và thành phần chung (.card, .btn, .chip, .alert, .field, .tag). */
 
-.nt { --nt-p: #ff5a1f; --nt-c: #3b5bdb; --nt-f: #12b5a2; max-width: 1100px; margin: 0 auto; }
+.nt { --nt-p: var(--gs-accent); --nt-c: #3b5bdb; --nt-f: #12b5a2; max-width: 1180px; margin: 0 auto; }
 .nt .card + .card { margin-top: 0; }                    /* khoảng cách do lưới quyết định */
 .nt .pg-head { margin-bottom: 18px; }
 
-/* ===== Tiêu đề nhỏ của từng khối ===== */
-.nt-label { margin: 0 0 10px; font-size: 1.05rem; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
-.nt-label small { font-size: .85rem; font-weight: 400; color: var(--color-text-muted); }
+/* ===== Bố cục 2 cột: form bên trái, kết quả bên phải ===== */
+.nt-calc { display: grid; grid-template-columns: minmax(300px, 380px) 1fr; gap: 24px; align-items: start; margin-bottom: 36px; scroll-margin-top: 90px; }
+.nt-side { display: grid; gap: 16px; min-width: 0; }
+.nt-result { position: sticky; top: 84px; display: grid; gap: 16px; min-width: 0; }   /* chỉnh form bên trái thì kết quả vẫn trong tầm nhìn */
+.nt-result .alert { margin: 0; }
 
-/* ===== Chọn mục tiêu =====
+.nt-card-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 14px; }
+.nt-card-top .card__head { margin: 0; }
+.nt-link { font-size: .88rem; font-weight: 600; color: var(--gs-accent); text-decoration: none; }
+.nt-link:hover { text-decoration: underline; }
+
+/* ===== Thông số của bạn ===== */
+.nt-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
+.nt-facts div { padding: 10px 12px; border-radius: 12px; background: #f6f8fc; }
+.nt-facts__wide { grid-column: 1 / -1; }
+.nt-facts dt { font-size: .74rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--color-text-muted); }
+.nt-facts dd { margin: 2px 0 0; font-weight: 700; color: var(--gs-ink); }
+
+/* ===== Chọn mục tiêu (xếp dọc trong cột trái) =====
    Dùng "button.nt-goal" (độ ưu tiên cao hơn) để style chung của nút <button> trong dự án không đè lên (từng bị nền cam, chữ trắng). */
-.nt-goals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 22px; }
+.nt-goals { display: grid; gap: 8px; }
 .nt button.nt-goal {
-    display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; text-align: left; cursor: pointer;
-    padding: 16px 18px; min-height: 0; border: 2px solid var(--ui-line); border-radius: 16px;
+    display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 2px 12px; width: 100%; text-align: left; cursor: pointer;
+    padding: 12px 14px; min-height: 0; border: 2px solid var(--ui-line); border-radius: 14px;
     background: #fff; background-image: none; color: var(--color-text); font-weight: 400; line-height: 1.3;
-    box-shadow: var(--ui-shadow-sm); transform: none; filter: none;
+    box-shadow: none; transform: none; filter: none;
     -webkit-appearance: none; appearance: none; transition: border-color .15s, box-shadow .15s, background-color .15s;
 }
 .nt button.nt-goal:hover { border-color: #ffb08a; background: #fff; color: var(--color-text); transform: none; filter: none; }
-.nt button.nt-goal.is-active { border-color: var(--color-accent); background: #fff4ee; box-shadow: 0 0 0 3px rgba(255, 90, 31, .14); }
-.nt-goal__name { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.05rem; color: var(--color-text); }
-.nt-goal__name i { font-style: normal; font-size: .7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--color-accent); color: #fff; }
-.nt-goal__kcal { font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; color: var(--color-text); }
-.nt-goal__kcal small { font-size: .82rem; font-weight: 600; color: var(--color-text-muted); letter-spacing: 0; }
-.nt-goal__delta { font-size: .86rem; color: var(--color-text-muted); }
-.nt button.nt-goal.is-active .nt-goal__delta { color: #c2410c; font-weight: 600; }
+.nt button.nt-goal.is-active { border-color: var(--gs-accent); background: var(--ui-accent-soft); box-shadow: 0 0 0 3px rgba(255, 90, 31, .14); }
+.nt button.nt-goal:focus-visible { outline: 3px solid rgba(255, 90, 31, .45); outline-offset: 2px; }
+.nt-goal__name { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1rem; color: var(--color-text); }
+.nt-goal__name i { font-style: normal; font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--gs-accent); color: #fff; }
+.nt-goal__kcal { font-size: 1.15rem; font-weight: 800; letter-spacing: -.01em; color: var(--gs-ink); white-space: nowrap; }
+.nt-goal__kcal small { font-size: .78rem; font-weight: 600; color: var(--color-text-muted); }
+.nt-goal__delta { grid-column: 1 / -1; font-size: .84rem; color: var(--color-text-muted); }
+.nt button.nt-goal.is-active .nt-goal__delta { color: var(--ui-accent-dark); font-weight: 600; }
 
-/* ===== BMR → TDEE → mục tiêu ===== */
-.nt-flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: stretch; margin-bottom: 28px; }
-.nt-step {
-    display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; border-radius: 18px;
+/* ===== Thẻ số lớn: TDEE và mục tiêu calo ===== */
+.nt-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.nt-kpi {
+    display: flex; flex-direction: column; gap: 4px; padding: 20px 22px; border-radius: 18px;
     background: #fff; border: 1px solid var(--ui-line); box-shadow: var(--ui-shadow-sm);
 }
-.nt-step__tag { align-self: flex-start; padding: 3px 11px; border-radius: 999px; background: #eef1f7; color: #344054; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
-.nt-step h3 { margin: 4px 0 0; font-size: 1rem; color: var(--color-text); }
-.nt-step__num { margin: 0; font-size: 2.1rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
-.nt-step__num small { font-size: .85rem; font-weight: 600; color: var(--color-text-muted); letter-spacing: 0; }
-.nt-step__desc { margin: 0; font-size: .9rem; line-height: 1.55; color: #475467; }
-.nt-step__en { margin: auto 0 0; padding-top: 6px; font-size: .78rem; color: #98a2b3; font-style: italic; }
-.nt-step--main { background: linear-gradient(135deg, #0b1020, #1a2447); border-color: transparent; color: #fff; }
-.nt-step--main .nt-step__tag { background: var(--color-accent); color: #fff; }
-.nt-step--main h3 { color: #fff; }
-.nt-step--main .nt-step__num small { color: #b9c3de; }
-.nt-step--main .nt-step__desc { color: #c7d0e6; }
+.nt-kpi__tag { align-self: flex-start; padding: 3px 11px; border-radius: 999px; background: #eef1f7; color: #344054; font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.nt-kpi__label { margin: 8px 0 0; font-size: .92rem; font-weight: 600; color: var(--color-text-muted); }
+.nt-kpi__num { margin: 0; font-size: clamp(2.1rem, 3.6vw, 2.8rem); font-weight: 800; letter-spacing: -.03em; line-height: 1.15; color: var(--gs-ink); font-variant-numeric: tabular-nums; }
+.nt-kpi__num small { font-size: .88rem; font-weight: 600; letter-spacing: 0; color: var(--color-text-muted); }
+.nt-kpi__sub { margin: 6px 0 0; font-size: .86rem; line-height: 1.55; color: #475467; }
+.nt-kpi__sub b { color: var(--gs-ink); }
+.nt-kpi--main { background: linear-gradient(135deg, var(--gs-ink), var(--gs-ink-2)); border-color: transparent; box-shadow: 0 14px 30px rgba(11, 16, 32, .22); }
+.nt-kpi--main .nt-kpi__tag { background: var(--gs-accent); color: #fff; }
+.nt-kpi--main .nt-kpi__num { color: #fff; }
+.nt-kpi--main .nt-kpi__label,
+.nt-kpi--main .nt-kpi__num small,
+.nt-kpi--main .nt-kpi__sub { color: var(--gs-text-soft); }
+.nt-kpi--main .nt-kpi__sub b { color: var(--gs-accent-2); }
 
-.nt-op { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; min-width: 96px; }
-.nt-op__val { padding: 6px 14px; border-radius: 999px; background: var(--ui-accent-soft); color: var(--ui-accent-dark); font-size: 1.05rem; font-weight: 800; white-space: nowrap; }
-.nt-op small { font-size: .78rem; line-height: 1.35; color: var(--color-text-muted); }
-
-/* ===== Macro: vòng tròn + kiểu ăn ===== */
-.nt-macro { display: grid; grid-template-columns: 1.05fr 1fr; gap: 20px; margin-bottom: 36px; align-items: start; scroll-margin-top: 90px; }
-.nt-donut-card { position: sticky; top: 84px; }   /* cuộn xuống chỉnh kiểu ăn thì vòng tròn vẫn hiện bên cạnh */
-.nt-donut-wrap { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; justify-content: center; padding: 8px 0 4px; }
-.nt-donut { position: relative; width: 210px; height: 210px; flex: none; }
+/* ===== Macro: biểu đồ vòng + 3 thẻ số ===== */
+.nt-macro-body { display: grid; grid-template-columns: 200px 1fr; gap: 24px; align-items: center; }
+.nt-donut { position: relative; width: 200px; height: 200px; flex: none; }
 .nt-donut svg { width: 100%; height: 100%; display: block; }
 .nt-donut circle { fill: none; stroke-width: 4.2; }
 .nt-donut__bg { stroke: #eef1f7; }
@@ -63,18 +74,22 @@
 .nt-donut__seg.nt-c { stroke: var(--nt-c); }
 .nt-donut__seg.nt-f { stroke: var(--nt-f); }
 .nt-donut__mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.nt-donut__mid b { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
-.nt-donut__mid span { font-size: .82rem; color: var(--color-text-muted); }
+.nt-donut__mid b { font-size: 1.9rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; color: var(--gs-ink); }
+.nt-donut__mid span { font-size: .8rem; color: var(--color-text-muted); }
 
-.nt-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; min-width: 190px; }
-.nt-legend li { display: grid; grid-template-columns: 14px 1fr auto auto; align-items: center; gap: 10px; font-size: .98rem; }
-.nt-legend b { font-weight: 700; }
-.nt-legend em { font-style: normal; min-width: 44px; text-align: right; color: var(--color-text-muted); font-size: .9rem; }
-.nt-dot { width: 12px; height: 12px; border-radius: 4px; }
-.nt-legend .nt-p .nt-dot { background: var(--nt-p); }
-.nt-legend .nt-c .nt-dot { background: var(--nt-c); }
-.nt-legend .nt-f .nt-dot { background: var(--nt-f); }
-.nt-hint { margin: 16px 0 0; font-size: .85rem; color: var(--color-text-muted); text-align: center; }
+.nt-mstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.nt-mstat { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 14px; border-radius: 14px; background: #f6f8fc; border-top: 3px solid var(--nt-x); }
+.nt-mstat.nt-p { --nt-x: var(--nt-p); }
+.nt-mstat.nt-c { --nt-x: var(--nt-c); }
+.nt-mstat.nt-f { --nt-x: var(--nt-f); }
+.nt-mstat__name { display: flex; align-items: center; gap: 6px; font-size: .84rem; font-weight: 700; color: #344054; }
+.nt-mstat__num { margin: 4px 0 0; font-size: 1.85rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; color: var(--gs-ink); font-variant-numeric: tabular-nums; }
+.nt-mstat__num small { font-size: .9rem; font-weight: 600; color: var(--color-text-muted); }
+.nt-mstat__meta { margin: 0; font-size: .8rem; color: var(--color-text-muted); }
+.nt-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; background: var(--nt-x); }
+.nt-bar { display: block; height: 6px; margin-top: 8px; border-radius: 999px; background: #e4e8f1; overflow: hidden; }
+.nt-bar span { display: block; height: 100%; border-radius: inherit; background: var(--nt-x); }
+.nt-hint { margin: 16px 0 0; font-size: .85rem; line-height: 1.55; color: var(--color-text-muted); }
 
 /* Kiểu ăn */
 .nt-styles { display: grid; gap: 8px; margin-bottom: 14px; }
@@ -113,7 +128,10 @@
 .nt-meal header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .nt-meal h3 { margin: 0; font-size: 1.05rem; flex: 1 1 auto; }
 .nt-meal__time { padding: 3px 10px; border-radius: 999px; background: #eef1f7; color: #475467; font-size: .8rem; font-weight: 700; }
-.nt-meal__kcal { font-weight: 700; color: var(--ui-accent-dark); font-size: .92rem; }
+.nt-meal__dish { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid #f0f2f7; }
+.nt-meal__name { margin: 0; font-size: 1rem; font-weight: 700; line-height: 1.4; color: var(--gs-ink); }
+.nt-meal__kcal { margin: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; color: var(--ui-accent-dark); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nt-meal__kcal small { font-size: .8rem; font-weight: 600; color: var(--color-text-muted); }
 .nt-foods { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; flex: 1; }
 .nt-foods li { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 2px 10px; padding: 9px 0; border-bottom: 1px solid #f0f2f7; font-size: .94rem; line-height: 1.4; }
 .nt-foods li:last-child { border-bottom: 0; }
@@ -124,8 +142,17 @@
 .nt-pill.nt-p { background: #fff0e8; color: #c2410c; }
 .nt-pill.nt-c { background: #e8edff; color: #2b3fa8; }
 .nt-pill.nt-f { background: #dcf7f3; color: #0b7c70; }
-.nt-sum { margin: 16px 0 0; font-size: .92rem; color: var(--color-text-muted); }
+.nt-sum { margin: 12px 0 0; font-size: .88rem; color: var(--color-text-muted); }
 .nt-sum b { color: var(--color-text); }
+
+/* Tổng cả ngày so với mục tiêu */
+.nt-day { margin-top: 16px; }
+.nt-day__status { padding: 4px 12px; border-radius: 999px; background: #fef3f2; color: #b42318; font-size: .82rem; font-weight: 700; }
+.nt-day__status.is-ok { background: #ecfdf3; color: #067647; }
+.nt-day__status.is-ok::before { content: "✓ "; }
+.nt-day__table td:first-child { color: var(--color-text-muted); font-weight: 600; }
+.nt-day__table b { color: var(--gs-ink); font-size: 1.05rem; }
+.nt-day__diff td { color: var(--color-text-muted); font-size: .9rem; }
 .nt-tips { margin: 12px 0 0; padding: 14px 18px 14px 34px; border-radius: 14px; background: #fff; border: 1px solid var(--ui-line); font-size: .93rem; line-height: 1.6; }
 
 /* ===== Bảng so sánh ===== */
@@ -141,20 +168,23 @@
 .nt-empty { max-width: 560px; margin: 20px auto; text-align: center; }
 .nt-empty .btn { margin-top: 6px; }
 
-/* ===== Điện thoại ===== */
+/* ===== Màn hình nhỏ ===== */
+@media (max-width: 1100px) {
+    .nt-macro-body { grid-template-columns: 1fr; justify-items: center; }
+    .nt-mstats { width: 100%; }
+}
 @media (max-width: 1000px) {
     .nt-meal-grid, .nt-meal-grid[data-n="4"] { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 900px) {
-    .nt-flow { grid-template-columns: 1fr; gap: 8px; }
-    .nt-op { flex-direction: row; justify-content: center; gap: 10px; min-width: 0; padding: 2px 0; }
-    .nt-op small br { display: none; }
-    .nt-macro { grid-template-columns: 1fr; }
-    .nt-donut-card { position: static; }
+    .nt-calc { grid-template-columns: 1fr; }
+    .nt-result { position: static; order: -1; }   /* điện thoại: thấy kết quả trước, form chỉnh ở dưới */
 }
 @media (max-width: 700px) {
-    .nt-goals { grid-template-columns: 1fr; gap: 10px; }
-    .nt-donut { width: 190px; height: 190px; }
     .nt-meal-grid, .nt-meal-grid[data-n="4"] { grid-template-columns: 1fr; }
     .nt-custom__grid { gap: 8px; }
+}
+@media (max-width: 560px) {
+    .nt-kpis, .nt-mstats { grid-template-columns: 1fr; }
+    .nt-donut { width: 180px; height: 180px; }
 }

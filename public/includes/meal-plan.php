@@ -167,16 +167,37 @@ function foodCatalog(): array
 }
 
 /**
- * Món gợi ý theo loại bữa: mỗi phương án là [nguồn đạm, nguồn tinh bột, nguồn đạm bổ sung].
+ * Món gợi ý theo loại bữa. Mỗi phương án có tên món và 'foods' = [nguồn đạm, nguồn tinh bột, nguồn đạm bổ sung].
  * Nguồn đạm bổ sung chỉ dùng khi nguồn đạm chính bị giới hạn khối lượng (ví dụ trứng tối đa 3 quả/bữa).
+ * Bữa tối luôn là bữa cuối ngày nên không dùng trứng (bữa cuối cần khối lượng tính được chính xác, xem suggestMeal).
  */
 function mealOptions(): array
 {
     return [
-        'breakfast' => [['trung', 'yenmach', 'suachua'], ['ucga', 'bun'], ['trung', 'banhmi', 'suachua'], ['suachua', 'yenmach']],
-        'lunch'     => [['ucga', 'com'], ['bo', 'comlut'], ['cabasa', 'com'], ['heo', 'khoaitay']],
-        'dinner'    => [['cahoi', 'khoailang'], ['tom', 'com'], ['cabasa', 'khoaitay'], ['heo', 'khoailang']],
-        'snack'     => [['suachua', 'chuoi'], ['trung', 'khoailang', 'suachua'], ['suachua', 'yenmach'], ['trung', 'chuoi', 'suachua']],
+        'breakfast' => [
+            ['name' => 'Yến mạch, trứng và sữa chua',      'foods' => ['trung', 'yenmach', 'suachua']],
+            ['name' => 'Bún gà',                           'foods' => ['ucga', 'bun']],
+            ['name' => 'Bánh mì trứng, sữa chua',          'foods' => ['trung', 'banhmi', 'suachua']],
+            ['name' => 'Yến mạch trộn sữa chua',           'foods' => ['suachua', 'yenmach']],
+        ],
+        'lunch' => [
+            ['name' => 'Cơm ức gà',                        'foods' => ['ucga', 'com']],
+            ['name' => 'Cơm gạo lứt, bò nạc',              'foods' => ['bo', 'comlut']],
+            ['name' => 'Cơm cá basa hấp',                  'foods' => ['cabasa', 'com']],
+            ['name' => 'Thịt heo nạc, khoai tây luộc',     'foods' => ['heo', 'khoaitay']],
+        ],
+        'dinner' => [
+            ['name' => 'Cá hồi nướng, khoai lang',         'foods' => ['cahoi', 'khoailang']],
+            ['name' => 'Cơm tôm luộc',                     'foods' => ['tom', 'com']],
+            ['name' => 'Cá basa hấp, khoai tây',           'foods' => ['cabasa', 'khoaitay']],
+            ['name' => 'Thịt heo nạc, khoai lang',         'foods' => ['heo', 'khoailang']],
+        ],
+        'snack' => [
+            ['name' => 'Sữa chua chuối',                   'foods' => ['suachua', 'chuoi']],
+            ['name' => 'Trứng luộc, khoai lang, sữa chua', 'foods' => ['trung', 'khoailang', 'suachua']],
+            ['name' => 'Sữa chua yến mạch',                'foods' => ['suachua', 'yenmach']],
+            ['name' => 'Trứng luộc, chuối, sữa chua',      'foods' => ['trung', 'chuoi', 'suachua']],
+        ],
     ];
 }
 
@@ -198,49 +219,89 @@ function roundPortion(float $grams): int
  *   3. Chất béo đã có sẵn trong 2 món trên; còn thiếu bao nhiêu thì bổ sung bằng dầu ăn (hoặc đậu phộng ở bữa phụ).
  *   4. Làm tròn khối lượng, rồi cộng lại macro THỰC TẾ của khẩu phần để hiển thị trung thực.
  *
- * @param array $slot   một phần tử của mealSlots()
- * @param array $target ['p' => g, 'c' => g, 'f' => g] mục tiêu của bữa
+ * Bữa cuối ngày ($exact = true) tính chính xác hơn để tổng cả ngày khớp mục tiêu:
+ *   - Giải cùng lúc khối lượng nguồn đạm và nguồn tinh bột (hệ 2 phương trình), vì món nào cũng có chút đạm lẫn tinh bột.
+ *   - Làm tròn tới 1 g (không phải 5 g), dầu ăn tính theo gram thay vì theo thìa.
+ *
+ * @param array $slot    một phần tử của mealSlots()
+ * @param array $target  ['p' => g, 'c' => g, 'f' => g] mục tiêu của bữa
  * @param int   $variant số thứ tự phương án (đổi món)
- * @return array ['items' => [[name, grams, hint]], 'p','c','f','kcal', 'option_count']
+ * @param bool  $exact   true = bữa cuối, cân cho khớp phần còn lại của ngày
+ * @return array ['dish', 'items' => [[name, grams, hint]], 'raw' => ['p','c','f','kcal'] chưa làm tròn, 'option_count']
  */
-function suggestMeal(array $slot, array $target, int $variant): array
+function suggestMeal(array $slot, array $target, int $variant, bool $exact = false): array
 {
     $foods = foodCatalog();
     $options = mealOptions()[$slot['kind']];
     $count = count($options);
-    $choice = $options[(($variant % $count) + $count) % $count];
+    $option = $options[(($variant % $count) + $count) % $count];
+    $choice = $option['foods'];
     $protein = $foods[$choice[0]];
     $carb = $foods[$choice[1]];
     $topUp = isset($choice[2]) ? $foods[$choice[2]] : null;
+    // Chỉ tính chính xác được khi món không có giới hạn đơn vị (trứng theo quả, chuối theo quả)
+    $exact = $exact && !isset($protein['unit']) && !isset($carb['unit']);
+    $portion = fn(float $g): int => $exact ? (int)round(max(0, $g)) : roundPortion($g);
 
-    // 1. Nguồn tinh bột (bỏ qua nếu cần quá ít, ví dụ kiểu ăn ít tinh bột)
-    $gCarb = $carb['c'] > 0 ? $target['c'] / ($carb['c'] / 100) : 0;
-    if ($gCarb < 15) {
-        $gCarb = 0;
-    }
-    $carbProtein = $gCarb * $carb['p'] / 100;
+    if ($exact) {
+        // Hệ 2 phương trình (đơn vị: gram macro trên 1 g thực phẩm):
+        //   đạm:      gProt * pP + gCarb * cP = target p
+        //   tinh bột: gProt * pC + gCarb * cC = target c
+        $pP = $protein['p'] / 100; $pC = $protein['c'] / 100;
+        $cP = $carb['p'] / 100;    $cC = $carb['c'] / 100;
+        $det = $pP * $cC - $cP * $pC;
+        $gCarb = ($pP * $target['c'] - $pC * $target['p']) / $det;
+        $gProt = ($target['p'] - $cP * $gCarb) / $pP;
+        if ($gCarb < 0) {                     // tinh bột đã đủ từ bữa trước: chỉ còn nguồn đạm
+            $gCarb = 0;
+            $gProt = $target['p'] / $pP;
+        } elseif ($gProt < 0) {               // đạm trong nguồn tinh bột đã vượt phần đạm còn lại
+            $gProt = 0;
+            $gCarb = $target['c'] / $cC;
+        }
+        $gTopUp = 0;
+    } else {
+        // 1. Nguồn tinh bột (bỏ qua nếu cần quá ít, ví dụ kiểu ăn ít tinh bột)
+        $gCarb = $carb['c'] > 0 ? $target['c'] / ($carb['c'] / 100) : 0;
+        if ($gCarb < 15) {
+            $gCarb = 0;
+        }
+        $carbProtein = $gCarb * $carb['p'] / 100;
 
-    // 2. Nguồn đạm (có giới hạn khối lượng thì phần thiếu lấy từ nguồn đạm bổ sung)
-    $needProt = max(0, $target['p'] - $carbProtein);
-    $gProt = $needProt / ($protein['p'] / 100);
-    $gTopUp = 0;
-    if (isset($protein['max']) && $gProt > $protein['max']) {
-        $needProt -= $protein['max'] * $protein['p'] / 100;
-        $gProt = $protein['max'];
-        if ($topUp !== null) {
-            $gTopUp = $needProt / ($topUp['p'] / 100);
+        // 2. Nguồn đạm (có giới hạn khối lượng thì phần thiếu lấy từ nguồn đạm bổ sung)
+        $needProt = max(0, $target['p'] - $carbProtein);
+        $gProt = $needProt / ($protein['p'] / 100);
+        $gTopUp = 0;
+        if (isset($protein['max'])) {
+            // Trứng: tối đa 3 quả, và không quá phần chất béo của bữa (3 quả ≈ 16,5 g béo); ít nhất 1 quả
+            $cap = min($protein['max'], max($protein['unit'][1], $target['f'] / ($protein['f'] / 100)));
+            if ($gProt > $cap) {
+                $units = max(1, (int)floor($cap / $protein['unit'][1]));
+                $gProt = $units * $protein['unit'][1];
+                $needProt -= $gProt * $protein['p'] / 100;
+                if ($topUp !== null) {
+                    $gTopUp = $needProt / ($topUp['p'] / 100);
+                }
+            }
         }
     }
 
-    // Làm tròn: trứng tính theo quả, còn lại bội số của 5 g
+    // Làm tròn: trứng tính theo quả, còn lại bội số của 5 g (bữa cuối: 1 g)
     $items = [];
     $totals = ['p' => 0.0, 'c' => 0.0, 'f' => 0.0];
-    $add = function (array $food, float $grams) use (&$items, &$totals) {
+    $add = function (array $food, float $grams, bool $byUnit = true) use (&$items, &$totals) {
         $hint = '';
         if (isset($food['unit'])) {
-            $units = max(1, (int)round($grams / $food['unit'][1]));
-            $grams = $units * $food['unit'][1];
-            $hint = '≈ ' . $units . ' ' . $food['unit'][0];
+            if ($byUnit) {
+                $units = (int)round($grams / $food['unit'][1]);
+                if ($units < 1) {
+                    return; // cần chưa tới nửa quả: bỏ món này thay vì ép lên 1 quả
+                }
+                $grams = $units * $food['unit'][1];
+                $hint = '≈ ' . $units . ' ' . $food['unit'][0];
+            } else {
+                $hint = '≈ ' . str_replace('.', ',', (string)round($grams / $food['unit'][1], 1)) . ' ' . $food['unit'][0];
+            }
         }
         $items[] = ['name' => $food['name'], 'grams' => (int)$grams, 'hint' => $hint];
         $totals['p'] += $grams * $food['p'] / 100;
@@ -249,67 +310,141 @@ function suggestMeal(array $slot, array $target, int $variant): array
     };
 
     $isEgg = isset($protein['unit']);
-    $add($protein, $isEgg ? $gProt : roundPortion($gProt));
+    $gProtPortion = $isEgg ? max($gProt, $protein['unit'][1]) : $portion($gProt);   // trứng: ít nhất 1 quả
+    if ($gProtPortion > 0) {
+        $add($protein, $gProtPortion);
+    }
     if ($gTopUp >= 20) {
         $add($topUp, roundPortion($gTopUp));
     }
-    if ($gCarb > 0) {
-        $add($carb, isset($carb['unit']) ? $gCarb : roundPortion($gCarb));
+    $carbCount = count($items);
+    if ($gCarb > 0 && $portion($gCarb) > 0) {
+        $add($carb, isset($carb['unit']) ? $gCarb : $portion($gCarb));
     }
+    // Không có nguồn tinh bột (kiểu ăn ít tinh bột, hoặc bữa trước đã đủ) thì tên món chỉ còn nguồn đạm
+    $dish = count($items) > $carbCount ? $option['name'] : $protein['name'];
 
     // 3. Bù chất béo còn thiếu
     $fatLeft = $target['f'] - $totals['f'];
-    // Bữa phụ dùng đậu phộng (1 nắm nhỏ ≈ 10 g béo) nên chỉ thêm khi còn thiếu đủ nhiều
-    $minFat = $slot['kind'] === 'snack' ? 8 : 3;
-    if ($fatLeft >= $minFat) {
-        $fatFood = $slot['kind'] === 'snack' ? $foods['dauphong'] : $foods['dau'];
-        $gFat = $fatFood['f'] > 0 ? $fatLeft / ($fatFood['f'] / 100) : 0;
-        $step = isset($fatFood['unit']) ? $fatFood['unit'][1] : 5;
-        $units = max(1, (int)round($gFat / $step));
-        $add($fatFood, $units * $step);
+    if ($exact) {
+        // Bữa cuối: dầu ăn tính theo gram để tổng chất béo trong ngày khớp
+        $gOil = (int)round($fatLeft);
+        if ($gOil >= 1) {
+            $add($foods['dau'], $gOil, false);
+        }
+    } else {
+        // Bữa phụ dùng đậu phộng (1 nắm nhỏ ≈ 10 g béo) nên chỉ thêm khi còn thiếu đủ nhiều
+        $minFat = $slot['kind'] === 'snack' ? 8 : 3;
+        if ($fatLeft >= $minFat) {
+            $fatFood = $slot['kind'] === 'snack' ? $foods['dauphong'] : $foods['dau'];
+            $gFat = $fatFood['f'] > 0 ? $fatLeft / ($fatFood['f'] / 100) : 0;
+            $step = isset($fatFood['unit']) ? $fatFood['unit'][1] : 5;
+            $units = max(1, (int)round($gFat / $step));
+            $add($fatFood, $units * $step);
+        }
     }
 
-    $kcal = $totals['p'] * 4 + $totals['c'] * 4 + $totals['f'] * 9;
     return [
+        'dish'         => $dish,
         'items'        => $items,
-        'p'            => round($totals['p']),
-        'c'            => round($totals['c']),
-        'f'            => round($totals['f']),
-        'kcal'         => (int)round($kcal),
+        'raw'          => $totals + ['kcal' => $totals['p'] * 4 + $totals['c'] * 4 + $totals['f'] * 9],
         'option_count' => $count,
     ];
 }
 
 /**
- * Lịch ăn cả ngày: chia macro theo từng bữa rồi gợi ý món.
+ * Làm tròn một dãy số sao cho tổng các số đã làm tròn bằng đúng tổng gốc làm tròn
+ * (cách "phần dư lớn nhất"). Ví dụ [1.4, 1.4, 1.2] (tổng 4) → [2, 1, 1] thay vì [1, 1, 1] (tổng 3).
+ * Dùng để số liệu từng bữa cộng lại đúng bằng dòng tổng.
+ */
+function roundToSum(array $values): array
+{
+    $floors = array_map('floor', $values);
+    $missing = (int)round(array_sum($values) - array_sum($floors));
+    $remainders = [];
+    foreach ($values as $i => $v) {
+        $remainders[$i] = $v - $floors[$i];
+    }
+    arsort($remainders);
+    foreach (array_slice(array_keys($remainders), 0, max(0, $missing)) as $i) {
+        $floors[$i]++;
+    }
+    return array_map('intval', $floors);
+}
+
+/**
+ * Lịch ăn cả ngày: chia macro theo từng bữa rồi gợi ý món, tổng cả ngày khớp mục tiêu.
+ *
+ * Cách giữ tổng khớp:
+ *   1. Mỗi bữa nhận phần còn lại của ngày (mục tiêu − những gì các bữa trước đã thực sự cho), chia theo tỉ lệ
+ *      của bữa đó trong số các bữa còn lại. Bữa trước lệch do làm tròn thì bữa sau tự bù.
+ *   2. Bữa cuối (bữa tối) nhận toàn bộ phần còn lại và được tính chính xác tới 1 g (xem suggestMeal).
+ *   3. Số liệu từng bữa làm tròn bằng roundToSum() nên cộng lại đúng bằng dòng tổng.
  *
  * @param array $targets ['target_kcal','protein_g','carbs_g','fat_g'] của cả ngày
- * @return array danh sách bữa: slot + target + suggestion
+ * @return array ['meals' => [slot, target, suggestion + p,c,f,kcal đã làm tròn], 'total' => [...], 'target' => [...]]
  */
 function buildMealPlan(array $targets, int $meals, int $variant): array
 {
+    $slots = mealSlots($meals);
+    $want = ['p' => $targets['protein_g'], 'c' => $targets['carbs_g'], 'f' => $targets['fat_g']];
+    $done = ['p' => 0.0, 'c' => 0.0, 'f' => 0.0];
+    $shareLeft = array_sum(array_column($slots, 'share'));
     $plan = [];
     $snackCount = 0;
-    foreach (mealSlots($meals) as $slot) {
-        $ratio = $slot['share'] / 100;
-        $target = [
-            'p' => $targets['protein_g'] * $ratio,
-            'c' => $targets['carbs_g'] * $ratio,
-            'f' => $targets['fat_g'] * $ratio,
-        ];
+    foreach ($slots as $i => $slot) {
+        $ratio = $slot['share'] / $shareLeft;
+        $target = [];
+        foreach ($want as $k => $v) {
+            $target[$k] = max(0, ($v - $done[$k]) * $ratio);
+        }
         // Hai bữa phụ cùng loại thì lệch nhau 1 phương án để đỡ trùng món
         $offset = 0;
         if ($slot['kind'] === 'snack') {
             $offset = $snackCount;
             $snackCount++;
         }
-        $plan[] = [
-            'slot'       => $slot,
-            'target'     => $target,
-            'suggestion' => suggestMeal($slot, $target, $variant + $offset),
-        ];
+        $isLast = $i === count($slots) - 1;
+        $suggestion = suggestMeal($slot, $target, $variant + $offset, $isLast);
+        if ($isLast) {
+            // Món tối đang chọn béo hơn phần chất béo còn lại (ví dụ cá hồi) thì thử lần lượt các món khác,
+            // lấy món đầu tiên vừa; không món nào vừa thì lấy món dư ít nhất.
+            $best = $suggestion;
+            for ($try = 1; $try < $suggestion['option_count'] && $best['raw']['f'] > $target['f'] + 0.5; $try++) {
+                $other = suggestMeal($slot, $target, $variant + $offset + $try, true);
+                if ($other['raw']['f'] < $best['raw']['f']) {
+                    $best = $other;
+                }
+            }
+            $suggestion = $best;
+        }
+        foreach ($done as $k => $_) {
+            $done[$k] += $suggestion['raw'][$k];
+        }
+        $shareLeft -= $slot['share'];
+        $plan[] = ['slot' => $slot, 'target' => $target, 'suggestion' => $suggestion];
     }
-    return $plan;
+
+    // Làm tròn từng bữa sao cho cộng lại đúng bằng tổng
+    $total = [];
+    foreach (['p', 'c', 'f', 'kcal'] as $k) {
+        $rounded = roundToSum(array_map(fn($m) => $m['suggestion']['raw'][$k], $plan));
+        foreach ($rounded as $i => $v) {
+            $plan[$i]['suggestion'][$k] = $v;
+        }
+        $total[$k] = array_sum($rounded);
+    }
+
+    return [
+        'meals'  => $plan,
+        'total'  => $total,
+        'target' => [
+            'p'    => (int)round($targets['protein_g']),
+            'c'    => (int)round($targets['carbs_g']),
+            'f'    => (int)round($targets['fat_g']),
+            'kcal' => (int)round($targets['target_kcal']),
+        ],
+    ];
 }
 
 /** Vài lời khuyên ngắn theo mục tiêu (hiện dưới lịch ăn). */
