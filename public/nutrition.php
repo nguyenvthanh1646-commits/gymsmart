@@ -41,6 +41,9 @@ $styles = dietStyles();
 $experienceLabels = [
     'BEGINNER' => 'người mới tập', 'INTERMEDIATE' => 'đã có kinh nghiệm', 'ADVANCED' => 'đã có kinh nghiệm',
 ];
+// Nhãn cho khối "Thông số của bạn" ở cột trái
+$genderLabels = ['MALE' => 'Nam', 'FEMALE' => 'Nữ', 'OTHER' => 'Khác'];
+$levelLabels  = ['BEGINNER' => 'Mới tập', 'INTERMEDIATE' => 'Trung bình', 'ADVANCED' => 'Nâng cao'];
 
 // ===== 1. Đọc hồ sơ =====
 $stmt = $pdo->prepare(
@@ -178,16 +181,16 @@ if ($macros !== null) {
 // ===== 5. Chuẩn bị dữ liệu hiển thị =====
 $notes = []; // lưu ý sức khỏe (không chặn, chỉ nhắc)
 $shares = ['protein' => 0, 'carbs' => 0, 'fat' => 0];
-$plan = [];
-$meals = 3;
+$plan = ['meals' => [], 'total' => [], 'target' => []];
+$meals = 4;   // mặc định 4 bữa: sáng, trưa, phụ, tối
 $variant = 0;
 
 if ($macros !== null) {
     $shares = macroShares($macros['protein_g'], $macros['carbs_g'], $macros['fat_g']);
 
     // Số bữa và phương án món lấy từ URL (chỉ để xem, không đổi dữ liệu nên không cần CSRF)
-    $mealsIn = filter_var($_GET['meals'] ?? 3, FILTER_VALIDATE_INT);
-    $meals = in_array($mealsIn, [3, 4, 5], true) ? $mealsIn : 3;
+    $mealsIn = filter_var($_GET['meals'] ?? 4, FILTER_VALIDATE_INT);
+    $meals = in_array($mealsIn, [3, 4, 5], true) ? $mealsIn : 4;
     $variantIn = filter_var($_GET['v'] ?? 0, FILTER_VALIDATE_INT);
     $variant = ($variantIn !== false && $variantIn >= 0 && $variantIn < 100) ? $variantIn : 0;
     $plan = buildMealPlan($macros, $meals, $variant);
@@ -255,165 +258,173 @@ include __DIR__ . '/includes/header.php';
     <div class="card nt-empty"><p>Không tìm thấy tài khoản.</p></div>
 <?php else: ?>
 
-    <!-- ===== Chọn mục tiêu: bấm là tính lại ===== -->
-    <h2 class="nt-label">Mục tiêu của bạn <small>Bấm để đổi, calo và macro tính lại ngay</small></h2>
-    <form method="post" action="/nutrition.php" class="nt-goals" aria-label="Mục tiêu tập luyện">
-        <?= csrfField() ?>
-        <input type="hidden" name="action" value="goal">
-        <?php foreach ($goalLabels as $g => $label):
-            $delta = round($comparison[$g]['target_kcal'] - $tdee);   // làm tròn để không hiện "−0"
-            $active = $user['goal'] === $g;
-        ?>
-            <button type="submit" name="goal" value="<?= htmlspecialchars($g) ?>"
-                    class="nt-goal<?= $active ? ' is-active' : '' ?>" <?= $active ? 'aria-pressed="true"' : 'aria-pressed="false"' ?>>
-                <span class="nt-goal__name"><?= htmlspecialchars($label) ?><?= $active ? ' <i>Đang chọn</i>' : '' ?></span>
-                <span class="nt-goal__kcal"><?= nf($comparison[$g]['target_kcal']) ?> <small>kcal/ngày</small></span>
-                <span class="nt-goal__delta"><?= $delta == 0 ? 'Bằng TDEE (không đổi)' : (($delta > 0 ? '+' : '−') . nf(abs($delta)) . ' kcal so với TDEE') /* audit:ok chỉ là số do nf() định dạng */ ?></span>
-            </button>
-        <?php endforeach; ?>
-    </form>
+    <?php
+    // ===== Số liệu cho cột kết quả (chỉ định dạng để hiển thị, không tính lại công thức) =====
+    $factorText = rtrim(rtrim(number_format($tdee / $bmr, 3, ',', '.'), '0'), ',');  // hệ số vận động, ví dụ 1,55
+    $stepDelta  = round($macros['target_kcal'] - $tdee);                            // làm tròn để không hiện "−0"
+    $off  = 25.0; // vòng tròn bắt đầu từ đỉnh
+    $arcP = donutArc($shares['protein'], $off);
+    $arcC = donutArc($shares['carbs'], $off);
+    $arcF = donutArc($shares['fat'], $off);
+    // 3 thẻ macro: [class màu, tên, gram, % calo, kcal mỗi gram]
+    $macroCards = [
+        ['nt-p', 'Protein',  $macros['protein_g'], $shares['protein'], 4],
+        ['nt-c', 'Tinh bột', $macros['carbs_g'],   $shares['carbs'],   4],
+        ['nt-f', 'Chất béo', $macros['fat_g'],     $shares['fat'],     9],
+    ];
+    // Chiều cao, cân nặng: số nguyên thì không hiện ",0"
+    $nfBody = fn($v) => nf($v, floor((float)$v) == (float)$v ? 0 : 1);
+    ?>
 
-    <?php foreach ($notes as $note): ?>
-        <div class="alert alert--note" role="note"><div><?= htmlspecialchars($note) ?></div></div>
-    <?php endforeach; ?>
+    <!-- ===== Bố cục 2 cột: trái là form (thông số, mục tiêu, kiểu ăn), phải là kết quả ===== -->
+    <section class="nt-calc" id="macro">
+        <div class="nt-side">
+            <section class="card nt-profile" aria-labelledby="nt-profile-title">
+                <div class="nt-card-top">
+                    <h2 class="card__head" id="nt-profile-title">Thông số của bạn</h2>
+                    <a class="nt-link" href="/profile.php">Sửa hồ sơ</a>
+                </div>
+                <dl class="nt-facts">
+                    <div><dt>Giới tính</dt><dd><?= htmlspecialchars($genderLabels[$user['gender']] ?? '') ?></dd></div>
+                    <div><dt>Tuổi</dt><dd><?= (int)$user['age'] ?></dd></div>
+                    <div><dt>Chiều cao</dt><dd><?= htmlspecialchars($nfBody($user['height_cm'])) ?> cm</dd></div>
+                    <div><dt>Cân nặng</dt><dd><?= htmlspecialchars($nfBody($user['weight_kg'])) ?> kg</dd></div>
+                    <div class="nt-facts__wide"><dt>Vận động</dt><dd><?= htmlspecialchars($activityLabels[$user['activity_level']] ?? '') ?></dd></div>
+                    <div class="nt-facts__wide"><dt>Trình độ</dt><dd><?= htmlspecialchars($levelLabels[$user['experience_level']] ?? 'Chưa chọn') ?></dd></div>
+                </dl>
+            </section>
 
-    <!-- ===== Calo mục tiêu được tính như thế nào: BMR → TDEE → mục tiêu ===== -->
-    <h2 class="nt-label">Calo của bạn được tính như thế nào <small>Từ trái sang phải</small></h2>
-    <section class="nt-flow">
-        <article class="nt-step">
-            <span class="nt-step__tag">BMR</span>
-            <h3>Năng lượng cơ bản</h3>
-            <p class="nt-step__num"><?= nf($bmr) ?> <small>kcal/ngày</small></p>
-            <p class="nt-step__desc">Số calo cơ thể đốt khi nằm nghỉ cả ngày, chỉ để duy trì sự sống: thở, tim đập, giữ thân nhiệt.</p>
-            <p class="nt-step__en">Basal Metabolic Rate</p>
-        </article>
+            <!-- Chọn mục tiêu: bấm là tính lại -->
+            <form class="card nt-goal-form" method="post" action="/nutrition.php" aria-labelledby="nt-goal-title">
+                <?= csrfField() ?>
+                <input type="hidden" name="action" value="goal">
+                <h2 class="card__head" id="nt-goal-title">Mục tiêu</h2>
+                <p class="card__sub">Bấm để đổi, calo và macro tính lại ngay.</p>
+                <div class="nt-goals">
+                    <?php foreach ($goalLabels as $g => $label):
+                        $delta = round($comparison[$g]['target_kcal'] - $tdee);
+                        $active = $user['goal'] === $g;
+                    ?>
+                        <button type="submit" name="goal" value="<?= htmlspecialchars($g) ?>"
+                                class="nt-goal<?= $active ? ' is-active' : '' ?>" <?= $active ? 'aria-pressed="true"' : 'aria-pressed="false"' ?>>
+                            <span class="nt-goal__name"><?= htmlspecialchars($label) ?><?= $active ? ' <i>Đang chọn</i>' : '' ?></span>
+                            <span class="nt-goal__kcal"><?= nf($comparison[$g]['target_kcal']) ?> <small>kcal</small></span>
+                            <span class="nt-goal__delta"><?= $delta == 0 ? 'Bằng TDEE' : (($delta > 0 ? '+' : '−') . nf(abs($delta)) . ' kcal so với TDEE') /* audit:ok chỉ là số do nf() định dạng */ ?></span>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            </form>
 
-        <div class="nt-op">
-            <span class="nt-op__val">× <?= htmlspecialchars(rtrim(rtrim(number_format($tdee / $bmr, 3, ',', '.'), '0'), ',')) ?></span>
-            <small>Hệ số vận động<br>(<?= htmlspecialchars($activityLabels[$user['activity_level']] ?? '') ?>)</small>
-        </div>
+            <form class="card nt-diet" method="post" action="/nutrition.php#macro">
+                <?= csrfField() ?>
+                <input type="hidden" name="action" value="diet">
+                <h2 class="card__head">Kiểu ăn</h2>
+                <p class="card__sub">Chọn cách chia macro bạn muốn. Tổng calo mỗi ngày không đổi.</p>
 
-        <article class="nt-step">
-            <span class="nt-step__tag">TDEE</span>
-            <h3>Tổng năng lượng tiêu hao</h3>
-            <p class="nt-step__num"><?= nf($tdee) ?> <small>kcal/ngày</small></p>
-            <p class="nt-step__desc">Tổng calo bạn đốt trong một ngày, gồm BMR cộng calo từ sinh hoạt và tập luyện. Ăn đúng mức này thì cân nặng giữ nguyên.</p>
-            <p class="nt-step__en">Total Daily Energy Expenditure</p>
-        </article>
+                <?php if ($dietError !== ''): ?>
+                    <div class="alert alert--error" role="alert"><?= htmlspecialchars($dietError) ?></div>
+                <?php endif; ?>
 
-        <?php $stepDelta = round($macros['target_kcal'] - $tdee); ?>
-        <div class="nt-op">
-            <span class="nt-op__val"><?= $stepDelta == 0 ? '± 0' : (($stepDelta > 0 ? '+ ' : '− ') . nf(abs($stepDelta))) /* audit:ok số do nf() định dạng */ ?></span>
-            <small>kcal theo mục tiêu<br>(<?= htmlspecialchars($goalLabels[$user['goal']] ?? '') ?>)</small>
-        </div>
-
-        <article class="nt-step nt-step--main">
-            <span class="nt-step__tag">Mục tiêu</span>
-            <h3>Calo nên ăn mỗi ngày</h3>
-            <p class="nt-step__num"><?= nf($macros['target_kcal']) ?> <small>kcal/ngày</small></p>
-            <p class="nt-step__desc">Lượng calo phù hợp với mục tiêu của bạn. Macro và lịch ăn bên dưới được chia từ con số này.</p>
-        </article>
-    </section>
-
-    <!-- ===== Macro: vòng tròn + kiểu ăn ===== -->
-    <section class="nt-macro" id="macro">
-        <div class="card nt-donut-card">
-            <h2 class="card__head">Macro mỗi ngày</h2>
-            <div class="nt-donut-wrap">
-                <?php $off = 25.0; // bắt đầu từ đỉnh vòng tròn
-                    $arcP = donutArc($shares['protein'], $off);
-                    $arcC = donutArc($shares['carbs'], $off);
-                    $arcF = donutArc($shares['fat'], $off);
-                ?>
-                <div class="nt-donut" role="img"
-                     aria-label="Protein <?= nf($shares['protein']) ?>%, tinh bột <?= nf($shares['carbs']) ?>%, chất béo <?= nf($shares['fat']) ?>%">
-                    <svg viewBox="0 0 42 42" aria-hidden="true">
-                        <circle class="nt-donut__bg" cx="21" cy="21" r="15.9155"/>
-                        <circle class="nt-donut__seg nt-p" cx="21" cy="21" r="15.9155"
-                                stroke-dasharray="<?= round($arcP['len'], 2) ?> <?= round(100 - $arcP['len'], 2) ?>" stroke-dashoffset="<?= round($arcP['start'], 2) ?>"/>
-                        <circle class="nt-donut__seg nt-c" cx="21" cy="21" r="15.9155"
-                                stroke-dasharray="<?= round($arcC['len'], 2) ?> <?= round(100 - $arcC['len'], 2) ?>" stroke-dashoffset="<?= round($arcC['start'], 2) ?>"/>
-                        <circle class="nt-donut__seg nt-f" cx="21" cy="21" r="15.9155"
-                                stroke-dasharray="<?= round($arcF['len'], 2) ?> <?= round(100 - $arcF['len'], 2) ?>" stroke-dashoffset="<?= round($arcF['start'], 2) ?>"/>
-                    </svg>
-                    <div class="nt-donut__mid">
-                        <b><?= nf($macros['target_kcal']) ?></b>
-                        <span>kcal / ngày</span>
-                    </div>
+                <div class="nt-styles">
+                    <?php foreach ($styles as $key => $style): ?>
+                        <label class="nt-style">
+                            <input type="radio" name="diet" value="<?= htmlspecialchars($key) ?>" <?= $formDiet === $key ? 'checked' : '' ?>>
+                            <span class="nt-style__box">
+                                <b><?= htmlspecialchars($style['label']) ?></b>
+                                <small><?= htmlspecialchars($style['desc']) ?></small>
+                            </span>
+                        </label>
+                    <?php endforeach; ?>
                 </div>
 
-                <ul class="nt-legend">
-                    <li class="nt-p">
-                        <span class="nt-dot"></span>
-                        <span class="nt-legend__name">Protein</span>
-                        <b><?= nf($macros['protein_g']) ?> g</b>
-                        <em><?= nf($shares['protein']) ?>%</em>
-                    </li>
-                    <li class="nt-c">
-                        <span class="nt-dot"></span>
-                        <span class="nt-legend__name">Tinh bột</span>
-                        <b><?= nf($macros['carbs_g']) ?> g</b>
-                        <em><?= nf($shares['carbs']) ?>%</em>
-                    </li>
-                    <li class="nt-f">
-                        <span class="nt-dot"></span>
-                        <span class="nt-legend__name">Chất béo</span>
-                        <b><?= nf($macros['fat_g']) ?> g</b>
-                        <em><?= nf($shares['fat']) ?>%</em>
-                    </li>
-                </ul>
-            </div>
-            <p class="nt-hint">Protein <?= nf($macros['protein_g'] / $weight, 1) ?> g/kg cân nặng
-                (khuyến nghị 1,6 g/kg cho người mới tập, 1,8 g/kg cho người đã có kinh nghiệm; hồ sơ của bạn: <?= htmlspecialchars($experienceLabels[$user['experience_level']] ?? 'người mới tập') ?>).
-                Quy đổi: protein và tinh bột 4 kcal/g, chất béo 9 kcal/g.
-                <a href="/articles.php">Tìm hiểu vai trò của protein, carb, fat</a></p>
+                <div class="nt-custom<?= $formDiet === 'custom' ? ' is-open' : '' ?>" id="nt-custom" data-kcal="<?= htmlspecialchars((string)$macros['target_kcal']) ?>">
+                    <div class="nt-custom__grid">
+                        <div class="field">
+                            <label for="nt-p">Protein (%)</label>
+                            <input type="number" id="nt-p" name="p" min="10" max="40" step="1" value="<?= (int)$formPct['p'] ?>" inputmode="numeric">
+                            <span class="nt-g" data-for="p"></span>
+                        </div>
+                        <div class="field">
+                            <label for="nt-c">Tinh bột (%)</label>
+                            <input type="number" id="nt-c" name="c" min="5" max="70" step="1" value="<?= (int)$formPct['c'] ?>" inputmode="numeric">
+                            <span class="nt-g" data-for="c"></span>
+                        </div>
+                        <div class="field">
+                            <label for="nt-f">Chất béo (%)</label>
+                            <input type="number" id="nt-f" name="f" min="15" max="60" step="1" value="<?= (int)$formPct['f'] ?>" inputmode="numeric">
+                            <span class="nt-g" data-for="f"></span>
+                        </div>
+                    </div>
+                    <p class="nt-total" id="nt-total">Tổng: <b>100%</b></p>
+                </div>
+
+                <button type="submit" class="btn btn--block">Áp dụng kiểu ăn</button>
+            </form>
         </div>
 
-        <form class="card nt-diet" method="post" action="/nutrition.php#macro">
-            <?= csrfField() ?>
-            <input type="hidden" name="action" value="diet">
-            <h2 class="card__head">Kiểu ăn</h2>
-            <p class="card__sub">Chọn cách chia macro bạn muốn. Tổng calo mỗi ngày không đổi.</p>
+        <!-- ===== Cột kết quả ===== -->
+        <div class="nt-result">
+            <?php foreach ($notes as $note): ?>
+                <div class="alert alert--note" role="note"><div><?= htmlspecialchars($note) ?></div></div>
+            <?php endforeach; ?>
 
-            <?php if ($dietError !== ''): ?>
-                <div class="alert alert--error" role="alert"><?= htmlspecialchars($dietError) ?></div>
-            <?php endif; ?>
-
-            <div class="nt-styles">
-                <?php foreach ($styles as $key => $style): ?>
-                    <label class="nt-style">
-                        <input type="radio" name="diet" value="<?= htmlspecialchars($key) ?>" <?= $formDiet === $key ? 'checked' : '' ?>>
-                        <span class="nt-style__box">
-                            <b><?= htmlspecialchars($style['label']) ?></b>
-                            <small><?= htmlspecialchars($style['desc']) ?></small>
-                        </span>
-                    </label>
-                <?php endforeach; ?>
+            <div class="nt-kpis">
+                <article class="nt-kpi">
+                    <span class="nt-kpi__tag">TDEE</span>
+                    <p class="nt-kpi__label">Tổng năng lượng tiêu hao</p>
+                    <p class="nt-kpi__num"><?= nf($tdee) ?> <small>kcal/ngày</small></p>
+                    <p class="nt-kpi__sub">BMR <b><?= nf($bmr) ?></b> × <b><?= htmlspecialchars($factorText) ?></b>
+                        (<?= htmlspecialchars($activityLabels[$user['activity_level']] ?? '') ?>). Ăn đúng mức này thì cân nặng giữ nguyên.</p>
+                </article>
+                <article class="nt-kpi nt-kpi--main">
+                    <span class="nt-kpi__tag">Mục tiêu calo</span>
+                    <p class="nt-kpi__label">Calo nên ăn mỗi ngày</p>
+                    <p class="nt-kpi__num"><?= nf($macros['target_kcal']) ?> <small>kcal/ngày</small></p>
+                    <p class="nt-kpi__sub"><b><?= $stepDelta == 0 ? '± 0' : (($stepDelta > 0 ? '+' : '−') . nf(abs($stepDelta))) /* audit:ok số do nf() định dạng */ ?> kcal</b>
+                        so với TDEE (<?= htmlspecialchars($goalLabels[$user['goal']] ?? '') ?>). Macro và lịch ăn được chia từ con số này.</p>
+                </article>
             </div>
 
-            <div class="nt-custom<?= $formDiet === 'custom' ? ' is-open' : '' ?>" id="nt-custom" data-kcal="<?= htmlspecialchars((string)$macros['target_kcal']) ?>">
-                <div class="nt-custom__grid">
-                    <div class="field">
-                        <label for="nt-p">Protein (%)</label>
-                        <input type="number" id="nt-p" name="p" min="10" max="40" step="1" value="<?= (int)$formPct['p'] ?>" inputmode="numeric">
-                        <span class="nt-g" data-for="p"></span>
+            <section class="card nt-macro-card" aria-labelledby="nt-macro-title">
+                <div class="nt-card-top">
+                    <h2 class="card__head" id="nt-macro-title">Macro mỗi ngày</h2>
+                    <span class="tag"><?= htmlspecialchars($styles[$prefs['diet']]['label']) ?></span>
+                </div>
+                <div class="nt-macro-body">
+                    <div class="nt-donut" role="img"
+                         aria-label="Protein <?= nf($shares['protein']) ?>%, tinh bột <?= nf($shares['carbs']) ?>%, chất béo <?= nf($shares['fat']) ?>%">
+                        <svg viewBox="0 0 42 42" aria-hidden="true">
+                            <circle class="nt-donut__bg" cx="21" cy="21" r="15.9155"/>
+                            <circle class="nt-donut__seg nt-p" cx="21" cy="21" r="15.9155"
+                                    stroke-dasharray="<?= round($arcP['len'], 2) ?> <?= round(100 - $arcP['len'], 2) ?>" stroke-dashoffset="<?= round($arcP['start'], 2) ?>"/>
+                            <circle class="nt-donut__seg nt-c" cx="21" cy="21" r="15.9155"
+                                    stroke-dasharray="<?= round($arcC['len'], 2) ?> <?= round(100 - $arcC['len'], 2) ?>" stroke-dashoffset="<?= round($arcC['start'], 2) ?>"/>
+                            <circle class="nt-donut__seg nt-f" cx="21" cy="21" r="15.9155"
+                                    stroke-dasharray="<?= round($arcF['len'], 2) ?> <?= round(100 - $arcF['len'], 2) ?>" stroke-dashoffset="<?= round($arcF['start'], 2) ?>"/>
+                        </svg>
+                        <div class="nt-donut__mid">
+                            <b><?= nf($macros['target_kcal']) ?></b>
+                            <span>kcal / ngày</span>
+                        </div>
                     </div>
-                    <div class="field">
-                        <label for="nt-c">Tinh bột (%)</label>
-                        <input type="number" id="nt-c" name="c" min="5" max="70" step="1" value="<?= (int)$formPct['c'] ?>" inputmode="numeric">
-                        <span class="nt-g" data-for="c"></span>
-                    </div>
-                    <div class="field">
-                        <label for="nt-f">Chất béo (%)</label>
-                        <input type="number" id="nt-f" name="f" min="15" max="60" step="1" value="<?= (int)$formPct['f'] ?>" inputmode="numeric">
-                        <span class="nt-g" data-for="f"></span>
+
+                    <div class="nt-mstats">
+                        <?php foreach ($macroCards as [$cls, $name, $grams, $pct, $kcalPerGram]): ?>
+                            <article class="nt-mstat <?= htmlspecialchars($cls) ?>">
+                                <span class="nt-mstat__name"><span class="nt-dot"></span><?= htmlspecialchars($name) ?></span>
+                                <p class="nt-mstat__num"><?= nf($grams) ?> <small>g</small></p>
+                                <p class="nt-mstat__meta"><?= nf($pct) ?>% · <?= nf($grams * $kcalPerGram) ?> kcal</p>
+                                <span class="nt-bar" aria-hidden="true"><span style="width: <?= round($pct, 1) ?>%"></span></span>
+                            </article>
+                        <?php endforeach; ?>
                     </div>
                 </div>
-                <p class="nt-total" id="nt-total">Tổng: <b>100%</b></p>
-            </div>
-
-            <button type="submit" class="btn btn--block">Áp dụng kiểu ăn</button>
-        </form>
+                <p class="nt-hint">Protein <?= nf($macros['protein_g'] / $weight, 1) ?> g/kg cân nặng
+                    (khuyến nghị 1,6 g/kg cho người mới tập, 1,8 g/kg cho người đã có kinh nghiệm; hồ sơ của bạn: <?= htmlspecialchars($experienceLabels[$user['experience_level']] ?? 'người mới tập') ?>).
+                    Quy đổi: protein và tinh bột 4 kcal/g, chất béo 9 kcal/g.
+                    <a href="/articles.php">Tìm hiểu vai trò của protein, carb, fat</a></p>
+            </section>
+        </div>
     </section>
 
     <!-- ===== Lịch ăn gợi ý ===== -->
@@ -434,18 +445,16 @@ include __DIR__ . '/includes/header.php';
         </div>
 
         <div class="nt-meal-grid" data-n="<?= (int)$meals ?>">
-            <?php
-            $sum = ['p' => 0, 'c' => 0, 'f' => 0, 'kcal' => 0];
-            foreach ($plan as $meal):
-                $s = $meal['suggestion'];
-                $sum['p'] += $s['p']; $sum['c'] += $s['c']; $sum['f'] += $s['f']; $sum['kcal'] += $s['kcal'];
-            ?>
+            <?php foreach ($plan['meals'] as $meal): $s = $meal['suggestion']; ?>
                 <article class="card nt-meal">
                     <header>
                         <span class="nt-meal__time"><?= htmlspecialchars($meal['slot']['time']) ?></span>
                         <h3><?= htmlspecialchars($meal['slot']['name']) ?></h3>
-                        <span class="nt-meal__kcal"><?= nf($s['kcal']) ?> kcal</span>
                     </header>
+                    <div class="nt-meal__dish">
+                        <p class="nt-meal__name"><?= htmlspecialchars($s['dish']) ?></p>
+                        <p class="nt-meal__kcal"><?= nf($s['kcal']) ?> <small>kcal</small></p>
+                    </div>
                     <ul class="nt-foods">
                         <?php foreach ($s['items'] as $item): ?>
                             <li>
@@ -465,9 +474,49 @@ include __DIR__ . '/includes/header.php';
             <?php endforeach; ?>
         </div>
 
-        <p class="nt-sum">Tổng lịch ăn khoảng <b><?= nf($sum['kcal']) ?> kcal</b>
-            (protein <?= nf($sum['p']) ?> g, tinh bột <?= nf($sum['c']) ?> g, chất béo <?= nf($sum['f']) ?> g),
-            mục tiêu <?= nf($macros['target_kcal']) ?> kcal. Chênh lệch nhỏ do làm tròn khối lượng.</p>
+        <?php
+        // Tổng cả ngày (cộng từ các bữa ở trên) so với mục tiêu. Coi là khớp khi mỗi macro lệch tối đa 1 g
+        // và calo lệch tối đa 1% (phần lệch còn lại chỉ do làm tròn khối lượng thực phẩm).
+        $total = $plan['total'];
+        $goalRow = $plan['target'];
+        $dayRows = [
+            'kcal' => ['Calo', 'kcal'], 'p' => ['Protein', 'g'], 'c' => ['Tinh bột', 'g'], 'f' => ['Chất béo', 'g'],
+        ];
+        $dayOk = abs($total['kcal'] - $goalRow['kcal']) <= $goalRow['kcal'] * 0.01;
+        foreach (['p', 'c', 'f'] as $k) {
+            $dayOk = $dayOk && abs($total[$k] - $goalRow[$k]) <= 1;
+        }
+        ?>
+        <section class="card nt-day" aria-labelledby="nt-day-title">
+            <div class="nt-card-top">
+                <h3 class="card__head" id="nt-day-title">Tổng cả ngày</h3>
+                <span class="nt-day__status<?= $dayOk ? ' is-ok' : '' ?>"><?= $dayOk ? 'Khớp mục tiêu' : 'Chưa khớp mục tiêu' ?></span>
+            </div>
+            <div class="nt-table-wrap">
+                <table class="nt-table nt-day__table">
+                    <thead>
+                        <tr><th></th><?php foreach ($dayRows as [$label, $unit]): ?><th><?= htmlspecialchars($label) ?></th><?php endforeach; ?></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Tổng các bữa</td>
+                            <?php foreach ($dayRows as $k => [$label, $unit]): ?><td><b><?= nf($total[$k]) ?></b> <?= htmlspecialchars($unit) ?></td><?php endforeach; ?>
+                        </tr>
+                        <tr>
+                            <td>Mục tiêu</td>
+                            <?php foreach ($dayRows as $k => [$label, $unit]): ?><td><?= nf($goalRow[$k]) ?> <?= htmlspecialchars($unit) ?></td><?php endforeach; ?>
+                        </tr>
+                        <tr class="nt-day__diff">
+                            <td>Chênh lệch</td>
+                            <?php foreach ($dayRows as $k => [$label, $unit]): $d = $total[$k] - $goalRow[$k]; ?>
+                                <td><?= $d == 0 ? '0' : (($d > 0 ? '+' : '−') . nf(abs($d))) /* audit:ok số do nf() định dạng */ ?> <?= htmlspecialchars($unit) ?></td>
+                            <?php endforeach; ?>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="nt-sum">Bữa trước lệch do làm tròn khối lượng thì bữa sau tự bù; bữa tối được tính chính xác tới 1 g để tổng ngày khớp mục tiêu.</p>
+        </section>
 
         <?php $tips = goalTips($user['goal']); if ($tips): ?>
             <ul class="nt-tips">
