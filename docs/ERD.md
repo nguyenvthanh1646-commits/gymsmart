@@ -160,11 +160,11 @@ Thư viện bài tập kèm ảnh và video hướng dẫn, do `ADMIN` quản l�
 | Cột | Ghi chú |
 |---|---|
 | type | `RESISTANCE` (kháng lực) hoặc `CARDIO` |
-| image_url | ảnh minh họa dùng cho thẻ bài tập (ảnh từ nguồn mở như wger, hoặc ảnh nhóm tự chụp; ghi nguồn nếu giấy phép yêu cầu) |
+| image_url | ảnh minh họa dùng cho thẻ bài tập (ảnh từ nguồn mở như wger, hoặc ảnh nhóm tự chụp; ghi nguồn nếu giấy phép yêu cầu);chỉ lưu tên file nằm trong public/images/exercises/ |
 | video_url | chỉ lưu **ID video YouTube** (VD: `dQw4w9WgXcQ`), PHP ghép thành link nhúng `https://www.youtube.com/embed/<ID>` khi hiển thị |
-| instructions | các bước thực hiện bài tập, hiển thị ở mục "Cách thực hiện" |
-| common_mistakes | lỗi thường gặp, hiển thị ở mục "Lỗi thường gặp" |
-| muscle_group | dùng để filter (ngực, lưng, vai, chân, tay, toàn thân, tim mạch...) |
+| instructions | các bước thực hiện, **mỗi dòng một bước** (ngăn cách bằng xuống dòng), hiển thị thành danh sách đánh số ở mục "Cách thực hiện" |
+| common_mistakes | lỗi thường gặp, **mỗi dòng một lỗi**, hiển thị thành danh sách ở mục "Lỗi thường gặp" |
+| muscle_group | đúng 7 giá trị: `CHEST`, `BACK`, `SHOULDERS`, `LEGS`, `ARMS`, `ABS`, `FULL_BODY`. Trong DB là `VARCHAR(100)` (không phải ENUM) nên PHP phải kiểm tra danh sách cho phép trước khi dùng để filter |
 | difficulty | dùng trong thuật toán gợi ý lịch tập theo kinh nghiệm user |
 
 ### `workout_plans`
