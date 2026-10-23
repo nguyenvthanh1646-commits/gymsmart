@@ -95,7 +95,7 @@ include __DIR__ . '/includes/header.php';
 
         <?php if (!empty($exercise['image_url'])): ?>
             <!-- basename() chỉ giữ tên file, tránh đường dẫn lạ như ../ -->
-            <img src="images/exercises/<?= htmlspecialchars(basename($exercise['image_url'])) ?>"
+            <img src="img/exercises/<?= htmlspecialchars(basename($exercise['image_url'])) ?>"
                  alt="<?= htmlspecialchars($exercise['name']) ?>"
                  style="max-width:100%;">
         <?php endif; ?>
