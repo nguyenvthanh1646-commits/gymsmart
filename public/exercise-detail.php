@@ -2,6 +2,7 @@
 // public/exercise-detail.php - Trang chi tiết bài tập (D1)
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/video.php';
 
 $exercise = false; // mặc định: chưa có bài tập nào
 
@@ -32,12 +33,9 @@ if ($id !== false) {
     $exercise = $stmt->fetch(PDO::FETCH_ASSOC); // false nếu không có dòng nào
 }
 
-// Chỉ nhận video ID đúng 11 ký tự (chữ, số, _ , -), ngược lại coi như không có video
-$videoId = null;
-if ($exercise && !empty($exercise['video_url'])
-    && preg_match('/^[A-Za-z0-9_-]{11}$/', $exercise['video_url'])) {
-    $videoId = $exercise['video_url'];
-}
+// Link nhúng video: nhận link YouTube đầy đủ hoặc mã 11 ký tự (xem includes/video.php);
+// sai định dạng thì coi như không có video
+$embedUrl = $exercise ? youtubeEmbedUrl($exercise['video_url'] ?? null) : null;
 
 // Tách văn bản nhiều dòng thành mảng các bước, bỏ dòng trống
 function splitLines(?string $text): array {
@@ -104,16 +102,6 @@ include __DIR__ . '/includes/header.php';
         <!-- nl2br đổi xuống dòng thành <br>; phải escape trước rồi mới nl2br -->
         <p><?= nl2br(htmlspecialchars($exercise['description'] ?? '')) ?></p>
 
-        <?php if ($videoId): // chỉ hiện khung video khi có video hợp lệ ?>
-            <h2>Video hướng dẫn</h2>
-            <div style="position:relative; padding-top:56.25%;">
-                <iframe src="https://www.youtube.com/embed/<?= htmlspecialchars($videoId) ?>"
-                        title="Video hướng dẫn: <?= htmlspecialchars($exercise['name']) ?>"
-                        style="position:absolute; inset:0; width:100%; height:100%; border:0;"
-                        allowfullscreen loading="lazy"></iframe>
-            </div>
-        <?php endif; ?>
-
         <?php if ($steps): ?>
             <h2>Cách thực hiện</h2>
             <ol>
@@ -121,6 +109,17 @@ include __DIR__ . '/includes/header.php';
                     <li><?= htmlspecialchars($step) ?></li>
                 <?php endforeach; ?>
             </ol>
+        <?php endif; ?>
+
+        <?php if ($embedUrl !== null): // chỉ hiện khung video khi có video hợp lệ ?>
+            <h2>Video hướng dẫn</h2>
+            <div style="position:relative; padding-top:56.25%; margin-bottom:24px;">
+                <iframe src="<?= htmlspecialchars($embedUrl) ?>"
+                        title="Video hướng dẫn: <?= htmlspecialchars($exercise['name']) ?>"
+                        style="position:absolute; inset:0; width:100%; height:100%; border:0;"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen loading="lazy"></iframe>
+            </div>
         <?php endif; ?>
 
         <?php if ($mistakes): ?>

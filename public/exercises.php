@@ -234,7 +234,7 @@ include __DIR__ . '/includes/header.php';
             <a class="exercise-card ex-card" href="/exercise-detail.php?id=<?= (int)$ex['id'] ?>">
                 <div class="exercise-card__media ex-card__media">
                     <?php if (!empty($ex['image_url'])): ?>
-                        <img class="exercise-card__image" src="<?= htmlspecialchars($ex['image_url']) ?>"
+                        <img class="exercise-card__image" src="/img/exercises/<?= htmlspecialchars($ex['image_url']) ?>"
                              alt="<?= htmlspecialchars($ex['name']) ?>" loading="lazy">
                     <?php else: ?>
                         <div class="ex-card__ph">Chưa có ảnh</div>
