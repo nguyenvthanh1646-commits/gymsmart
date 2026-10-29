@@ -11,7 +11,7 @@
  * Vì sao không dùng requireLogin()? Hàm đó chuyển hướng sang trang HTML, còn JavaScript cần nhận JSON
  * có mã 401 để biết phải làm gì. Mọi API đều lấy user_id từ $_SESSION, không bao giờ từ URL/form.
  *
- * Định dạng trả về (theo API_SPEC.md):
+ * Định dạng trả về (theo docs/API_SPEC.md, mục 0):
  *     thành công: { "success": true,  "data": ... }
  *     thất bại:   { "success": false, "error": "lời nhắn tiếng Việt" }
  */

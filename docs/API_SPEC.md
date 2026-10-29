@@ -2,7 +2,24 @@
 
 Tài liệu đặc tả API, dùng làm hợp đồng (contract) giữa backend và frontend. Cập nhật file này ngay khi thêm/sửa endpoint (theo quy định trong `CLAUDE.md`).
 
-> **Lưu ý khi code bằng PHP thuần:** các endpoint dưới đây viết dạng REST để mô tả rõ chức năng và dữ liệu. Khi triển khai, mỗi endpoint là một file trong `public/api/` (ví dụ `POST /auth/login` → `api/login.php`), xác thực bằng **PHP session** (cookie), không dùng JWT. Quy ước response `{success, data, message}` vẫn giữ nguyên.
+> **Lưu ý khi code bằng PHP thuần:** từ mục 1 trở đi là bản **thiết kế ban đầu** dạng REST, để mô tả chức năng và dữ liệu. Code thật **không** làm đủ các endpoint đó: nhiều chức năng (đăng nhập, đăng ký, hồ sơ, số đo, TDEE, admin) là **form POST thẳng vào trang `.php`** (có CSRF, Post/Redirect/Get), không qua API. Danh sách endpoint JSON thật nằm ở mục 0 ngay dưới đây.
+
+## 0. Triển khai thực tế (cập nhật 29/10/2026)
+
+Mọi file trong `public/api/` lấy `user_id` từ `$_SESSION`, không bao giờ từ request. API **không** gọi `requireLogin()` (hàm đó chuyển hướng sang HTML) mà tự trả JSON 401. API ghi dữ liệu kiểm tra mã CSRF.
+
+| Method | File | Kiểu trả về | Ghi chú |
+|---|---|---|---|
+| GET | `/api/body-metrics.php?from=&to=` | `{success, data}` / `{success:false, error}` | Dùng `includes/api.php` → `apiBoot()`. Số đo của user cho Chart.js |
+| GET | `/api/nutrition-history.php?from=&to=` | `{success, data}` / `{success:false, error}` | Như trên, lịch sử TDEE/macro |
+| POST | `/api/workout-plan-generate.php` | `{success, plan_id}` / `{success:false, message}` | `days_per_week`, `level`, `split_type` (tùy chọn), `csrf_token`. 401/403/409/422/500 |
+| POST | `/api/workout-plan-edit.php` | `{success}` / `{success:false, message}` | `action` = update \| replace \| remove \| add, `row_id`, `sets`, `reps`, `new_exercise_id`, `day_of_week`, `exercise_id`, `csrf_token`. Chỉ sửa lịch ACTIVE của chính user |
+| POST | `/api/log-workout.php` | `{success}` / `{success:false, message}` | `row_id`, `exercise_id`, `sets`, `reps`, `weight`, `csrf_token`. `row_id` phải thuộc lịch của user |
+| POST | `/api/chatbot.php` | `{reply, ...}` / `{error}` | Body JSON `{message, history, mode, task, personalize}`, header `X-CSRF-Token`. Chế độ admin kiểm tra vai trò trong DB |
+| GET | `/api/export-workout-plan.php` | file CSV | Lịch ACTIVE của user, có chống CSV injection. Trang (không phải JSON), dùng `requireLogin()` |
+| GET | `/api/logout.php` | chuyển hướng `/login.php` | Hủy session |
+
+Khi sửa một file API thì giữ đúng kiểu trả về của file đó, vì JavaScript phía trang đang đọc đúng key đó (`message` hay `error`).
 
 **Base URL (quy ước mô tả):** `/api`
 **Format response chung:** `{ success: boolean, data: object|array|null, message: string }`
@@ -44,7 +61,7 @@ Tài liệu đặc tả API, dùng làm hợp đồng (contract) giữa backend 
 // Request
 {
   "age": 22, "heightCm": 175, "weightKg": 68,
-  "gender": "MALE", "activityLevel": "MODERATE", "goal": "GAIN_MUSCLE"
+  "gender": "MALE", "activityLevel": "MODERATE", "experienceLevel": "BEGINNER", "goal": "GAIN_MUSCLE"
 }
 ```
 
@@ -139,6 +156,21 @@ Tài liệu đặc tả API, dùng làm hợp đồng (contract) giữa backend 
 // POST /body-metrics
 { "recordedDate": "2026-08-28", "weightKg": 68.5, "bodyFatPercent": 15.2 }
 ```
+
+> **Triển khai thực tế (A-14, phần biểu đồ Tiến trình):** thêm/xóa số đo làm qua form trong `progress.php` (PRG + CSRF), không qua API. Hai endpoint JSON chỉ đọc, dùng cho Chart.js:
+>
+> | Method | Endpoint | Ghi chú |
+> |---|---|---|
+> | GET | `/api/body-metrics.php?from=YYYY-MM-DD&to=YYYY-MM-DD` | `from`/`to` tùy chọn. Chỉ trả dữ liệu của user đang đăng nhập, tối đa 2000 dòng, sắp xếp ngày tăng dần |
+> | GET | `/api/nutrition-history.php?from=&to=` | Lịch sử các lần tính TDEE/macro |
+>
+> ```json
+> // GET /api/body-metrics.php
+> { "success": true, "data": [ { "id": 5, "date": "2026-09-20", "weightKg": 78.6, "bodyFatPercent": 21.5, "chestCm": null, "waistCm": 87, "armCm": null } ] }
+> // GET /api/nutrition-history.php
+> { "success": true, "data": [ { "date": "2026-10-13", "tdeeKcal": 2400, "targetKcal": 1920, "proteinG": 125, "carbsG": 200, "fatG": 53 } ] }
+> ```
+> Lỗi: 401 chưa đăng nhập, 405 không phải GET, 400 `from`/`to` sai định dạng hoặc `from` > `to`, 500 lỗi server (đều trả JSON `{success:false,error}`).
 
 ---
 
@@ -240,7 +272,6 @@ Response lỗi format thống nhất:
 
 ## Ghi chú khi triển khai
 
-- Tất cả endpoint (trừ 🔓 Public) đều phải gọi `requireLogin()` ở đầu file; endpoint Admin gọi `requireAdmin()` — kiểm tra ở PHP, không chỉ ẩn nút ở giao diện
-- Endpoint Admin cần thêm `@PreAuthorize("hasRole('ADMIN')")` (hoặc tương đương), không chỉ kiểm tra ở frontend
+- Trang `.php` gọi `requireLogin()` / `requireAdmin()` ở đầu file; file trong `api/` tự kiểm tra session và trả JSON 401. Quyền admin kiểm tra ở PHP, không chỉ ẩn nút ở giao diện
 - Khi thêm entity mới trong `ERD.md`, nhớ bổ sung endpoint tương ứng vào file này
 - Với `/nutrition/calculate` và `/workout-plans/generate`: đây là 2 endpoint chứa "thuật toán" quan trọng nhất của đồ án — viết rõ comment giải thích công thức/logic ngay trong code, không chỉ dựa vào tài liệu này

@@ -158,9 +158,9 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 
 - **Chặn dò mật khẩu đã có ở mức cơ bản** (`includes/login-throttle.php`: 5 lần sai cùng email hoặc 20 lần sai cùng IP trong 15 phút thì khóa 15 phút). Chưa có: thông báo cho chủ tài khoản, CAPTCHA, khóa theo thiết bị. Nếu chưa import bảng `login_attempts` thì việc chặn tự tắt (đăng nhập vẫn chạy).
 - **Đăng xuất bằng đường dẫn GET** (`/api/logout.php`). Kẻ xấu có thể ép đăng xuất người dùng, hậu quả nhỏ. Có thể đổi thành form POST sau.
-- **Quyền admin lưu trong session**: nếu bị hạ quyền trong DB thì phiên đang mở vẫn còn quyền cũ cho tới khi đăng xuất.
+- **Quyền admin đọc lại từ DB** ở mỗi trang `/admin` (`refreshSessionRole()` trong `includes/auth.php`) và ở chatbot chế độ admin, nên hạ quyền/xóa tài khoản có hiệu lực ngay. Trang người dùng thường vẫn chỉ kiểm tra `user_id` trong session.
 - **Đăng ký báo "Email này đã được sử dụng"** cho phép dò xem một email đã có tài khoản chưa. Chấp nhận được ở quy mô đồ án.
-- Ảnh bài tập là link ngoài: nếu trang gốc xóa ảnh thì thẻ hiện ảnh vỡ. Không phải lỗi bảo mật nhưng ảnh hưởng demo.
+- Ảnh bài tập lưu trong `public/img/exercises/` (cột `image_url` chỉ chứa tên file, `exerciseImageSrc()` lọc tên lạ). Video là iframe YouTube: nếu kênh gốc gỡ video thì khung video trống.
 
 ---
 
@@ -232,7 +232,6 @@ Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/t
 | Mở `/progress.php?edit=<id người khác>` hoặc `?edit=abc` | Mở form Thêm mới trống, không lộ dữ liệu người khác |
 | Gửi form không kèm mã CSRF | Trang "Phiên làm việc đã hết hạn" (403) |
 
-
 ### Biểu đồ và API Tiến trình (C-4)
 | Cách thử | Kết quả mong đợi |
 |---|---|
@@ -242,15 +241,7 @@ Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/t
 | Đăng nhập user khác rồi mở API | Chỉ thấy số đo của chính user đó |
 | Tài khoản chưa có số đo hoặc chưa tính TDEE | Biểu đồ hiện thông báo "Chưa có dữ liệu", không lỗi JS (F12 > Console) |
 | Đổi 30 ngày / 90 ngày / Tất cả | Biểu đồ vẽ lại theo khoảng chọn, không gọi lại API |
- a-15-ho-so-main
 | Chặn tải `js/lib/chart.umd.min.js` (DevTools) | Hiện dòng báo lỗi, bảng lịch sử vẫn dùng được |
-
- HEAD
-| Chặn tải `js/vendor/chart.umd.min.js` (DevTools) | Hiện dòng báo lỗi, bảng lịch sử vẫn dùng được |
- a-14-tien-trinh
-| Chặn tải `js/lib/chart.umd.min.js` (DevTools) | Hiện dòng báo lỗi, bảng lịch sử vẫn dùng được |
- main
- main
 
 ### Hồ sơ và ảnh đại diện (A-15)
 | Cách thử | Kết quả mong đợi |
@@ -263,9 +254,6 @@ Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/t
 | Mở file ảnh trong `uploads/avatars/` bằng cách đổi đuôi .php | Không chạy được mã (xem `.htaccess` trong thư mục) |
 | Đổi `avatar` trong DB thành `../../config.php` rồi mở Hồ sơ | Bỏ qua đường dẫn lạ, hiện chữ cái đầu |
 | Chưa import `users_avatar.sql` | Trang vẫn mở được, nút đổi ảnh ẩn và có nhắc import |
- a-15-ho-so-main
- a-14-tien-trinh
- main
 
 ### Đăng ký 3 bước (A-16)
 | Cách thử | Kết quả mong đợi |
@@ -278,7 +266,3 @@ Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/t
 | Gửi `full_name[]=x` (mảng) | Coi như trống, báo lỗi, không lỗi PHP |
 | Xem HTML trang sau khi lỗi | Không có mật khẩu đã nhập trong HTML |
 | Đăng ký xong, xem bảng users | `password_hash` bắt đầu bằng `$2y$`, có đủ age, height, weight, gender, activity, experience, goal |
- a-15-ho-so-main
- 6b2d4ab (A-14: đưa Chart.js sang js/lib để không bị .gitignore vendor/ chặn)
- main
- main
