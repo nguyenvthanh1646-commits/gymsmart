@@ -26,3 +26,17 @@ function jsonResponse(array $data, int $statusCode = 200): void
     echo json_encode($data);
     exit;
 }
+
+/**
+ * Quy ước cột exercises.image_url: chỉ lưu TÊN FILE nằm trong public/img/exercises/ (ví dụ "12.jpg").
+ * Hàm này kiểm tra tên file rồi dựng đường dẫn ảnh để in vào src. Tên lạ (có "/", "..", "javascript:"...) thì trả null.
+ */
+function exerciseImageFileOk(?string $file): bool
+{
+    return is_string($file) && preg_match('/^[A-Za-z0-9_-][A-Za-z0-9._-]{0,99}\.(jpe?g|png|webp|svg)$/i', $file) === 1;
+}
+
+function exerciseImageSrc(?string $file): ?string
+{
+    return exerciseImageFileOk($file) ? '/img/exercises/' . $file : null;
+}

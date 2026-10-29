@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/auth.php';
 requireLogin(); // giống exercises.php: xem thư viện bài tập cần đăng nhập
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/video.php';
+require_once __DIR__ . '/includes/functions.php'; // exerciseImageSrc()
 
 $exercise = false; // mặc định: chưa có bài tập nào
 
@@ -92,9 +93,9 @@ include __DIR__ . '/includes/header.php';
             <?= htmlspecialchars($difficultyLabels[$exercise['difficulty']] ?? $exercise['difficulty']) ?>
         </p>
 
-        <?php if (!empty($exercise['image_url'])): ?>
-            <!-- basename() chỉ giữ tên file, tránh đường dẫn lạ như ../ -->
-            <img src="img/exercises/<?= htmlspecialchars(basename($exercise['image_url'])) ?>"
+        <?php if (($imgSrc = exerciseImageSrc($exercise['image_url'])) !== null): ?>
+            <!-- exerciseImageSrc() chỉ nhận tên file hợp lệ, tránh đường dẫn lạ như ../ -->
+            <img src="<?= htmlspecialchars($imgSrc) ?>"
                  alt="<?= htmlspecialchars($exercise['name']) ?>"
                  style="max-width:100%;">
         <?php endif; ?>
