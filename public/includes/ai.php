@@ -81,10 +81,19 @@ function aiGenerate(string $system, array $turns, array $options = []): array
         $models[] = $fb;
     }
     $res = null;
-    foreach ($models as $model) {
+    foreach ($models as $i => $model) {
+        $hasNext = isset($models[$i + 1]);
         for ($try = 0; $try < 3; $try++) {
             $res = aiGenerateOnce($system, $turns, $options, $model);
-            if ($res['ok'] || !in_array($res['code'], ['AI_BUSY', 'AI_TIMEOUT'], true)) {
+            if ($res['ok']) {
+                return $res;
+            }
+            // Hết hạn mức (429) hoặc tên model sai: thử lại cùng model vô ích (hạn mức tính riêng theo từng model),
+            // nên chuyển ngay sang model dự phòng nếu có.
+            if ($hasNext && in_array($res['code'], ['AI_QUOTA', 'AI_MODEL'], true)) {
+                break;
+            }
+            if (!in_array($res['code'], ['AI_BUSY', 'AI_TIMEOUT'], true)) {
                 return $res;
             }
             if ($try < 2) {
