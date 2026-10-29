@@ -12,6 +12,7 @@
 require_once __DIR__ . '/includes/auth.php'; // có session + isLoggedIn()
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/csrf.php';   // có biến $pdo
+require_once __DIR__ . '/includes/login-throttle.php'; // chặn dò mật khẩu (A-8)
 
 // Đã đăng nhập rồi thì không cần vào trang này nữa
 if (isLoggedIn()) {
@@ -33,6 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($email === '' || $password === '') {
         $error = 'Vui lòng nhập email và mật khẩu.';
+    } elseif (($lockMin = loginLockedMinutes($pdo, $email)) > 0) {
+        // Kiểm tra TRƯỚC khi so mật khẩu: đang bị khóa thì mật khẩu đúng cũng không cho vào
+        $error = 'Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau ' . $lockMin . ' phút.';
     } else {
         // Tìm user theo email (prepared statement, chống SQL Injection)
         $stmt = $pdo->prepare(
@@ -47,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Tạo session ID mới sau khi đăng nhập thành công,
             // tránh tấn công "session fixation" (kẻ xấu cài sẵn session ID cho nạn nhân).
             session_regenerate_id(true);
+            loginClearFailures($pdo, $email);
 
             $_SESSION['user_id']   = $user['id'];
             $_SESSION['role']      = $user['role'];
@@ -59,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Cố ý dùng 1 thông báo chung cho cả "sai email" và "sai mật khẩu",
         // để kẻ xấu không dò ra được email nào đã có tài khoản.
         $error = 'Email hoặc mật khẩu không đúng.';
+        loginRecordFailure($pdo, $email);
     }
 }
 
