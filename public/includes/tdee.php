@@ -25,8 +25,18 @@ function calculateBMR($weightKg, $heightCm, $age, $gender) {
 
     // Chặn dữ liệu vô lý. Dùng throw thay vì return 0 để lỗi không bị
     // che đi (tránh lưu 0 kcal vào DB như một kết quả thật).
+    // is_numeric: chặn chuỗi lạ ("abc", "70kg"); is_finite: chặn NAN/INF (so sánh với NAN luôn ra false nên lọt qua "<= 0").
+    foreach ([$weightKg, $heightCm, $age] as $v) {
+        if (!is_numeric($v) || !is_finite((float)$v)) {
+            throw new InvalidArgumentException('Cân nặng, chiều cao, tuổi phải là số');
+        }
+    }
     if ($weightKg <= 0 || $heightCm <= 0 || $age <= 0) {
         throw new InvalidArgumentException('Cân nặng, chiều cao, tuổi phải > 0');
+    }
+    // Giới hạn trên rộng hơn form hồ sơ (300 kg, 250 cm, 100 tuổi) một chút, chỉ để chặn số vô lý
+    if ($weightKg > 500 || $heightCm > 300 || $age > 120) {
+        throw new InvalidArgumentException('Cân nặng, chiều cao hoặc tuổi vượt giới hạn hợp lý');
     }
 
     // Phần chung cho mọi giới tính: 10*kg + 6.25*cm - 5*tuổi
@@ -41,6 +51,11 @@ function calculateBMR($weightKg, $heightCm, $age, $gender) {
         // OTHER: code đang lấy trung bình hai hằng số: (5 + (-161)) / 2 = -78
         // Lý do chọn: ... (TODO: bạn tự điền sau khi đọc nguồn tham khảo)
         $bmr += (5 - 161) / 2;
+    }
+
+    // Số đo lệch nhau quá mức (ví dụ 1 kg, 1 cm, 120 tuổi) cho BMR âm: không có ý nghĩa thì báo lỗi
+    if ($bmr <= 0) {
+        throw new InvalidArgumentException('Chỉ số cơ thể không hợp lệ (BMR tính ra <= 0)');
     }
 
     return $bmr; // trả về cho nơi gọi hàm (VD: calculateTDEE)
@@ -69,7 +84,7 @@ function calculateTDEE($bmr, $activityLevel) {
     }
 
     // Kiểm tra BMR là số dương
-    if (!is_numeric($bmr) || $bmr <= 0) {
+    if (!is_numeric($bmr) || !is_finite((float)$bmr) || $bmr <= 0) {
         throw new InvalidArgumentException('BMR phải là số > 0');
     }
 
@@ -119,7 +134,8 @@ function calculateTargets($tdee, $weightKg, $goal, $experience = null) {
         throw new InvalidArgumentException('Mục tiêu không hợp lệ');
     }
     // Kiểm tra số đầu vào
-    if (!is_numeric($tdee) || $tdee <= 0 || !is_numeric($weightKg) || $weightKg <= 0) {
+    if (!is_numeric($tdee) || !is_finite((float)$tdee) || $tdee <= 0
+        || !is_numeric($weightKg) || !is_finite((float)$weightKg) || $weightKg <= 0) {
         throw new InvalidArgumentException('TDEE và cân nặng phải là số > 0');
     }
 
