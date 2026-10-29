@@ -6,7 +6,8 @@
  *   { "message": "...", "mode": "user" | "admin", "task": "chat" | "exercise_draft",
  *     "history": [ {"role":"user"|"model","text":"..."} ... ], "personalize": true|false }
  * Response 200: { "reply": "...", "links": [ {"label","url"} ], "draft": {...}  (draft chỉ có khi task=exercise_draft) }
- * Response lỗi: { "error": "lời nhắn cho người dùng", "code": "AI_...", "detail": "chi tiết kỹ thuật (chỉ admin/localhost)" }
+ * Response lỗi: { "error": "lời nhắn cho người dùng", "code": "AI_...", "detail": "chi tiết kỹ thuật (chỉ admin/localhost)",
+ *                 "links": [...] (chỉ khi AI lỗi mà vẫn tìm được bài tập liên quan) }
  *
  * Hai trợ lý KHÁC NHAU, chọn ở phía server (không tin client):
  *   - user : huấn luyện viên AI — hỏi đáp tập luyện/dinh dưỡng, biết bài tập trong thư viện, (tùy chọn) hồ sơ cá nhân
@@ -484,6 +485,11 @@ if ($task === 'exercise_draft') {
 if (!$res['ok']) {
     error_log('chatbot: ' . $res['code'] . ' http=' . $res['http'] . ' ' . $res['detail']);
     $out = ['error' => aiFriendlyError($res['code']), 'code' => $res['code']];
+    // AI lỗi nhưng phần tra bảng exercises (RAG) không cần AI vẫn có kết quả: trả kèm để người dùng có bài để xem
+    if ($links) {
+        $out['error'] .= ' Trong lúc chờ, bạn xem các trang liên quan bên dưới nhé.';
+        $out['links'] = array_slice($links, 0, 4);
+    }
     if ($showDetail) {
         $out['detail'] = $res['detail'];
     }
