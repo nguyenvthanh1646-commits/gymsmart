@@ -61,8 +61,8 @@
 .adm-video-no{color:#9ca3af}
 .adm-empty{padding:40px 16px;text-align:center;color:var(--adm-muted)}
 
-/* ===== Điện thoại: mỗi dòng bảng thành một thẻ ===== */
-@media (max-width:720px){
+/* ===== Điện thoại và máy tính bảng dọc: mỗi dòng bảng thành một thẻ (bảng 6-7 cột tràn ngang ở 768px) ===== */
+@media (max-width:900px){
   .adm-tools{grid-template-columns:1fr 1fr}
   .adm-tools .adm-input{grid-column:1 / -1}
   .adm-table thead{display:none}
@@ -126,7 +126,22 @@ body{overflow-x:hidden}
 .adm-nav-av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ff8a3d,#ff5a1f);color:#fff;font-weight:700;font-size:.92rem}
 .adm-nav .adm-nav-out{height:auto;padding:8px 4px;font-size:.88rem;color:#aab4cf}
 @media (max-width:1240px){.adm-nav .adm-nav-site{display:none}}   /* menu có 6 mục: ẩn nút "Xem trang người dùng" trên màn hình hẹp để không bị cắt mất chữ Đăng xuất */
-@media (max-width:720px){.adm-nav-in{height:56px;padding:0 12px;gap:0}.adm-nav a{height:56px;padding:0 9px;font-size:.88rem}.adm-nav .adm-nav-site{display:none}.adm-nav a.adm-nav-brand{margin-right:4px;padding:0 6px 0 0}.adm-nav a.adm-nav-brand span{display:none}.adm-nav-av{display:none}.adm-nav-right{padding-left:4px}.adm-nav .adm-nav-out{padding:8px 2px;font-size:.82rem}}
+.adm-nav-links{display:flex;align-items:center;gap:6px}
+/* Màn hình hẹp: hàng 1 = logo + Đăng xuất, hàng 2 = 6 mục dạng lưới, thấy hết không cần cuộn */
+@media (max-width:900px){
+  .adm-nav{position:static}   /* menu 2 hàng cao hơn: không dính đầu trang để khỏi che nội dung */
+  .adm-nav-in{flex-wrap:wrap;height:auto;overflow:visible;white-space:normal;padding:0 16px;gap:0}
+  .adm-nav a.adm-nav-brand{height:56px}
+  .adm-nav-links{order:3;width:100%;display:grid;grid-template-columns:repeat(6,1fr);gap:0;border-top:1px solid rgba(255,255,255,.08)}
+  .adm-nav-links a{height:48px;justify-content:center;padding:0 4px;font-size:.88rem;text-align:center}
+  .adm-nav-links a.is-active::after{left:18%;right:18%}
+  .adm-nav .adm-nav-out{padding:12px 4px}
+}
+@media (max-width:520px){
+  .adm-nav-links{grid-template-columns:repeat(3,1fr)}
+  .adm-nav-links a{height:44px}
+  .adm-nav-av{display:none}
+}
 
 /* ===== Tổng quan: thẻ số liệu + biểu đồ thanh ===== */
 .adm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
@@ -190,10 +205,9 @@ body{overflow-x:hidden}
 .adm-kv dd{margin:0;font-weight:600;text-align:right}
 .adm-kv small{font-weight:500;color:var(--adm-muted)}
 .adm-actions form{display:inline-block}
-@media (max-width:720px){.adm-actions form{flex:1}.adm-actions form .adm-btn{width:100%}}
+@media (max-width:900px){.adm-actions form{flex:1}.adm-actions form .adm-btn{width:100%}.adm-actions{flex-wrap:wrap}.adm-btn-sm{min-height:44px}}   /* màn cảm ứng: vùng chạm tối thiểu 44px */
 @media (max-width:720px){
   .adm-btn{white-space:nowrap}
-  .adm-actions{flex-wrap:wrap}
   .adm-hero__cta .adm-btn{padding:0 10px;font-size:.92rem}
 }
 /* ===== Form bài tập: nội dung bên trái, ảnh/video + nút lưu bên phải ===== */

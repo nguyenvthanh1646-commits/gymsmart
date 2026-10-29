@@ -25,10 +25,13 @@ if ($admParts && $admParts[0] !== '') {
 ?>
 <nav class="adm-nav" aria-label="Quản trị">
     <div class="adm-nav-in">
-        <a class="adm-nav-brand" href="/admin/dashboard.php"><?= gsLogoMark(32) ?><span>Gym<b>Smart</b></span><span class="adm-nav-tag">Admin</span></a>
-        <?php foreach ($admNavItems as $key => [$href, $label]): ?>
-            <a href="<?= $href ?>" class="<?= $admNavActive === $key ? 'is-active' : '' ?>"><?= htmlspecialchars($label) ?></a>
-        <?php endforeach; ?>
+        <a class="adm-nav-brand" href="/admin/dashboard.php" aria-label="GymSmart Admin — Tổng quan"><?= gsLogoMark(32) ?><span>Gym<b>Smart</b></span><span class="adm-nav-tag">Admin</span></a>
+        <!-- Gói các mục vào 1 khối: máy tính nằm cùng hàng, màn hình hẹp xuống hàng 2 dạng lưới (không phải cuộn ngang) -->
+        <div class="adm-nav-links">
+            <?php foreach ($admNavItems as $key => [$href, $label]): ?>
+                <a href="<?= $href ?>"<?= $admNavActive === $key ? ' class="is-active" aria-current="page"' : '' ?>><?= htmlspecialchars($label) ?></a>
+            <?php endforeach; ?>
+        </div>
         <div class="adm-nav-right">
             <a class="adm-nav-site" href="/exercises.php">Xem trang người dùng &#8599;</a>
             <span class="adm-nav-av" title="<?= htmlspecialchars((string)($_SESSION['full_name'] ?? '')) ?>"><?= htmlspecialchars($admInitial) ?></span>
