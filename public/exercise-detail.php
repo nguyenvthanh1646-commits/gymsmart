@@ -22,10 +22,11 @@ $muscleLabels = [
     'CHEST' => 'Ngực', 'BACK' => 'Lưng', 'SHOULDERS' => 'Vai',
     'LEGS' => 'Chân', 'ARMS' => 'Tay', 'ABS' => 'Bụng', 'FULL_BODY' => 'Toàn thân',
 ];
+// Cùng bộ nhãn với thư viện (exercises.php) để người dùng không thấy 2 cách gọi cho 1 mức độ khó
 $difficultyLabels = [
-    'BEGINNER' => 'Người mới', 'INTERMEDIATE' => 'Trung cấp', 'ADVANCED' => 'Nâng cao',
+    'BEGINNER' => 'Dễ', 'INTERMEDIATE' => 'Trung bình', 'ADVANCED' => 'Khó',
 ];
-$typeLabels = ['RESISTANCE' => 'Tập kháng lực', 'CARDIO' => 'Cardio'];
+$typeLabels = ['RESISTANCE' => 'Kháng lực', 'CARDIO' => 'Cardio'];
 
 
 if ($id !== false) {
@@ -51,7 +52,7 @@ $mistakes = $exercise ? splitLines($exercise['common_mistakes'] ?? '') : [];
 $related = [];
 if ($exercise) {
     $stmt = $pdo->prepare(
-        'SELECT id, name, difficulty FROM exercises
+        'SELECT id, name, type, difficulty, image_url FROM exercises
          WHERE muscle_group = ? AND id <> ?
          ORDER BY RAND() LIMIT 3'
     );
@@ -67,6 +68,8 @@ $pageTitle = $exercise ? $exercise['name'] : 'Không tìm thấy bài tập';
 include __DIR__ . '/includes/header.php';
 ?>
 
+<link rel="stylesheet" href="/css/exercise-detail.css">
+
 <main class="container">
 <?php if (!$exercise): ?>
 
@@ -77,79 +80,110 @@ include __DIR__ . '/includes/header.php';
     </div>
 
 <?php else: ?>
+    <?php
+    // Dùng ?? để nếu giá trị lạ thì hiện nguyên giá trị, vẫn qua htmlspecialchars khi in
+    $muscle = $muscleLabels[$exercise['muscle_group']] ?? $exercise['muscle_group'];
+    $imgSrc = exerciseImageSrc($exercise['image_url']); // chỉ nhận tên file hợp lệ, tránh đường dẫn lạ như ../
+    ?>
+    <nav class="exd-crumb" aria-label="Đường dẫn">
+        <a href="exercises.php">Thư viện bài tập</a>
+        <span aria-hidden="true">›</span>
+        <!-- urlencode giữ giá trị nhóm cơ an toàn trong đường dẫn lọc -->
+        <a href="exercises.php?muscle_group=<?= htmlspecialchars(urlencode($exercise['muscle_group'])) ?>"><?= htmlspecialchars($muscle) ?></a>
+    </nav>
 
-    <div class="card">
-        <h1><?= htmlspecialchars($exercise['name']) ?></h1>
-
-        <p>
-            <?php // Dùng ?? để nếu giá trị lạ thì hiện nguyên giá trị, vẫn qua htmlspecialchars ?>
-            <strong>Nhóm cơ:</strong>
-            <?= htmlspecialchars($muscleLabels[$exercise['muscle_group']] ?? $exercise['muscle_group']) ?>
-            |
-            <strong>Loại:</strong>
-            <?= htmlspecialchars($typeLabels[$exercise['type']] ?? $exercise['type']) ?>
-            |
-            <strong>Độ khó:</strong>
-            <?= htmlspecialchars($difficultyLabels[$exercise['difficulty']] ?? $exercise['difficulty']) ?>
-        </p>
-
-        <?php if (($imgSrc = exerciseImageSrc($exercise['image_url'])) !== null): ?>
-            <!-- exerciseImageSrc() chỉ nhận tên file hợp lệ, tránh đường dẫn lạ như ../ -->
-            <img src="<?= htmlspecialchars($imgSrc) ?>"
-                 alt="<?= htmlspecialchars($exercise['name']) ?>"
-                 style="max-width:100%;">
-        <?php endif; ?>
-
-        <h2>Mô tả</h2>
-        <!-- nl2br đổi xuống dòng thành <br>; phải escape trước rồi mới nl2br -->
-        <p><?= nl2br(htmlspecialchars($exercise['description'] ?? '')) ?></p>
-
-        <?php if ($steps): ?>
-            <h2>Cách thực hiện</h2>
-            <ol>
-                <?php foreach ($steps as $step): ?>
-                    <li><?= htmlspecialchars($step) ?></li>
-                <?php endforeach; ?>
-            </ol>
-        <?php endif; ?>
-
-        <?php if ($embedUrl !== null): // chỉ hiện khung video khi có video hợp lệ ?>
-            <h2>Video hướng dẫn</h2>
-            <div style="position:relative; padding-top:56.25%; margin-bottom:24px;">
-                <iframe src="<?= htmlspecialchars($embedUrl) ?>"
-                        title="Video hướng dẫn: <?= htmlspecialchars($exercise['name']) ?>"
-                        style="position:absolute; inset:0; width:100%; height:100%; border:0;"
-                        referrerpolicy="strict-origin-when-cross-origin"
-                        allowfullscreen loading="lazy"></iframe>
+    <div class="pg-head exd-head">
+        <div>
+            <h1><?= htmlspecialchars($exercise['name']) ?></h1>
+            <div class="ex-meta">
+                <span class="tag"><?= htmlspecialchars($muscle) ?></span>
+                <span class="tag"><?= htmlspecialchars($typeLabels[$exercise['type']] ?? $exercise['type']) ?></span>
+                <span class="tag tag--<?= htmlspecialchars($exercise['difficulty']) ?>"><?= htmlspecialchars($difficultyLabels[$exercise['difficulty']] ?? $exercise['difficulty']) ?></span>
             </div>
-        <?php endif; ?>
-
-        <?php if ($mistakes): ?>
-            <h2>Lỗi thường gặp</h2>
-            <ul>
-                <?php foreach ($mistakes as $m): ?>
-                    <li><?= htmlspecialchars($m) ?></li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-
-        <?php if ($related): // chỉ hiện khi có bài gợi ý ?>
-            <h2>Bài tập cùng nhóm cơ</h2>
-            <ul>
-                <?php foreach ($related as $r): ?>
-                    <li>
-                        <!-- (int) ép id thành số nguyên cho an toàn -->
-                        <a href="exercise-detail.php?id=<?= (int)$r['id'] ?>">
-                            <?= htmlspecialchars($r['name']) ?>
-                        </a>
-                        (<?= htmlspecialchars($difficultyLabels[$r['difficulty']] ?? $r['difficulty']) ?>)
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-
-        <a class="btn" href="exercises.php">Quay lại thư viện</a>
+        </div>
     </div>
+
+    <div class="exd">
+        <div class="exd__main">
+            <?php if ($embedUrl !== null): // chỉ hiện khung video khi có video hợp lệ ?>
+                <!-- Video đặt đầu trang (xem trước khi đọc chữ). Ảnh bài tập nằm phía sau làm ảnh chờ trong lúc YouTube tải -->
+                <div class="exd__video">
+                    <?php if ($imgSrc !== null): ?>
+                        <img src="<?= htmlspecialchars($imgSrc) ?>" alt="" aria-hidden="true">
+                    <?php endif; ?>
+                    <iframe src="<?= htmlspecialchars($embedUrl) ?>"
+                            title="Video hướng dẫn: <?= htmlspecialchars($exercise['name']) ?>"
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allowfullscreen loading="lazy"></iframe>
+                </div>
+            <?php elseif ($imgSrc !== null): ?>
+                <img class="exd__img" src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($exercise['name']) ?>">
+            <?php endif; ?>
+
+            <div class="card exd__body">
+                <h2>Mô tả</h2>
+                <!-- nl2br đổi xuống dòng thành <br>; phải escape trước rồi mới nl2br -->
+                <p><?= nl2br(htmlspecialchars($exercise['description'] ?? '')) ?></p>
+
+                <?php if ($steps): ?>
+                    <h2>Cách thực hiện</h2>
+                    <ol class="exd__steps">
+                        <?php foreach ($steps as $step): ?>
+                            <li><?= htmlspecialchars($step) ?></li>
+                        <?php endforeach; ?>
+                    </ol>
+                <?php endif; ?>
+
+                <?php if ($mistakes): ?>
+                    <h2>Lỗi thường gặp</h2>
+                    <ul class="exd__mistakes">
+                        <?php foreach ($mistakes as $m): ?>
+                            <li><?= htmlspecialchars($m) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php if ($embedUrl !== null && $imgSrc !== null): // có video thì ảnh minh họa nhóm cơ đặt ở cột phụ ?>
+            <aside class="exd__side">
+                <figure class="card exd__fig">
+                    <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($exercise['name']) ?>" loading="lazy">
+                    <figcaption>Ảnh minh họa tư thế và nhóm cơ</figcaption>
+                </figure>
+            </aside>
+        <?php endif; ?>
+    </div>
+
+    <?php if ($related): // chỉ hiện khi có bài gợi ý ?>
+        <section class="exd-related" aria-labelledby="exd-related-title">
+            <h2 id="exd-related-title">Bài tập cùng nhóm cơ</h2>
+            <!-- Cùng kiểu thẻ với thư viện bài tập (class ex-card trong ui.css) -->
+            <div class="ex-grid">
+                <?php foreach ($related as $r): ?>
+                    <!-- (int) ép id thành số nguyên cho an toàn -->
+                    <a class="ex-card" href="exercise-detail.php?id=<?= (int)$r['id'] ?>">
+                        <div class="ex-card__media">
+                            <?php if (($relImg = exerciseImageSrc($r['image_url'])) !== null): ?>
+                                <img src="<?= htmlspecialchars($relImg) ?>" alt="<?= htmlspecialchars($r['name']) ?>" loading="lazy">
+                            <?php else: ?>
+                                <div class="ex-card__ph">Chưa có ảnh</div>
+                            <?php endif; ?>
+                            <span class="tag tag--<?= htmlspecialchars($r['difficulty']) ?> ex-card__level"><?= htmlspecialchars($difficultyLabels[$r['difficulty']] ?? $r['difficulty']) ?></span>
+                        </div>
+                        <div class="ex-card__body">
+                            <h3><?= htmlspecialchars($r['name']) ?></h3>
+                            <div class="ex-meta">
+                                <span class="tag"><?= htmlspecialchars($typeLabels[$r['type']] ?? $r['type']) ?></span>
+                            </div>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        </section>
+    <?php endif; ?>
+
+    <a class="btn btn--ghost exd-back" href="exercises.php">&larr; Quay lại thư viện</a>
 
 <?php endif; ?>
 </main>

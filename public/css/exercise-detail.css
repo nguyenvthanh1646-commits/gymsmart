@@ -1,0 +1,40 @@
+/* exercise-detail.css — trang chi tiết bài tập (exercise-detail.php).
+   Dùng lại thành phần chung trong ui.css (.card, .tag, .pg-head, .ex-grid, .ex-card); file này chỉ lo bố cục riêng.
+   Tiền tố "exd-". */
+
+.exd-crumb { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: -8px 0 4px; font-size: .9rem; color: var(--color-text-muted); }
+.exd-crumb a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; text-decoration: none; }
+.exd-crumb a:hover { text-decoration: underline; }
+.exd-head h1 { margin-bottom: 12px; }
+
+/* Máy tính: nội dung bên trái, ảnh minh họa bên phải. Điện thoại: một cột */
+.exd { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+.exd__main { display: grid; gap: 20px; min-width: 0; }
+
+/* Khung video 16:9; ảnh nằm dưới iframe làm ảnh chờ khi YouTube chưa tải xong */
+.exd__video { position: relative; aspect-ratio: 16 / 9; border-radius: var(--radius); overflow: hidden; background: #eceff6; box-shadow: var(--ui-shadow-md); }
+.exd__video img, .exd__video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.exd__video img { object-fit: contain; background: #fff; }
+.exd__img { display: block; width: 100%; max-height: 420px; object-fit: contain; background: #fff; border-radius: var(--radius); border: 1px solid var(--ui-line); }
+
+.exd__body h2 { margin: 24px 0 10px; font-size: 1.15rem; }
+.exd__body h2:first-child { margin-top: 0; }
+.exd__body p { margin: 0; }
+.exd__steps, .exd__mistakes { margin: 0; padding-left: 1.3em; display: grid; gap: 8px; }
+.exd__steps li::marker { font-weight: 700; color: var(--color-accent); }
+.exd__mistakes li::marker { color: #b42318; }
+
+.exd__side { position: sticky; top: 88px; }
+.exd__fig { margin: 0; padding: 16px; }
+.exd__fig img { display: block; width: 100%; height: auto; border-radius: 8px; }
+.exd__fig figcaption { margin-top: 10px; font-size: .85rem; color: var(--color-text-muted); text-align: center; }
+
+.exd-related { margin-top: 40px; }
+.exd-related h2 { margin: 0 0 16px; font-size: 1.3rem; }
+.exd-back { margin-top: 28px; }
+
+@media (max-width: 900px) {
+    .exd { grid-template-columns: 1fr; }
+    .exd__side { position: static; }
+    .exd__fig { max-width: 420px; }
+}
