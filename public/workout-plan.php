@@ -1,10 +1,8 @@
 <?php
 // public/workout-plan.php (B10 & B11) - trang Lịch tập: tạo lịch, xem theo tuần, ghi log, chỉnh sửa.
 // Giao diện: css/workout-plan.css (class bắt đầu bằng "wp-"). Hành vi: js/workout-plan.js.
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/auth.php'; // tự bật session với cookie an toàn
+require_once __DIR__ . '/includes/csrf.php';
 requireLogin();
 
 require_once __DIR__ . '/includes/db.php';
@@ -74,7 +72,7 @@ include __DIR__ . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="/css/workout-plan.css">
 
-<div class="wp workout-plan" id="workout-plan-root">
+<div class="wp workout-plan" id="workout-plan-root" data-csrf="<?= htmlspecialchars(csrfToken()) ?>">
 
     <header class="wp-head">
         <div>

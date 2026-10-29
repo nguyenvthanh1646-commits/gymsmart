@@ -284,12 +284,30 @@ function fetchLastWorkoutLog(PDO $pdo, int $userId, int $exerciseId): ?array {
     return $row ?: null;
 }
 
-/** Lưu kết quả tập thực tế vào DB */
+/**
+ * Lưu kết quả tập thực tế vào DB.
+ * $planExerciseId > 0: dòng đó phải thuộc lịch ACTIVE của chính user (chống sửa row_id để ghi vào lịch người khác),
+ * và exercise_id lấy luôn từ dòng đó thay vì tin giá trị client gửi. $planExerciseId = 0: tập ngoài lịch, lưu NULL.
+ */
 function saveWorkoutLog(PDO $pdo, int $userId, int $planExerciseId, int $exerciseId, int $sets, int $reps, float $weight, string $note = ''): int {
+    assertValidSetsReps($sets, $reps);
+    if (!is_finite($weight) || $weight < 0 || $weight > 500) {
+        throw new InvalidArgumentException('Mức tạ phải từ 0 đến 500 kg.');
+    }
+    if ($planExerciseId > 0) {
+        $row = findOwnedPlanRow($pdo, $userId, $planExerciseId);
+        $exerciseId = (int)$row['exercise_id'];
+    } else {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM exercises WHERE id = ?');
+        $stmt->execute([$exerciseId]);
+        if ((int)$stmt->fetchColumn() === 0) {
+            throw new InvalidArgumentException('Bài tập không tồn tại.');
+        }
+    }
     $stmt = $pdo->prepare(
         "INSERT INTO workout_logs (user_id, workout_plan_exercise_id, exercise_id, log_date, sets_completed, reps_completed, weight_kg_used, note, created_at) 
          VALUES (?, ?, ?, CURDATE(), ?, ?, ?, ?, NOW())"
     );
-    $stmt->execute([$userId, $planExerciseId, $exerciseId, $sets, $reps, $weight, $note]);
+    $stmt->execute([$userId, $planExerciseId > 0 ? $planExerciseId : null, $exerciseId, $sets, $reps, $weight, $note]);
     return (int)$pdo->lastInsertId();
 }

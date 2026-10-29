@@ -2,7 +2,8 @@
 // public/api/workout-plan-edit.php  (B11)
 // POST: action = update | replace | remove | add  -> JSON.
 // user_id lấy từ $_SESSION; mọi thao tác chỉ tác động tới lịch ACTIVE của chính user đó.
-session_start();
+require_once __DIR__ . '/../includes/auth.php';  // bật session với cookie an toàn (không gọi requireLogin: API trả JSON)
+require_once __DIR__ . '/../includes/csrf.php';
 header('Content-Type: application/json; charset=utf-8');
 
 function jsonResponse(int $status, array $body): void
@@ -17,6 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 if (empty($_SESSION['user_id'])) {
     jsonResponse(401, ['success' => false, 'message' => 'Bạn cần đăng nhập.']);
+}
+if (!verifyCsrf()) {
+    jsonResponse(403, ['success' => false, 'message' => 'Phiên làm việc đã hết hạn, hãy tải lại trang.']);
 }
 $userId = (int)$_SESSION['user_id'];
 

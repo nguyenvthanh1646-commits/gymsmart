@@ -1,10 +1,7 @@
 <?php
 // public/api/export-workout-plan.php
 // Xuất lịch tập ACTIVE của CHÍNH người dùng ra file CSV mở được bằng Excel.
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/auth.php'; // tự bật session với cookie an toàn
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/workout-plan-db.php';
 

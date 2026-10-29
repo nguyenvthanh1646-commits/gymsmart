@@ -2,11 +2,17 @@
 // Trang Lịch tập: chọn ngày, form tạo lịch (B10), ghi log từng bài, chỉnh sửa lịch (B11).
 // Mọi lời gọi API dùng fetch, nhận JSON; tạo/sửa lịch thành công thì tải lại trang để hiện dữ liệu mới.
 (function () {
+    // Mã CSRF do PHP in sẵn ở thẻ gốc của trang; API ghi dữ liệu sẽ từ chối nếu thiếu mã này.
+    const rootEl = document.getElementById('workout-plan-root');
+    const csrfToken = rootEl ? (rootEl.dataset.csrf || '') : '';
+
     // Gửi POST dạng form, trả về object JSON; nếu server trả HTML (404, lỗi PHP...) thì ném lỗi dễ hiểu.
     async function postForm(url, params) {
+        const body = new URLSearchParams(params);
+        body.set('csrf_token', csrfToken);
         const response = await fetch(url, {
             method: 'POST',
-            body: new URLSearchParams(params),
+            body: body,
             credentials: 'same-origin'
         });
         const raw = await response.text();
