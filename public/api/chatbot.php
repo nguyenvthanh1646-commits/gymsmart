@@ -164,6 +164,18 @@ if (is_file($dbFile)) {
 if (!isset($pdo) || !($pdo instanceof PDO)) {
     $pdo = null;
 }
+// Chế độ admin: kiểm tra lại vai trò trong DB (role trong session có thể đã cũ nếu vừa bị hạ quyền)
+if ($mode === 'admin') {
+    $dbRole = null;
+    if ($pdo) {
+        $st = $pdo->prepare('SELECT role FROM users WHERE id = ?');
+        $st->execute([$userId]);
+        $dbRole = $st->fetchColumn();
+    }
+    if ($dbRole !== 'ADMIN') {
+        jsonOut(403, ['error' => 'Chức năng này chỉ dành cho quản trị viên.']);
+    }
+}
 
 /** Chạy SELECT, lỗi (bảng chưa có...) thì trả null thay vì dừng. */
 function dbRows(?PDO $pdo, string $sql, array $params = []): ?array

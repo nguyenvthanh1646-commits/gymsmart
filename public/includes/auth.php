@@ -65,10 +65,34 @@ function requireLogin(): void
  */
 function requireAdmin(): void
 {
+    global $pdo; // trang admin đã nạp includes/db.php trước khi gọi hàm này
     requireLogin();
+    if ($pdo instanceof PDO) {
+        refreshSessionRole($pdo);
+    }
     if (($_SESSION['role'] ?? '') !== 'ADMIN') {
         showError(403, 'Bạn không có quyền truy cập', 'Trang này chỉ dành cho quản trị viên. Nếu bạn nghĩ đây là nhầm lẫn, hãy báo người quản trị.');
     }
+}
+
+/**
+ * Đọc lại vai trò từ DB và cập nhật vào session.
+ * Vì sao cần? role trong session chỉ được ghi lúc đăng nhập. Nếu admin khác hạ quyền (ADMIN -> USER)
+ * hoặc xóa tài khoản này, session cũ vẫn ghi 'ADMIN' cho tới khi đăng xuất. Đọc lại ở mỗi trang admin
+ * thì thay đổi có hiệu lực ngay. Tài khoản không còn trong DB thì hủy session, chuyển về đăng nhập.
+ */
+function refreshSessionRole(PDO $pdo): void
+{
+    $stmt = $pdo->prepare('SELECT role FROM users WHERE id = ?');
+    $stmt->execute([(int)$_SESSION['user_id']]);
+    $role = $stmt->fetchColumn();
+    if ($role === false) {
+        $_SESSION = [];
+        session_destroy();
+        header('Location: /login.php');
+        exit;
+    }
+    $_SESSION['role'] = $role;
 }
 
 // Trang báo lỗi dùng chung (showError, showCsrfError)
