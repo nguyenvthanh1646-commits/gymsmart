@@ -120,7 +120,7 @@
 .nt-meals__head h2 { margin: 0; font-size: 1.4rem; }
 .nt-meals__ctrl { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .nt-meals__ctrl .chips { margin: 0; padding: 0; overflow: visible; }
-.nt-meals__ctrl .btn { min-height: 40px; padding: 0 16px; font-size: .92rem; }
+.nt-meals__ctrl .btn { min-height: 44px; padding: 0 16px; font-size: .92rem; }
 
 .nt-meal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .nt-meal-grid[data-n="4"] { grid-template-columns: repeat(4, 1fr); }

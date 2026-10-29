@@ -259,6 +259,18 @@ a { color: var(--ui-accent-dark); }
 .card__sub { margin: 0 0 18px; color: var(--color-text-muted); font-size: .95rem; }
 .pw-rule { margin: 6px 0 0; font-size: .85rem; color: var(--color-text-muted); }
 
+/* ===== Nút đang gửi: js/main.js khóa nút sau khi bấm gửi form để không gửi 2 lần ===== */
+.is-busy { opacity: .65; cursor: progress !important; }
+
+/* ===== Vùng chạm tối thiểu 44px trên điện thoại (nút nhỏ ở lịch tập, tiến trình, chatbot, chân trang) =====
+   Dùng min-height/min-width nên thắng width/height cố định trong CSS riêng của từng trang. */
+@media (max-width: 720px) {
+    .btn, .chip, .pw__btn, .wp-icon-btn, .wp-log-btn, button.pr-range__btn, .gc a.gc-link, .gc button.gc-ibtn { min-height: 44px; }
+    .wp-icon-btn, .gc button.gc-ibtn { min-width: 44px; }
+    .pr-link, button.pr-link, .pf-metrics__more, .ft__links a { display: inline-flex; align-items: center; min-height: 44px; }
+    .ft__links { gap: 0 22px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
