@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Tài liệu hướng dẫn cho Claude Code khi làm việc trên dự án này.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Tổng quan dự án
 
@@ -9,7 +9,9 @@ Tài liệu hướng dẫn cho Claude Code khi làm việc trên dự án này.
 **Quy mô:** Nhóm 5 thành viên, thời gian làm trong 1 kỳ học
 **Yêu cầu bắt buộc:** Tất cả thành viên phải **hiểu bản chất code và tự code tay** — không dùng framework che giấu logic (không Laravel, không ORM), không copy code mà không hiểu. **Không vibe code.** Cách làm việc với AI: tự viết code trước theo hiểu biết của mình, **chỉ hỏi AI khi bí ở một chỗ cụ thể** (lỗi không hiểu, không biết cú pháp, không chắc cách làm) — AI đóng vai trò giải thích/gỡ rối tại điểm nghẽn đó, không viết hộ nguyên tính năng từ đầu.
 
-> Đã loại bỏ: chat/nhắn tin giữa user-user, community/forum, role/tính năng Coach, **module bài viết nghiên cứu**. Lý do: chi phí xây dựng không tương xứng giá trị demo. Phần "học tập" của website được thay bằng **ảnh + video hướng dẫn nằm ngay trong thư viện bài tập**. Thời gian dư được dồn vào làm sâu Chatbot AI.
+> Đã loại bỏ: chat/nhắn tin giữa user-user, community/forum, role/tính năng Coach. Lý do: chi phí xây dựng không tương xứng giá trị demo. Phần "học tập" chủ yếu là **ảnh + video hướng dẫn nằm ngay trong thư viện bài tập**.
+>
+> Lưu ý: module **bài viết kiến thức** từng bị loại nhưng **đã được làm lại** (PR #37, #38, #40). Xem mục "Bài viết" bên dưới.
 
 ## Tech Stack — PHP thuần (LAMP, không framework)
 
@@ -18,49 +20,33 @@ Tài liệu hướng dẫn cho Claude Code khi làm việc trên dự án này.
 - **Database:** MySQL, truy vấn qua **PDO** (bắt buộc dùng prepared statements, không nối chuỗi SQL trực tiếp — tránh SQL Injection)
 - **Quản trị DB:** phpMyAdmin — dùng để tạo/sửa bảng, xem dữ liệu, chạy thử query, import/export `.sql`. Toàn bộ nhóm thao tác DB qua phpMyAdmin thay vì dòng lệnh MySQL
 - **Auth:** PHP Session (`$_SESSION`) — đơn giản, dễ hiểu bản chất hơn JWT cho người mới, không cần thư viện ngoài
-- **AI Chatbot:** Gọi API model ngôn ngữ (Anthropic/OpenAI) qua `curl` trong PHP, trả JSON cho frontend
+- **AI Chatbot:** Gọi **Gemini** (`generateContent`) qua `curl` trong PHP (`public/includes/ai.php`), trả JSON cho frontend
 - **Không dùng:** React, Vue, Laravel, Composer package quản lý nặng, ORM (Eloquent, Doctrine) — mọi thứ viết tay để hiểu rõ luồng chạy
 
 > Lý do chọn PHP thuần: với yêu cầu "hiểu bản chất", framework càng ít càng tốt — mỗi dòng code sinh viên viết ra phải tự giải thích được nó làm gì, không có lớp trừu tượng ẩn giấu.
 
-## Cấu trúc thư mục dự kiến (mô hình Multi-Page Application)
+## Kiến trúc (Multi-Page Application, PHP thuần)
 
-```
-/public (hoặc thư mục gốc web server trỏ tới)
-  /css
-    style.css          (style dùng chung)
-    [feature].css       (style riêng từng trang nếu cần)
-  /js
-    main.js             (logic JS dùng chung)
-    [feature].js         (JS riêng từng trang: workout-plan.js, nutrition.js, chatbot.js...)
-  /includes
-    db.php              (kết nối PDO, dùng chung toàn bộ)
-    auth.php            (hàm kiểm tra session đăng nhập)
-    header.php, footer.php, navbar.php   (include dùng chung mọi trang)
-    functions.php        (hàm tiện ích dùng chung)
-  /api
-    logout.php
-    calculate-tdee.php
-    workout-plan-generate.php
-    chatbot.php
-    ... (mỗi file xử lý 1 request AJAX, trả JSON)
-  index.php, login.php, register.php, profile.php
-  exercises.php          (lưới bài tập + lọc theo nhóm cơ)
-  exercise-detail.php    (video YouTube nhúng + cách thực hiện + lỗi thường gặp)
-  workout-plan.php
-  nutrition.php
-  progress.php
-/sql
-  schema.sql            (câu lệnh tạo bảng)
-  seed.sql              (dữ liệu mẫu: 40-50 bài tập kèm ảnh, video, hướng dẫn)
-/docs
-  ERD.md
-  API_SPEC.md
-  workflow.md
-  UI_UX_PROMPT.md
-```
+**Document root phải là `public/`.** Mọi link/redirect dùng đường dẫn tuyệt đối (`/login.php`, `/css/...`), nên mở thẳng `localhost/gymsmart-starter/...` sẽ hỏng. `config.php` nằm ở **gốc repo** (ngoài `public/`), được nạp qua `public/includes/db.php` bằng `__DIR__ . '/../../config.php'`.
 
-**Nguyên tắc tổ chức:** Mỗi trang `.php` ở thư mục gốc chịu trách nhiệm cho 1 tính năng, tự include `header.php`/`footer.php`, tự gọi hàm cần thiết từ `/includes`. Phần nào cần cập nhật động không reload trang (tính TDEE, chat với AI, tick hoàn thành bài tập) thì gọi qua `/api/*.php` bằng `fetch()` trong JS, nhận về JSON.
+- **Trang** (`public/*.php`, `public/admin/*.php`): mỗi file là 1 tính năng. Mở đầu bằng `require includes/auth.php` (tự bật session với cookie an toàn) rồi `requireLogin()` / `requireAdmin()`, nạp `includes/db.php` (tạo biến `$pdo`), gọi hàm từ `includes/*`, rồi include `header.php` → `navbar.php` → HTML → `footer.php`. Đặt `$pageTitle` trước khi include `header.php`. CSS/JS riêng từng trang nằm ở `public/css/<feature>.css`, `public/js/<feature>.js`.
+- **API** (`public/api/*.php`): trả JSON cho `fetch()`. Có **2 kiểu đang tồn tại**:
+  - Kiểu mới (GET, chỉ đọc): dùng `includes/api.php` → `apiBoot()` (chỉ GET, bắt buộc đăng nhập → 401 JSON, biến exception thành 500 JSON), trả `{success, data}` / `{success:false, error}`. Xem `body-metrics.php`, `nutrition-history.php`.
+  - Kiểu cũ (POST): tự kiểm tra method/session và trả `{success, message}` (`log-workout.php`, `workout-plan-*.php`, `chatbot.php`). Khi sửa file nào thì giữ đúng kiểu của file đó, vì JS phía trang đang đọc đúng key đó.
+  - API **không** dùng `requireLogin()` (hàm đó redirect sang HTML). `user_id` luôn lấy từ `$_SESSION`, không bao giờ lấy từ request.
+- **Logic nghiệp vụ tách khỏi HTML, nằm trong `public/includes/`**, và phần thuật toán được giữ **thuần, không đụng DB** để test được:
+  - `workout-plan.php`: thuật toán gợi ý lịch tập thuần (`generateWorkoutPlan()`, các hằng `WORKOUT_SPLITS`, `WORKOUT_GOALS`, `WORKOUT_LEVELS`, `WORKOUT_EXERCISE_ROLES` gắn **id bài tập cố định** theo `seed_exercises_v2.sql`). `workout-plan-db.php` là lớp truy vấn PDO đi kèm.
+  - `tdee.php` (BMR Mifflin-St Jeor / TDEE / macro), `meal-plan.php`, `admin-users.php`, `audit-log.php` (ghi `admin_audit_log` cho thao tác admin).
+  - `ai.php`: gọi Gemini, đọc hằng tùy chọn qua `aiConst()` (`AI_API_KEY`, `AI_MODEL`, `AI_MODEL_FALLBACK`, `AI_CA_BUNDLE`, `AI_BASE_URL`), trả lỗi có mã. `api/chatbot.php` nhét dữ liệu user và bài tập liên quan (RAG theo từ khóa trên bảng `exercises`) vào prompt.
+- **Bảo mật dùng chung:** `csrf.php` (`csrfField()` trong form, `verifyCsrf()` khi nhận POST, lỗi thì `showCsrfError()`), `error-page.php` (`showError()`), `header.php` gửi các header bảo vệ. Quy trình rà soát nằm ở `SECURITY_CHECKLIST.md`.
+- **Bài viết:** lấy từ 2 nguồn, gộp trong `includes/articles.php` → `loadArticles()`:
+  1. File: mỗi bài là 1 file `public/content/articles/<slug>.php` trả về mảng (định dạng khối `content` ghi ở comment đầu `includes/articles.php`). Ảnh bìa và hình minh họa là SVG trong `public/img/articles/`. `sources` chỉ được ghi nghiên cứu có thật, đã kiểm tra PMID/DOI (xem `docs/nghien-cuu-da-xac-minh.md`).
+  2. DB: bảng `articles` do admin soạn (`admin/articles.php`, `admin/article-form.php`).
+  Hiển thị qua `includes/article-markup.php`.
+
+### Database và file SQL
+
+`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `body_metrics.sql`, `password_resets.sql`, `split_types.sql`, `split_type_ap.sql`, `users_avatar.sql`). Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
 
 ## Phạm vi tính năng
 
@@ -77,7 +63,9 @@ Tài liệu hướng dẫn cho Claude Code khi làm việc trên dự án này.
 ### Tùy chọn (dồn vào Chatbot AI)
 7. Chatbot AI cơ bản → 8. Cá nhân hóa theo dữ liệu user → 9. RAG đơn giản: tra bảng `exercises` (mô tả, nhóm cơ, cách thực hiện) theo từ khóa rồi dẫn tới trang bài tập
 
-**Đã loại bỏ:** chat user-user, community/forum, role Coach, bài viết nghiên cứu (thay bằng video trong thư viện bài tập).
+**Đã loại bỏ:** chat user-user, community/forum, role Coach.
+
+**Đã làm thêm ngoài kế hoạch ban đầu:** bài viết kiến thức có trích nghiên cứu, khu admin (người dùng, bài tập, bài viết, nhật ký hoạt động, thống kê, xuất CSV), quên/đặt lại mật khẩu, ảnh đại diện. Trạng thái từng việc xem `TASKS.md`.
 
 ## Quy ước code (PHP/JS thuần)
 
@@ -128,14 +116,33 @@ Mỗi người phụ trách **trọn 1 nhóm tính năng từ database → PHP b
 
 ## Lệnh thường dùng
 
+PHP có thể không có trong PATH. Trên máy này dùng `C:\xampp\php\php.exe` (PHP 8.2). Chạy các lệnh dưới đây ở gốc repo:
+
 ```bash
-# Chạy local bằng PHP built-in server (không cần cài Apache/Nginx)
+# Chạy local (MySQL của XAMPP phải đang chạy; config.php chép từ config.example.php)
 php -S localhost:8000 -t public
+
+# Test: script PHP tự viết, không dùng PHPUnit. In [OK]/[FAIL], cuối cùng in "TẤT CẢ ĐỀU PASS"
+php test-workout-plan.php       # thuật toán lịch tập, dữ liệu từ test-exercises-fixture.php (không cần DB)
+php test-workout-plan-db.php    # lớp workout-plan-db.php trên SQLite in-memory (cần pdo_sqlite)
+
+# Lint 1 file
+php -l public/path/to/file.php
+
+# Quét regex tìm chỗ bảo mật đáng nghi (thiếu prepare, thiếu escape, thiếu requireLogin...). Kết quả chỉ là gợi ý, phải tự đọc lại code
+php tools/audit.php public
+
+# Kiểm tra vì sao chatbot không trả lời (cURL, khóa API, model, SSL). Có gọi thật tới Gemini
+php tools/chatbot-check.php
 ```
+
+Không có bước build, không có bundler, không dùng Composer/npm. Chart.js được lưu sẵn ở `public/js/lib/chart.umd.min.js` (không tải qua CDN).
+
+Đổi `seed_exercises_v2.sql` hoặc bảng vai trò trong `workout-plan.php` thì phải cập nhật `test-exercises-fixture.php` và chạy lại cả 2 test.
 
 **Database:** dùng XAMPP/MAMP (có sẵn phpMyAdmin), hoặc cài phpMyAdmin riêng nếu dùng MySQL độc lập.
 - Tạo database `gymsmart` qua giao diện phpMyAdmin
-- Tab **Import** → chọn `sql/schema.sql` để tạo bảng, rồi `sql/seed.sql` để nạp dữ liệu mẫu
+- Tab **Import** → chọn `sql/schema.sql`, rồi `sql/seed_exercises_v2.sql`, rồi các file bổ sung trong `sql/` (xem mục "Database và file SQL")
 - Khi sửa cấu trúc bảng trực tiếp trên phpMyAdmin, **nhớ export lại và cập nhật `sql/schema.sql`** để cả nhóm đồng bộ (tab Export → chọn format SQL)
 
 ## Quy trình Git của nhóm
