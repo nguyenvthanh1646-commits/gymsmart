@@ -336,7 +336,8 @@
                     detail = 'Server trả về dữ liệu không phải JSON (HTTP ' + r.status + '): ' + r.raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
                 }
                 if (r.status === 403 && r.data && /tải lại/i.test(msg)) { msg += ' (bấm F5)'; }
-                addMsg({ who: 'bot', text: msg, err: true, detail: detail, retry: r.status !== 401 && r.status !== 403 && r.status !== 429 });
+                var links = (r.data && Array.isArray(r.data.links)) ? r.data.links : [];   // bài tập liên quan, có cả khi AI lỗi
+                addMsg({ who: 'bot', text: msg, err: true, detail: detail, links: links, retry: r.status !== 401 && r.status !== 403 && r.status !== 429 });
             }
         }).catch(function (e) {
             clearTimeout(timer); hideTyping(); setBusy(false);
