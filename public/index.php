@@ -132,6 +132,11 @@ if ($loggedIn) {
     $firstName = $parts ? end($parts) : '';
 }
 
+// Bài nền tảng (mustRead) dùng cho cả khách và người đã đăng nhập (mục "Đọc trước khi tập")
+require_once __DIR__ . '/includes/articles.php';
+$allArticles = loadArticles();
+$mustReadArticles = array_filter($allArticles, fn($a) => $a['mustRead']);
+
 // Số liệu và bài viết nổi bật cho trang giới thiệu (khách). Lỗi database thì dùng giá trị mặc định, trang vẫn chạy.
 $exerciseCount = 0;
 $articleTeasers = [];
@@ -142,10 +147,11 @@ if (!$loggedIn) {
     } catch (Throwable $e) {
         $exerciseCount = 0;
     }
-    require_once __DIR__ . '/includes/articles.php';
-    $allArticles = loadArticles();
     $articleCount = count($allArticles);
+    // Mục có tiêu đề "Đọc trước khi tập" nên đặt các bài nền tảng lên trước, còn chỗ mới thêm bài khác
+    $articleTeasers = array_slice($mustReadArticles, 0, 3, true);
     foreach (['bao-nhieu-buoc-moi-ngay', 'protein-bao-nhieu-la-du', 'ta-nang-hay-ta-nhe'] as $s) {
+        if (count($articleTeasers) >= 3) { break; }
         if (isset($allArticles[$s])) {
             $articleTeasers[$s] = $allArticles[$s];
         }
@@ -296,7 +302,7 @@ include __DIR__ . '/includes/header.php';
     <div class="hm-wrap">
         <div class="sec-head">
             <h2>Đọc trước khi tập</h2>
-            <p>Mỗi bài nêu rõ mức độ bằng chứng và dẫn nguồn nghiên cứu. Chỉ để tham khảo, không thay tư vấn y tế.</p>
+            <p>Mỗi bài nêu rõ mức độ bằng chứng và dẫn nguồn nghiên cứu. Chỉ để tham khảo, không thay tư vấn y tế. Bài viết dành cho thành viên, đăng ký miễn phí.</p>
         </div>
         <div class="arts">
             <?php foreach ($articleTeasers as $s => $a): ?>
@@ -305,6 +311,7 @@ include __DIR__ . '/includes/header.php';
                     <span class="art-body">
                         <b><?= htmlspecialchars($a['title']) ?></b>
                         <small><?= htmlspecialchars($a['summary']) ?></small>
+                        <span class="art-foot">Đăng nhập để đọc &rarr;</span>
                     </span>
                 </a>
             <?php endforeach; ?>
@@ -400,6 +407,7 @@ include __DIR__ . '/includes/header.php';
             ['flame',    'TDEE &amp; Macro', 'Dinh dưỡng theo mục tiêu', '/nutrition.php', is_file(__DIR__ . '/nutrition.php')],
             ['chart',    'Tiến trình', 'Biểu đồ thay đổi', '/progress.php', is_file(__DIR__ . '/progress.php')],
             ['user',     'Hồ sơ', 'Chỉ số và mục tiêu', '/profile.php', true],
+            ['book',     'Bài viết', 'Kiến thức có nguồn', '/articles.php', is_file(__DIR__ . '/articles.php')],
         ];
         foreach ($tiles as [$icon, $label, $hint, $href, $ready]):
             $tag = $ready ? 'a' : 'div';
@@ -411,6 +419,23 @@ include __DIR__ . '/includes/header.php';
         <?php endforeach; ?>
     </div>
 </div>
+
+<?php if (!empty($mustReadArticles)): ?>
+<div class="hm-wrap">
+    <!-- Nhắc đọc các bài nền tảng (gồng core, thở cơ hoành) trước khi bắt đầu tập -->
+    <aside class="hm-must" aria-labelledby="hm-must-title">
+        <div>
+            <span class="hm-eyebrow">Đọc trước khi tập</span>
+            <h2 id="hm-must-title">Học <?= count($mustReadArticles) ?> kỹ thuật nền tảng trước buổi tập đầu tiên</h2>
+        </div>
+        <ul>
+            <?php foreach ($mustReadArticles as $s => $a): ?>
+                <li><a href="/article.php?slug=<?= htmlspecialchars(rawurlencode($s)) ?>"><?= htmlspecialchars($a['title']) ?> <span aria-hidden="true">&rarr;</span></a></li>
+            <?php endforeach; ?>
+        </ul>
+    </aside>
+</div>
+<?php endif; ?>
 
 <?php if (!empty($recommended)): ?>
 <section class="hm-section">
