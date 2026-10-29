@@ -41,7 +41,7 @@ function aiConfigProblems(): array
     $key = aiApiKey();
     if ($key === '') {
         $p[] = 'Chưa có AI_API_KEY trong config.php.';
-    } elseif (!preg_match('/^[A-Za-z0-9_-]{20,}$/', $key)) {
+    } elseif (!preg_match('/^[A-Za-z0-9._-]{20,}$/', $key)) { // khóa kiểu mới của Google có dấu chấm (AQ.xxx)
         $p[] = 'AI_API_KEY có ký tự lạ hoặc quá ngắn (có thể bị thừa dấu cách/ngoặc khi dán).';
     }
     $m = trim((string)aiConst('AI_MODEL', ''));
@@ -80,11 +80,28 @@ function aiGenerate(string $system, array $turns, array $options = []): array
     if ($fb !== '' && preg_match('/^[A-Za-z0-9._-]{3,64}$/', $fb) && $fb !== $models[0]) {
         $models[] = $fb;
     }
+    // Hạn TỔNG cho mọi lần thử (mặc định 90 giây), phải nhỏ hơn set_time_limit(120) của api/chatbot.php.
+    // Không có hạn này thì trường hợp xấu nhất 2 model × 3 lần × 30 giây ≈ 190 giây: PHP bị dừng giữa chừng.
+    $deadline = microtime(true) + max(10, (int)aiConst('AI_TOTAL_TIMEOUT', 90));
     $res = null;
-    foreach ($models as $model) {
+    foreach ($models as $i => $model) {
+        $hasNext = isset($models[$i + 1]);
         for ($try = 0; $try < 3; $try++) {
+            $left = (int)floor($deadline - microtime(true));
+            if ($left < 5) { // không còn đủ thời gian cho một lần gọi nữa
+                return $res ?? ['ok' => false, 'text' => '', 'code' => 'AI_TIMEOUT', 'http' => 0, 'detail' => 'Hết thời gian chờ tổng.'];
+            }
+            $options['timeout'] = $left;
             $res = aiGenerateOnce($system, $turns, $options, $model);
-            if ($res['ok'] || !in_array($res['code'], ['AI_BUSY', 'AI_TIMEOUT'], true)) {
+            if ($res['ok']) {
+                return $res;
+            }
+            // Hết hạn mức (429) hoặc tên model sai: thử lại cùng model vô ích (hạn mức tính riêng theo từng model),
+            // nên chuyển ngay sang model dự phòng nếu có.
+            if ($hasNext && in_array($res['code'], ['AI_QUOTA', 'AI_MODEL'], true)) {
+                break;
+            }
+            if (!in_array($res['code'], ['AI_BUSY', 'AI_TIMEOUT'], true)) {
                 return $res;
             }
             if ($try < 2) {
@@ -144,7 +161,8 @@ function aiGenerateOnce(string $system, array $turns, array $options, string $mo
         CURLOPT_POST           => true,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_TIMEOUT        => max(5, (int)aiConst('AI_TIMEOUT', 30)), // quá hạn thì thử lại bằng kết nối mới (xem aiGenerate)
+        // quá hạn thì thử lại bằng kết nối mới (xem aiGenerate); không vượt phần thời gian tổng còn lại
+        CURLOPT_TIMEOUT        => max(5, min((int)aiConst('AI_TIMEOUT', 30), (int)($options['timeout'] ?? 30))),
         CURLOPT_FRESH_CONNECT  => true,
         CURLOPT_HTTPHEADER     => ['content-type: application/json', 'x-goog-api-key: ' . $key],
         CURLOPT_POSTFIELDS     => $payload,

@@ -1,7 +1,8 @@
 <?php
 // public/api/workout-plan-generate.php
 // POST: days_per_week, level, split_type (tùy chọn)  ->  JSON. user_id lấy từ $_SESSION, KHÔNG nhận từ client.
-session_start();
+require_once __DIR__ . '/../includes/auth.php';  // bật session với cookie an toàn (không gọi requireLogin: API trả JSON)
+require_once __DIR__ . '/../includes/csrf.php';
 header('Content-Type: application/json; charset=utf-8');
 
 function jsonResponse(int $status, array $body): void
@@ -16,9 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Chưa đăng nhập -> 401 (API trả JSON, không redirect)
-// LƯU Ý: kiểm tra tên khóa session mà A dùng trong auth.php (ở đây giả định 'user_id')
 if (empty($_SESSION['user_id'])) {
     jsonResponse(401, ['success' => false, 'message' => 'Bạn cần đăng nhập.']);
+}
+if (!verifyCsrf()) {
+    jsonResponse(403, ['success' => false, 'message' => 'Phiên làm việc đã hết hạn, hãy tải lại trang.']);
 }
 $userId = (int)$_SESSION['user_id'];
 

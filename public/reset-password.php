@@ -13,7 +13,8 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/csrf.php';
 
 // Mã nằm trong URL (GET) khi mở link, và trong ô ẩn (POST) khi gửi form
-$token = (string)($_POST['token'] ?? $_GET['token'] ?? '');
+$token = $_POST['token'] ?? $_GET['token'] ?? '';
+$token = is_string($token) ? $token : ''; // ?token[]=x thì coi như không có mã
 
 /** Tìm bản ghi mã còn hiệu lực; trả về mảng (có user_id) hoặc null */
 function findValidReset(PDO $pdo, string $token): ?array
@@ -41,8 +42,8 @@ if ($reset && $_SERVER['REQUEST_METHOD'] === 'POST') {
         showCsrfError();
     }
 
-    $newPw     = $_POST['new_password'] ?? '';
-    $confirmPw = $_POST['confirm_password'] ?? '';
+    $newPw     = is_string($_POST['new_password'] ?? null) ? $_POST['new_password'] : '';
+    $confirmPw = is_string($_POST['confirm_password'] ?? null) ? $_POST['confirm_password'] : '';
 
     if (strlen($newPw) < 8) {
         $errors[] = 'Mật khẩu mới phải có ít nhất 8 ký tự.';

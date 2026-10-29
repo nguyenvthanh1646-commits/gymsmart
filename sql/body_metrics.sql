@@ -1,6 +1,6 @@
 -- body_metrics.sql — bảng số đo cơ thể theo từng ngày, dùng cho trang Tiến trình (việc C-3, A nhận làm).
 -- Cách dùng: phpMyAdmin → chọn database "gymsmart" → tab Import → chọn file này.
--- Báo D gộp đoạn này vào schema.sql (ERD.md đã có sẵn bảng BODY_METRICS).
+-- ĐÃ GỘP vào schema.sql (máy mới không cần chạy file này). Chỉ chạy trên database cũ chưa có bảng này.
 -- Chạy lại nhiều lần vẫn an toàn (IF NOT EXISTS).
 --
 -- Nếu báo lỗi #1215 "Cannot add foreign key constraint": cột users.id khác kiểu với user_id ở đây.

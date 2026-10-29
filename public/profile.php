@@ -163,6 +163,8 @@ $errors = [];
 $avatarError = '';
 $form = $user;
 $formName = $_POST['form'] ?? 'profile';
+// Ô gửi lên dạng mảng (full_name[]=x) thì coi như trống, tránh TypeError khi gọi trim()/password_verify()
+$in = fn(string $k): string => is_string($_POST[$k] ?? null) ? $_POST[$k] : '';
 
 // Ảnh vượt giới hạn post_max_size của PHP thì cả $_POST lẫn $_FILES đều rỗng
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$_POST && !$_FILES && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
@@ -209,14 +211,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formName === 'profile') {
         showCsrfError();
     }
 
-    $fullName   = trim($_POST['full_name'] ?? '');
-    $age        = trim($_POST['age'] ?? '');
-    $height     = str_replace(',', '.', trim($_POST['height_cm'] ?? '')); // cho phép gõ 1,75 kiểu Việt Nam
-    $weight     = str_replace(',', '.', trim($_POST['weight_kg'] ?? ''));
-    $gender     = $_POST['gender'] ?? '';
-    $activity   = $_POST['activity_level'] ?? '';
-    $experience = $_POST['experience_level'] ?? '';
-    $goal       = $_POST['goal'] ?? '';
+    $fullName   = trim($in('full_name'));
+    $age        = trim($in('age'));
+    $height     = str_replace(',', '.', trim($in('height_cm'))); // cho phép gõ 1,75 kiểu Việt Nam
+    $weight     = str_replace(',', '.', trim($in('weight_kg')));
+    $gender     = $in('gender');
+    $activity   = $in('activity_level');
+    $experience = $in('experience_level');
+    $goal       = $in('goal');
 
     $form = array_merge($user, [
         'full_name' => $fullName, 'age' => $age, 'height_cm' => $height, 'weight_kg' => $weight,
@@ -226,6 +228,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formName === 'profile') {
     // ===== Kiểm tra dữ liệu (validate phía server, bắt buộc) =====
     if ($fullName === '') {
         $errors[] = 'Vui lòng nhập họ và tên.';
+    } elseif (mb_strlen($fullName) > 100) {
+        $errors[] = 'Họ và tên tối đa 100 ký tự.'; // cùng giới hạn với trang đăng ký
     }
     $ageValue = filter_var($age, FILTER_VALIDATE_INT);
     if ($ageValue === false || $ageValue < 10 || $ageValue > 100) {
@@ -273,9 +277,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $formName === 'password') {
     if (!verifyCsrf()) {
         showCsrfError();
     }
-    $currentPw = $_POST['current_password'] ?? '';
-    $newPw     = $_POST['new_password'] ?? '';
-    $confirmPw = $_POST['confirm_password'] ?? '';
+    $currentPw = $in('current_password');
+    $newPw     = $in('new_password');
+    $confirmPw = $in('confirm_password');
 
     // Phải nhập đúng mật khẩu hiện tại: mượn máy đang đăng nhập cũng không đổi được
     $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = ?");

@@ -12,6 +12,7 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/audit-log.php';
+require_once __DIR__ . '/../includes/functions.php'; // exerciseImageFileOk()
 
 requireAdmin();
 
@@ -96,12 +97,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Mô tả, các bước thực hiện và lỗi thường gặp không được để trống.';
     }
 
-    // Ảnh: để trống, hoặc là link http(s), hoặc đường dẫn bắt đầu bằng "/".
-    // Chặn kiểu "javascript:..." để không bị chèn mã vào thuộc tính src.
+    // Ảnh: để trống, hoặc TÊN FILE nằm trong public/img/exercises/ (quy ước của cột image_url, xem ERD.md).
+    // Lỡ dán cả đường dẫn "/img/exercises/12.jpg" thì chỉ giữ tên file. Tên lạ (javascript:, ../) bị từ chối.
     if ($form['image_url'] !== '') {
-        if (mb_strlen($form['image_url']) > 255
-            || !preg_match('~^(https?://|/)~i', $form['image_url'])) {
-            $errors[] = 'Ảnh phải là link http(s) hoặc đường dẫn bắt đầu bằng "/" (tối đa 255 ký tự).';
+        if (strpos($form['image_url'], '/img/exercises/') === 0) {
+            $form['image_url'] = substr($form['image_url'], strlen('/img/exercises/'));
+        }
+        if (!exerciseImageFileOk($form['image_url'])) {
+            $errors[] = 'Ảnh phải là tên file trong thư mục img/exercises, ví dụ 12.jpg (đuôi jpg, png, webp hoặc svg).';
+        } elseif (!is_file(__DIR__ . '/../img/exercises/' . $form['image_url'])) {
+            $errors[] = 'Không thấy file img/exercises/' . $form['image_url'] . '. Hãy chép ảnh vào thư mục đó trước.';
         }
     }
 
@@ -242,8 +247,8 @@ function renderOptions(array $options, string $selected): void
             <div class="adm-field">
                 <label for="image_url">Ảnh minh họa</label>
                 <input class="adm-input" type="text" id="image_url" name="image_url" maxlength="255"
-                       value="<?= htmlspecialchars($form['image_url']) ?>" inputmode="url">
-                <p class="adm-hint">Link http(s) hoặc đường dẫn bắt đầu bằng /. Để trống nếu chưa có.</p>
+                       value="<?= htmlspecialchars($form['image_url']) ?>">
+                <p class="adm-hint">Tên file trong thư mục img/exercises, ví dụ 12.jpg. Để trống nếu chưa có.</p>
                 <img class="adm-preview" id="image-preview" alt="Xem trước ảnh">
             </div>
             <div class="adm-field">
@@ -274,8 +279,9 @@ function renderOptions(array $options, string $selected): void
 
     function showImage() {
         var v = img.value.trim();
-        // Chỉ xem trước link http(s) hoặc đường dẫn bắt đầu bằng "/", giống quy tắc kiểm tra ở server
-        if (/^(https?:\/\/|\/)/i.test(v)) { imgPrev.src = v; imgPrev.classList.add('is-on'); }
+        // Chỉ xem trước tên file hợp lệ, giống quy tắc kiểm tra ở server (exerciseImageFileOk)
+        v = v.replace(/^\/img\/exercises\//, '');
+        if (/^[A-Za-z0-9_-][A-Za-z0-9._-]{0,99}\.(jpe?g|png|webp|svg)$/i.test(v)) { imgPrev.src = '/img/exercises/' + v; imgPrev.classList.add('is-on'); }
         else { imgPrev.removeAttribute('src'); imgPrev.classList.remove('is-on'); }
     }
     function youtubeId(v) {

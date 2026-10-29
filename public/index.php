@@ -14,6 +14,7 @@
 require_once __DIR__ . '/includes/auth.php'; // có session + isLoggedIn()
 require_once __DIR__ . '/includes/db.php';   // có biến $pdo
 require_once __DIR__ . '/includes/logo.php';
+require_once __DIR__ . '/includes/functions.php'; // exerciseImageSrc()
 
 $loggedIn = isLoggedIn();
 
@@ -425,8 +426,8 @@ include __DIR__ . '/includes/header.php';
         <div class="hm-recs">
             <?php foreach ($recommended as $ex): ?>
                 <a class="hm-rec" href="/exercise-detail.php?id=<?= (int)$ex['id'] ?>">
-                    <?php if (!empty($ex['image_url'])): ?>
-                        <img class="hm-rec__img" src="<?= htmlspecialchars($ex['image_url']) ?>" alt="<?= htmlspecialchars($ex['name']) ?>" loading="lazy">
+                    <?php if (($imgSrc = exerciseImageSrc($ex['image_url'])) !== null): ?>
+                        <img class="hm-rec__img" src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($ex['name']) ?>" loading="lazy">
                     <?php else: ?>
                         <div class="hm-rec__ph">Chưa có ảnh</div>
                     <?php endif; ?>

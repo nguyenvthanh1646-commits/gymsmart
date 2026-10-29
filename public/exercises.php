@@ -13,6 +13,7 @@
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/functions.php'; // exerciseImageSrc()
 
 requireLogin(); // theo API_SPEC: xem thư viện bài tập cần đăng nhập
 
@@ -233,8 +234,8 @@ include __DIR__ . '/includes/header.php';
             <!-- (int) ép id thành số nguyên để không chèn được ký tự lạ vào đường dẫn -->
             <a class="exercise-card ex-card" href="/exercise-detail.php?id=<?= (int)$ex['id'] ?>">
                 <div class="exercise-card__media ex-card__media">
-                    <?php if (!empty($ex['image_url'])): ?>
-                        <img class="exercise-card__image" src="/img/exercises/<?= htmlspecialchars($ex['image_url']) ?>"
+                    <?php if (($imgSrc = exerciseImageSrc($ex['image_url'])) !== null): ?>
+                        <img class="exercise-card__image" src="<?= htmlspecialchars($imgSrc) ?>"
                              alt="<?= htmlspecialchars($ex['name']) ?>" loading="lazy">
                     <?php else: ?>
                         <div class="ex-card__ph">Chưa có ảnh</div>
