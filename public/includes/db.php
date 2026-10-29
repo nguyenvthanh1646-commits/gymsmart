@@ -31,7 +31,9 @@ $options = [
 try {
     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
 } catch (PDOException $e) {
-    // Khi mới học, in lỗi ra để debug. Trước khi nộp bài, nên đổi thành
-    // thông báo chung chung để không lộ thông tin hệ thống ra ngoài.
-    die('Không kết nối được database: ' . $e->getMessage());
+    // Chi tiết lỗi (host, tên user DB...) chỉ ghi vào log máy chủ (XAMPP: apache/logs/error.log),
+    // không in ra trình duyệt để khỏi lộ thông tin hệ thống. Người dùng chỉ thấy thông báo chung.
+    error_log('db.php: ' . $e->getMessage());
+    http_response_code(500);
+    die('Không kết nối được database. Kiểm tra MySQL trong XAMPP đã chạy và thông tin trong config.php.');
 }
