@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         showCsrfError();
     }
 
-    $email = trim($_POST['email'] ?? '');
+    $email = trim(is_string($_POST['email'] ?? null) ? $_POST['email'] : ''); // gửi dạng mảng thì coi như trống
 
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Vui lòng nhập một địa chỉ email hợp lệ.';

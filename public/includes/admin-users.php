@@ -65,8 +65,23 @@ function handleUserAction(PDO $pdo, string $redirectOther, string $redirectOnDel
             if ($user['role'] === 'ADMIN') {
                 $_SESSION['flash'] = ['error', 'Không xóa trực tiếp tài khoản ADMIN. Hãy hạ xuống USER trước.'];
             } else {
+                $avatar = null; // đọc trước khi xóa để dọn file ảnh đại diện trên đĩa
+                try {
+                    $stmt = $pdo->prepare("SELECT avatar FROM users WHERE id = ?");
+                    $stmt->execute([$target]);
+                    $avatar = $stmt->fetchColumn();
+                } catch (PDOException $e) {
+                    // chưa import cột avatar: không có ảnh để xóa
+                }
                 $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
                 $stmt->execute([$target]);
+                // Cùng quy tắc với avatarPathOk() trong profile.php: chỉ xóa đúng file trong uploads/avatars/
+                if (is_string($avatar) && preg_match('#^uploads/avatars/[A-Za-z0-9._-]+\.jpg$#', $avatar) === 1) {
+                    $file = __DIR__ . '/../' . $avatar;
+                    if (is_file($file)) {
+                        @unlink($file);
+                    }
+                }
                 auditLog($pdo, 'user.delete', 'user', $target, 'Xóa tài khoản "' . $user['full_name'] . '"');
                 $_SESSION['flash'] = ['ok', 'Đã xóa tài khoản "' . $user['full_name'] . '" cùng dữ liệu của họ.'];
                 $go = $redirectOnDelete;

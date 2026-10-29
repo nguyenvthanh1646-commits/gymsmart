@@ -29,8 +29,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         showCsrfError();
     }
 
-    $email    = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
+    // Ô gửi lên dạng mảng (email[]=x) thì coi như trống, tránh TypeError khi gọi trim()/password_verify()
+    $in = fn(string $k): string => is_string($_POST[$k] ?? null) ? $_POST[$k] : '';
+    $email    = trim($in('email'));
+    $password = $in('password');
 
     if ($email === '' || $password === '') {
         $error = 'Vui lòng nhập email và mật khẩu.';
