@@ -120,6 +120,9 @@
 .wp-log-btn:hover, .wp-log-btn[aria-expanded="true"] { border-color: var(--color-accent); color: var(--color-accent); }
 
 /* ===== Ghi log ===== */
+.wp-log__msg { margin: 10px 0 0; font-size: .88rem; font-weight: 600; color: #067647; }
+.wp-log__msg:empty { display: none; }
+.wp-log__msg.is-error { color: #b42318; }
 .wp-log { margin: 12px 0 0 46px; padding: 14px; border-radius: 14px; background: #f8f9fc; border: 1px solid var(--ui-line); }
 .wp-log__last { margin: 0 0 12px; font-size: .88rem; color: var(--color-text-muted); }
 .wp-log__badge { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 6px; background: var(--gs-ink, #0b1020); color: #fff; font-size: .72rem; font-weight: 700; }

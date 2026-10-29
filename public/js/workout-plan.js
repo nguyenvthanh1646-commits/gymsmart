@@ -162,6 +162,16 @@
 
         const btn = logForm.querySelector('.wp-log__submit');
         const originalText = btn.textContent;
+        // Dòng thông báo ngay dưới form (thay cho alert): role="status" để trình đọc màn hình đọc lên
+        let msg = logForm.parentElement.querySelector('.wp-log__msg');
+        if (!msg) {
+            msg = document.createElement('p');
+            msg.className = 'wp-log__msg';
+            msg.setAttribute('role', 'status');
+            logForm.after(msg);
+        }
+        msg.textContent = '';
+        msg.classList.remove('is-error');
         btn.disabled = true;
         btn.textContent = 'Đang lưu...';
         try {
@@ -169,16 +179,21 @@
             if (!data.success) throw new Error(data.message || 'Không lưu được.');
             btn.textContent = 'Đã lưu';
             btn.classList.add('is-done');
+            const f = logForm.elements;
+            msg.textContent = 'Đã ghi ' + f.sets.value + ' set × ' + f.reps.value + ' lặp, ' + f.weight.value + ' kg.';
             setTimeout(function () {
+                msg.textContent = '';
                 const item = logForm.closest('.wp-ex');
                 item.querySelector('.wp-log').hidden = true;
                 item.querySelector('[data-log-toggle]').setAttribute('aria-expanded', 'false');
                 btn.textContent = originalText;
                 btn.classList.remove('is-done');
                 btn.disabled = false;
-            }, 1000);
+            }, 1800);
         } catch (error) {
-            alert(error.message || 'Lỗi kết nối máy chủ');
+            // fetch lỗi mạng ném TypeError với chữ tiếng Anh: đổi thành câu dễ hiểu
+            msg.textContent = error instanceof TypeError ? 'Không kết nối được máy chủ, kiểm tra mạng rồi bấm Lưu lại.' : (error.message || 'Không lưu được.');
+            msg.classList.add('is-error');
             btn.textContent = originalText;
             btn.disabled = false;
         }
