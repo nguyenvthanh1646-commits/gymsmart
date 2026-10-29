@@ -1,6 +1,6 @@
 -- password_resets.sql — bảng mã đặt lại mật khẩu (chức năng "Quên mật khẩu", việc A-10).
 -- Cách dùng: phpMyAdmin → chọn database "gymsmart" → tab Import → chọn file này.
--- Báo D gộp đoạn này vào schema.sql và thêm bảng vào ERD.md.
+-- ĐÃ GỘP vào schema.sql (máy mới không cần chạy file này). Chỉ chạy trên database cũ chưa có bảng này.
 -- Chạy lại nhiều lần vẫn an toàn (IF NOT EXISTS).
 -- Chỉ lưu bản BĂM (SHA-256) của mã; mã thật chỉ nằm trong đường link gửi cho người dùng.
 

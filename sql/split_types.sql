@@ -1,5 +1,6 @@
 -- split_types.sql — thêm các kiểu chia mới cho bảng workout_plans:
 --   ANTERIOR_POSTERIOR (Mặt trước / Mặt sau) và 3 lịch kết hợp PPL_UL, UL_FULL_BODY, AP_FULL_BODY.
+-- ĐÃ GỘP vào schema.sql. Database cũ vẫn phải chạy file này nếu ENUM split_type mới có 4 giá trị (tạo lịch Mặt trước/Mặt sau hoặc lịch kết hợp sẽ lỗi).
 -- Chạy một lần trên phpMyAdmin (tab SQL). Không đụng dữ liệu cũ.
 USE gymsmart;
 ALTER TABLE workout_plans

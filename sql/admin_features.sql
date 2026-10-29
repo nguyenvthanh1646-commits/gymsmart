@@ -1,7 +1,7 @@
 -- admin_features.sql — 3 bảng cho chức năng admin mới: nhật ký hoạt động, bài viết do admin soạn, lượt xem bài.
 -- Cách dùng: phpMyAdmin → chọn database "gymsmart" → tab Import → chọn file này.
 -- Chạy lại nhiều lần vẫn an toàn (IF NOT EXISTS).
--- Báo D gộp vào schema.sql và thêm 3 bảng vào ERD.md.
+-- ĐÃ GỘP vào schema.sql (máy mới không cần chạy file này). Chỉ chạy trên database cũ chưa có bảng này.
 
 -- Ai làm gì và lúc nào. Không dùng khóa ngoại: xóa tài khoản admin thì nhật ký vẫn còn (đã lưu cả tên).
 CREATE TABLE IF NOT EXISTS admin_audit_log (
