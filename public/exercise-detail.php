@@ -1,6 +1,7 @@
 <?php
 // public/exercise-detail.php - Trang chi tiết bài tập (D1)
 require_once __DIR__ . '/includes/auth.php';
+requireLogin(); // giống exercises.php: xem thư viện bài tập cần đăng nhập
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/video.php';
 
