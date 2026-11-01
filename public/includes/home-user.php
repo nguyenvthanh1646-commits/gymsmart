@@ -66,6 +66,7 @@ if (!empty($missingFields)) {
         <div class="du-grid">
             <?php include __DIR__ . '/dash-today.php'; ?>
             <?php include __DIR__ . '/dash-week.php'; ?>
+            <?php include __DIR__ . '/dash-nutrition.php'; ?>
         </div>
     </div>
 </div>

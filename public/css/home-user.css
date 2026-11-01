@@ -135,6 +135,18 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; min-heig
 .is-extra .du-day__mark { background: rgba(255, 255, 255, .14); color: #fff; }
 .du-legend { margin: 10px 0 0; color: var(--du-text-muted); font-size: .78rem; line-height: 1.5; }
 
+/* ===== Thẻ Dinh dưỡng ===== */
+.du-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0 0 14px; }
+.du-stats dt { color: var(--du-text-muted); font-size: .84rem; }
+.du-stats dd { margin: 2px 0 0; color: #fff; font-size: 1.4rem; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.du-stats small { color: var(--du-text-muted); font-size: .8rem; font-weight: 500; }
+.du-macros { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
+.du-macros__line { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; color: #dbe1f1; font-size: .9rem; }
+.du-macros__line b { margin-left: auto; color: #fff; font-variant-numeric: tabular-nums; }
+.du-macros__share { min-width: 2.8em; color: var(--du-text-muted); font-size: .84rem; text-align: right; font-variant-numeric: tabular-nums; }
+.du-bar--carbs i { background: #ffb27a; }
+.du-bar--fat i { background: #ffd9c4; }
+
 @media (min-width: 720px) {
     .du { padding-top: 32px; }
     .du-wrap { padding: 0 20px; }
