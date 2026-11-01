@@ -50,13 +50,13 @@
                         <?php if ($row['logged']): ?>
                             <span class="du-ex__done">Đã ghi</span>
                         <?php else: ?>
-                            <button type="button" class="du-ex__toggle" data-log-toggle aria-expanded="false" aria-controls="du-log-<?= $rowId ?>">Ghi nhanh</button>
+                            <button type="button" class="du-ex__toggle" data-log-toggle aria-expanded="false" aria-controls="du-log-<?= (int)$rowId ?>">Ghi nhanh</button>
                         <?php endif; ?>
                     </div>
                     <?php if (!$row['logged']): ?>
-                        <form class="du-log" id="du-log-<?= $rowId ?>" method="post" action="/api/log-workout.php" data-log-form data-no-guard hidden>
+                        <form class="du-log" id="du-log-<?= (int)$rowId ?>" method="post" action="/api/log-workout.php" data-log-form data-no-guard hidden>
                             <?= csrfField() ?>
-                            <input type="hidden" name="row_id" value="<?= $rowId ?>">
+                            <input type="hidden" name="row_id" value="<?= (int)$rowId ?>">
                             <input type="hidden" name="exercise_id" value="<?= (int)$row['exercise_id'] ?>">
                             <label>Hiệp
                                 <input type="number" name="sets" min="1" max="<?= PLAN_EDIT_MAX_SETS ?>" value="<?= (int)$row['sets'] ?>" required>

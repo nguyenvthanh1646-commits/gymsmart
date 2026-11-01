@@ -122,13 +122,14 @@ if (extension_loaded('pdo_sqlite')) {
     $db->exec('CREATE TABLE body_metrics (id INTEGER PRIMARY KEY, user_id INT, recorded_date TEXT, weight_kg REAL)');
     $db->exec('CREATE TABLE article_reads (user_id INT, slug TEXT)');
     $db->exec("INSERT INTO workout_logs (user_id, exercise_id, workout_plan_exercise_id, log_date, weight_kg_used) VALUES
-        (1, 5, 50, '2026-10-20', 20), (1, 5, 50, '2026-10-27', 25), (2, 5, 90, '2026-10-28', 99), (1, 6, 60, '2026-10-19', NULL)");
+        (1, 5, 50, '2026-10-20', 20), (1, 5, 50, '2026-10-27', 25), (2, 5, 90, '2026-10-28', 99), (1, 6, 60, '2026-10-19', NULL), (1, 7, 70, '2026-10-19', 30), (1, 7, 70, '2026-10-20', 0)");
     $db->exec("INSERT INTO nutrition_targets (user_id, tdee_kcal, target_kcal, protein_g, carbs_g, fat_g, calculated_date) VALUES
         (1, 2000, 1800, 100, 200, 50, '2026-09-01'), (1, 2500, 2300, 150, 250, 60, '2026-10-01'), (2, 9, 9, 9, 9, 9, '2026-10-30')");
     $db->exec("INSERT INTO body_metrics (user_id, recorded_date, weight_kg) VALUES (1, '2026-10-08', 71), (1, '2026-10-01', 70), (2, '2026-10-20', 90)");
     $db->exec("INSERT INTO article_reads (user_id, slug) VALUES (1, 'da-doc'), (2, 'nguoi-khac-doc')");
 
     check('Mức tạ: lấy lần gần nhất của đúng user', dashLoadLastWeights($db, 1, [5, 6]) === [5 => 25.0]);
+    check('Mức tạ: bỏ qua lần ghi để trống (0 kg)', dashLoadLastWeights($db, 1, [7]) === [7 => 30.0]);
     check('Mức tạ: không có bài nào thì không truy vấn', dashLoadLastWeights(new BrokenPdo(), 1, []) === []);
     $logs = dashLoadWeekLogs($db, 1, '2026-10-28');
     check('Nhật ký tuần: chỉ của user này, đúng tuần', count($logs) === 1 && $logs[0]['log_date'] === '2026-10-27');

@@ -222,6 +222,7 @@ function dashLoadWeekLogs(PDO $pdo, int $userId, string $today): ?array
 /**
  * Mức tạ lần gần nhất của nhiều bài trong MỘT truy vấn (không lặp truy vấn theo từng bài).
  * Danh sách id ép về int rồi mới tạo dấu ? tương ứng. Trả về [exercise_id => kg].
+ * Chỉ lấy mức tạ lớn hơn 0: để trống khi ghi được lưu thành 0 (như hít đất), hiện "lần trước 0 kg" không có ý nghĩa.
  */
 function dashLoadLastWeights(PDO $pdo, int $userId, array $exerciseIds): array
 {
@@ -233,7 +234,7 @@ function dashLoadLastWeights(PDO $pdo, int $userId, array $exerciseIds): array
     try {
         $stmt = $pdo->prepare(
             "SELECT exercise_id, weight_kg_used FROM workout_logs
-             WHERE user_id = ? AND weight_kg_used IS NOT NULL AND exercise_id IN ($marks)
+             WHERE user_id = ? AND weight_kg_used > 0 AND exercise_id IN ($marks)
              ORDER BY log_date ASC, id ASC"
         );
         $stmt->execute(array_merge([$userId], $ids));

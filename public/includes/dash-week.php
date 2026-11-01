@@ -31,7 +31,7 @@ $duDayStates = [
             ?>
                 <li class="du-day <?= $dayClass ?><?= $day['isToday'] ? ' is-current' : '' ?>"<?= $day['isToday'] ? ' data-week-today' : '' ?>>
                     <span class="du-day__name" aria-hidden="true"><?= DASH_DAY_SHORT[$day['day']] ?></span>
-                    <span class="du-day__mark" aria-hidden="true" data-week-mark><?= $dayMark ?></span>
+                    <span class="du-day__mark" aria-hidden="true" data-week-mark><?= htmlspecialchars($dayMark) ?></span>
                     <span class="du-sr"><?= DASH_DAY_NAMES[$day['day']] ?><?= $day['isToday'] ? ' (hôm nay)' : '' ?>: <span data-week-state><?= $dayText ?></span><?php if ($day['total'] > 0): ?>, <span data-week-logged><?= (int)$day['logged'] ?></span>/<?= (int)$day['total'] ?> bài<?php endif; ?></span>
                 </li>
             <?php endforeach; ?>
