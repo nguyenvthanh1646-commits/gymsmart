@@ -106,7 +106,6 @@ if ($loggedIn) {
 }
 
 $doneCount = $profileTotal - count($missingFields);
-$percent   = $profileTotal > 0 ? (int)round($doneCount / $profileTotal * 100) : 0;
 $firstName = '';
 if ($loggedIn) {
     $parts = preg_split('/\s+/u', trim((string)($_SESSION['full_name'] ?? '')));
