@@ -65,7 +65,7 @@ body:has(.nb--guest-home) button:focus-visible { outline: 3px solid var(--gh-foc
     position: absolute; inset: 0; z-index: -2;
     background:
         radial-gradient(70% 26% at 50% 20%, rgba(255, 90, 31, .16), transparent 70%),
-        linear-gradient(180deg, rgba(0, 0, 1, .05) 0, rgba(0, 0, 1, .2) 190px, rgba(11, 16, 32, .9) 300px, var(--gs-ink) 100%);
+        linear-gradient(180deg, rgba(0, 0, 1, .05) 0, rgba(0, 0, 1, .2) 170px, rgba(11, 16, 32, .88) 245px, var(--gs-ink) 340px);
 }
 
 .gh-tech { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
@@ -84,7 +84,7 @@ body:has(.nb--guest-home) button:focus-visible { outline: 3px solid var(--gh-foc
 .gh-line-run { stroke: var(--gs-accent-2); stroke-width: 2.5; stroke-dasharray: 12 88; animation: gh-run 9s linear infinite; }
 
 .gh-hero__in { display: grid; gap: 32px; padding-top: 250px; padding-bottom: 72px; }
-.gh-hero__eyebrow { margin: 0 0 12px; color: var(--gs-accent-2); font-size: .9rem; font-weight: 700; letter-spacing: .02em; }
+.gh-hero__eyebrow { width: fit-content; margin: 0 0 12px; color: #ffc196; font-size: .9rem; font-weight: 700; letter-spacing: .02em; }
 .gh-hero__title { margin: 0; color: #fff; font-size: clamp(2.05rem, 8.6vw, 2.6rem); font-weight: 800; line-height: 1.14; letter-spacing: -.025em; text-wrap: balance; }
 .gh-hero__lead { margin: 16px 0 0; max-width: 36em; color: #dbe1f1; font-size: 1.05rem; line-height: 1.65; }
 .gh-hero__cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
@@ -147,8 +147,9 @@ body:has(.nb--guest-home) button:focus-visible { outline: 3px solid var(--gh-foc
     .gh-hero__title { font-size: clamp(2.6rem, 5vw, 3.85rem); }
     .gh-hero__lead { font-size: 1.14rem; }
 }
-/* Màn hình rộng: chữ bên trái, người tập ở giữa, thẻ ví dụ xếp dọc bên phải */
-@media (min-width: 1100px) {
+/* Màn hình rộng: chữ bên trái, người tập ở giữa, thẻ ví dụ xếp dọc bên phải.
+   Từ 1200px chữ mới không đè lên người tập; hẹp hơn thì dùng bố cục một cột với lớp phủ đậm đều. */
+@media (min-width: 1200px) {
     .gh-hero__in {
         grid-template-columns: minmax(0, 620px) 236px; justify-content: space-between; align-items: center;
         min-height: clamp(640px, calc(100svh - 68px), 860px);
@@ -160,7 +161,7 @@ body:has(.nb--guest-home) button:focus-visible { outline: 3px solid var(--gh-foc
         background:
             radial-gradient(34% 48% at 64% 44%, rgba(255, 90, 31, .13), transparent 72%),
             linear-gradient(180deg, transparent 62%, var(--gs-ink) 100%),
-            linear-gradient(90deg, rgba(11, 16, 32, .96) 0, rgba(11, 16, 32, .86) 42%, rgba(11, 16, 32, .15) 64%, transparent 78%);
+            linear-gradient(90deg, rgba(11, 16, 32, .96) 0, rgba(11, 16, 32, .9) 50%, rgba(11, 16, 32, .15) 68%, transparent 80%);
     }
     .gh-tech__hud { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
     .gh-tech__hud path { fill: none; stroke: rgba(255, 178, 122, .4); stroke-width: 1.2; }
