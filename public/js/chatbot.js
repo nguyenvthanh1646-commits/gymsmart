@@ -34,7 +34,7 @@
     var DRAFT_KEY = 'gc:draft:' + cfg.uid;               // bản nháp bài tập chờ điền vào form
     var NUDGE_KEY = 'gc:nudged';
 
-    var state = { open: false, busy: false, tab: 'chat', msgs: [], lastText: '', lastTask: 'chat' };
+    var state = { open: false, busy: false, tab: 'chat', msgs: [], lastText: '', lastTask: 'chat', opener: null };
 
     // ---------- Lưu trữ (có thể bị chặn ở chế độ ẩn danh → luôn bọc try/catch) ----------
     function store(kind) { try { return window[kind]; } catch (e) { return null; } }
@@ -352,15 +352,19 @@
     function openPanel() {
         if (state.open) { return; }
         state.open = true;
+        // Nhớ nơi focus đang đứng (nút nổi hoặc lối tắt trên trang) để trả về đúng chỗ khi đóng
+        state.opener = document.activeElement && document.activeElement !== document.body ? document.activeElement : fab;
         root.classList.add('is-open');
         fab.setAttribute('aria-expanded', 'true');
         panel.classList.remove('is-out');
         if (panel.classList.contains('is-max')) { root.classList.add('is-max'); }
         panel.hidden = false;
+        var g = styleGeo();
+        if (g && !isMobile()) { applyGeo(fitGeo(g)); }   // cửa sổ có thể đã đổi cỡ trong lúc khung đóng
         nudge.hidden = true; dot.hidden = true;
         save(NUDGE_KEY, 1);
         if (hero) { body.scrollTop = 0; } else { scrollDown(true); }   // màn chào thì đọc từ trên xuống
-        setTimeout(function () { input.focus({ preventScroll: true }); }, reduceMotion ? 0 : 280);
+        input.focus({ preventScroll: true });
     }
     function closePanel() {
         if (!state.open) { return; }
@@ -369,8 +373,9 @@
         fab.setAttribute('aria-expanded', 'false');
         panel.classList.add('is-out');
         root.classList.remove('is-max');
-        setTimeout(function () { if (!state.open) { panel.hidden = true; } }, reduceMotion ? 0 : 200);
-        fab.focus({ preventScroll: true });
+        setTimeout(function () { if (!state.open) { panel.hidden = true; } }, reduceMotion ? 0 : 160);
+        var back = state.opener && state.opener.isConnected ? state.opener : fab;
+        back.focus({ preventScroll: true });
     }
     fab.addEventListener('click', function () { state.open ? closePanel() : openPanel(); });
     $('gc-close').addEventListener('click', closePanel);
@@ -391,10 +396,16 @@
     function isMobile() { return window.matchMedia && window.matchMedia('(max-width: 520px)').matches; }
     function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
     function curGeo() { var r = panel.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height }; }
-    function fitGeo(g) {                                 // giữ khung nằm trọn trong cửa sổ
+    // Vị trí đã đặt qua style. Khác curGeo(): vẫn đúng khi khung đang ẩn (đo khung ẩn sẽ ra toàn số 0) hoặc đang chạy hiệu ứng mở.
+    function styleGeo() {
+        if (!panel.style.left) { return null; }
+        return { l: parseFloat(panel.style.left), t: parseFloat(panel.style.top), w: parseFloat(panel.style.width), h: parseFloat(panel.style.height) };
+    }
+    function fitGeo(g) {                                 // giữ khung nằm trọn trong cửa sổ, kể cả cửa sổ nhỏ hơn cỡ tối thiểu
         var vw = window.innerWidth, vh = window.innerHeight;
-        g.w = clamp(g.w, MIN_W, Math.max(MIN_W, vw - 16));
-        g.h = clamp(g.h, MIN_H, Math.max(MIN_H, vh - 16));
+        var maxW = Math.max(200, vw - 16), maxH = Math.max(200, vh - 16);
+        g.w = clamp(g.w, Math.min(MIN_W, maxW), maxW);
+        g.h = clamp(g.h, Math.min(MIN_H, maxH), maxH);
         g.l = clamp(g.l, 8, Math.max(8, vw - g.w - 8));
         g.t = clamp(g.t, 8, Math.max(8, vh - g.h - 8));
         return g;
@@ -405,7 +416,7 @@
         panel.style.width = g.w + 'px'; panel.style.height = g.h + 'px';
     }
     function clearGeo() { ['left', 'top', 'right', 'bottom', 'width', 'height'].forEach(function (k) { panel.style[k] = ''; }); }
-    function saveGeo() { if (panel.style.left) { save(GEO_KEY, curGeo(), 'localStorage'); } }
+    function saveGeo() { var g = styleGeo(); if (g) { save(GEO_KEY, g, 'localStorage'); } }
 
     function drag(handle, onMove, cls) {                 // khung chung cho kéo/đổi cỡ bằng chuột, cảm ứng, bút
         handle.addEventListener('pointerdown', function (e) {
@@ -464,8 +475,23 @@
     var geo = load(GEO_KEY, 'localStorage');
     if (geo && typeof geo.l === 'number' && typeof geo.w === 'number' && !isMobile()) { applyGeo(fitGeo(geo)); }
     window.addEventListener('resize', function () {
-        if (panel.style.left && !panel.classList.contains('is-max')) { if (isMobile()) { return; } applyGeo(fitGeo(curGeo())); }
+        var g = styleGeo();
+        if (g && !panel.hidden && !panel.classList.contains('is-max') && !isMobile()) { applyGeo(fitGeo(g)); }
     });
+
+    // Bàn phím ảo trên điện thoại: khung bám theo vùng nhìn thấy thật để ô nhập không bị che (dùng trong css/chatbot.css)
+    function syncViewport() {
+        var vv = window.visualViewport;
+        if (!vv) { return; }
+        root.style.setProperty('--gc-vv', vv.height + 'px');
+        root.style.setProperty('--gc-vv-top', vv.offsetTop + 'px');
+        if (state.open) { scrollDown(false); }
+    }
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', syncViewport);
+        window.visualViewport.addEventListener('scroll', syncViewport);
+        syncViewport();
+    }
 
     // ---------- Ô nhập ----------
     input.addEventListener('input', function () { autosize(); refreshSend(); });
