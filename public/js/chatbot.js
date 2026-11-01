@@ -5,7 +5,8 @@
  *               → hiện "đang soạn" → nhận { reply, links, draft } → vẽ tin nhắn.
  *
  * Lưu ý bảo mật: mọi chữ từ server/AI đều đưa vào trang bằng textContent (không innerHTML),
- * nên AI có trả về thẻ <script> cũng chỉ hiện như chữ thường (không bị XSS).
+ * nên AI có trả về thẻ <script> cũng chỉ hiện như chữ thường (không bị XSS). Markdown cơ bản (**đậm**, danh sách,
+ * xuống dòng) được dựng bằng các phần tử DOM, không phải bằng cách chèn HTML.
  *
  * Hai chế độ (cfg.mode): "user" = huấn luyện viên ảo, "admin" = trợ lý quản trị (có thêm thẻ "Soạn bài tập").
  * Lịch sử chat lưu trong sessionStorage của trình duyệt (mất khi đóng tab), mỗi tài khoản + chế độ một khóa riêng.
@@ -82,12 +83,12 @@
     }
     function safeUrl(u) { return typeof u === 'string' && u.charAt(0) === '/' && u.charAt(1) !== '/'; }  // chỉ link nội bộ
 
-    // ---------- Vẽ nội dung chữ: đoạn văn + danh sách "- ", hiện dần từng từ ----------
+    // ---------- Vẽ nội dung chữ: đoạn văn, danh sách, **đậm**, hiện dần từng từ. Không bao giờ dùng innerHTML ----------
     function fillRich(container, text, animate) {
         var lines = String(text).replace(/\r/g, '').split('\n');
-        var total = text.split(/\s+/).length;
+        var total = String(text).split(/\s+/).length;
         var step = animate && !reduceMotion ? Math.min(0.03, 1.5 / Math.max(total, 1)) : 0;   // tối đa ~1,5 giây cho cả tin
-        var n = 0, list = null, para = null;
+        var n = 0, list = null, listTag = '', para = null;
 
         function words(target, str) {
             var parts = str.split(/(\s+)/);
@@ -101,21 +102,34 @@
                 target.appendChild(w);
             }
         }
+        // Tách **đậm**: phần tử lẻ của split là chữ nằm giữa hai cặp dấu sao
+        function inline(target, str) {
+            str.split(/\*\*(.+?)\*\*/g).forEach(function (part, i) {
+                if (part === '') { return; }
+                if (i % 2 === 1) { var b = el('strong'); words(b, part); target.appendChild(b); } else { words(target, part); }
+            });
+        }
+        function addItem(tag, str) {
+            if (!list || listTag !== tag) { list = el(tag); listTag = tag; container.appendChild(list); }
+            var li = el('li'); inline(li, str); list.appendChild(li);
+            para = null;
+        }
         lines.forEach(function (line) {
             var t = line.trim();
             if (t === '') { list = null; para = null; return; }
-            var m = /^[-•*]\s+(.*)$/.exec(t);
-            if (m) {
-                if (!list) { list = el('ul'); container.appendChild(list); }
-                var li = el('li'); words(li, m[1]); list.appendChild(li);
-                para = null;
-            } else {
-                list = null;
-                if (!para) { para = el('p'); container.appendChild(para); } else { para.appendChild(document.createElement('br')); }
-                words(para, t);
-            }
+            var bullet = /^[-•*]\s+(.*)$/.exec(t);
+            var numbered = /^\d+[.)]\s+(.*)$/.exec(t);
+            var heading = /^#{1,4}\s+(.*)$/.exec(t);          // AI lỡ viết tiêu đề Markdown thì hiện thành dòng đậm
+            if (bullet) { addItem('ul', bullet[1]); return; }
+            if (numbered) { addItem('ol', numbered[1]); return; }
+            list = null;
+            if (!para) { para = el('p'); container.appendChild(para); } else { para.appendChild(document.createElement('br')); }
+            if (heading) { var h = el('strong'); inline(h, heading[1]); para.appendChild(h); } else { inline(para, t); }
         });
         return step * n;                                  // thời gian hiệu ứng (giây)
+    }
+    function timeLabel(ms) {
+        return typeof ms === 'number' ? new Date(ms).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
     }
 
     // ---------- Tin nhắn ----------
@@ -165,7 +179,7 @@
         return c;
     }
 
-    /** Vẽ một tin nhắn. m = {who:'me'|'bot', text, links?, draft?, err?, detail?, retry?} */
+    /** Vẽ một tin nhắn. m = {who:'me'|'bot', text, at?, links?, draft?, err?, retry?, retryAfter?, retryLabel?} */
     function renderMsg(m, animate) {
         var row = el('div', 'gc-msg' + (m.who === 'me' ? ' gc-msg--me' : '') + (m.err ? ' gc-msg--err' : '') + (animate ? '' : ' is-static'));
         if (m.who !== 'me') { row.appendChild(avatar()); }
@@ -176,13 +190,8 @@
         } else {
             fillRich(bub, m.text, animate);
         }
-        if (m.err && m.detail) {
-            var d = el('div', 'gc-detail');
-            d.appendChild(el('b', '', 'Chi tiết kỹ thuật (chỉ quản trị viên / localhost thấy):'));
-            d.appendChild(document.createTextNode(m.detail));
-            bub.appendChild(d);
-        }
         col.appendChild(bub);
+        if (timeLabel(m.at)) { col.appendChild(el('span', 'gc-time', timeLabel(m.at))); }
 
         if (m.draft) { col.appendChild(draftCard(m.draft)); }
         if (m.links && m.links.length) {
@@ -201,13 +210,25 @@
             col.appendChild(acts);
         }
         if (m.err && m.retry) {
-            var rt = el('button', 'gc-btn gc-btn--ghost', 'Thử lại');
+            var label = m.retryLabel || 'Thử lại';
+            var rt = el('button', 'gc-btn gc-btn--ghost', label);
             rt.type = 'button';
             rt.addEventListener('click', function () {
                 row.parentNode.removeChild(row);
                 state.msgs = state.msgs.filter(function (x) { return x !== m; });
+                persist();
                 send(state.lastText, state.lastTask, true);
             });
+            // Server báo gửi quá nhanh: đếm ngược rồi mới cho bấm, khỏi bị từ chối lần nữa
+            if (m.retryAfter > 0) {
+                var left = m.retryAfter;
+                rt.disabled = true;
+                rt.textContent = label + ' sau ' + left + ' giây';
+                var cd = setInterval(function () {
+                    left--;
+                    if (left <= 0) { clearInterval(cd); rt.disabled = false; rt.textContent = label; } else { rt.textContent = label + ' sau ' + left + ' giây'; }
+                }, 1000);
+            }
             col.appendChild(rt);
         }
         row.appendChild(col);
@@ -216,6 +237,7 @@
         return row;
     }
     function addMsg(m, animate) {
+        m.at = Date.now();
         state.msgs.push(m);
         persist();
         var row = renderMsg(m, animate !== false);
@@ -232,7 +254,7 @@
         typingRow = el('div', 'gc-msg');
         typingRow.appendChild(avatar());
         var b = el('div', 'gc-bub gc-typing');
-        b.setAttribute('aria-label', 'Đang soạn câu trả lời');
+        b.appendChild(el('span', 'gc-sr', 'Đang soạn câu trả lời'));
         b.appendChild(el('i')); b.appendChild(el('i')); b.appendChild(el('i'));
         typingRow.appendChild(b);
         body.appendChild(typingRow);
@@ -240,36 +262,54 @@
     }
     function hideTyping() { if (typingRow && typingRow.parentNode) { typingRow.parentNode.removeChild(typingRow); } typingRow = null; }
 
-    // ---------- Màn chào ----------
-    var hero = null;
+    // ---------- Chip gợi ý: hiện khi chưa có tin nhắn (màn chào) hoặc ngay sau một câu trả lời ----------
+    function chipList() {
+        return (isAdmin && state.tab === 'draft') ? (cfg.draftChips || []).map(function (t) { return { text: t, icon: '' }; }) : cfg.chips;
+    }
+    function buildChip(c, i) {
+        var b = el('button', 'gc-chip' + (c.icon ? '' : ' gc-chip--plain'));
+        b.type = 'button';
+        b.style.setProperty('--i', i);
+        if (c.icon) { b.appendChild(el('span', 'gc-chip__ic', c.icon)); }
+        b.appendChild(el('span', '', c.text));
+        b.addEventListener('click', function () {
+            input.value = c.text;                         // điền vào ô nhập rồi gửi như người dùng tự gõ
+            send(c.text, state.tab === 'draft' ? 'exercise_draft' : 'chat');
+        });
+        return b;
+    }
+
+    var hero = null, follow = null;
     function showHero() {
         hero = el('div', 'gc-hero');
         var av = el('div', 'gc-hero__av');
         av.appendChild(svgUse(isAdmin ? 'gc-glyph' : 'gc-logo'));
         hero.appendChild(av);
-        hero.appendChild(el('p', '', cfg.welcome));
+        hero.appendChild(el('p', '', (isAdmin && state.tab === 'draft') ? cfg.draftHint : cfg.welcome));
         var chips = el('div', 'gc-chips');
-        var list = (isAdmin && state.tab === 'draft') ? (cfg.draftChips || []).map(function (t) { return { text: t, icon: '' }; }) : cfg.chips;
-        if (isAdmin && state.tab === 'draft') {
-            hero.querySelector('p').textContent = cfg.draftHint;
-        }
-        list.forEach(function (c, i) {
-            var b = el('button', 'gc-chip' + (c.icon ? '' : ' gc-chip--plain'));
-            b.type = 'button';
-            b.style.setProperty('--i', i);
-            if (c.icon) { b.appendChild(el('span', 'gc-chip__ic', c.icon)); }
-            b.appendChild(el('span', '', c.text));
-            b.addEventListener('click', function () { send(c.text, state.tab === 'draft' ? 'exercise_draft' : 'chat'); });
-            chips.appendChild(b);
-        });
+        chipList().forEach(function (c, i) { chips.appendChild(buildChip(c, i)); });
         hero.appendChild(chips);
         body.appendChild(hero);
     }
     function hideHero() {
-        if (!hero) { return; }
-        var h = hero; hero = null;
-        h.classList.add('is-gone');
-        setTimeout(function () { if (h.parentNode) { h.parentNode.removeChild(h); } }, reduceMotion ? 0 : 360);
+        if (hero && hero.parentNode) { hero.parentNode.removeChild(hero); }
+        hero = null;
+    }
+    function hideFollow() {
+        if (follow && follow.parentNode) { follow.parentNode.removeChild(follow); }
+        follow = null;
+    }
+    // Sau câu trả lời bình thường mới gợi ý tiếp; lỗi hay bản nháp thì thôi. Bỏ câu vừa hỏi và chỉ lấy tối đa 3 chip cho gọn.
+    function showFollow() {
+        hideFollow();
+        var last = state.msgs[state.msgs.length - 1];
+        if (state.busy || !last || last.who !== 'bot' || last.err || last.draft) { return; }
+        var list = chipList().filter(function (c) { return c.text !== state.lastText; }).slice(0, 3);
+        if (!list.length) { return; }
+        follow = el('div', 'gc-follow');
+        list.forEach(function (c, i) { follow.appendChild(buildChip(c, i)); });
+        body.appendChild(follow);
+        scrollDown(true);
     }
 
     // ---------- Trạng thái bận / rảnh ----------
@@ -386,7 +426,8 @@
         if (state.busy) { return; }
         state.msgs = []; drop(KEY);
         while (body.firstChild) { body.removeChild(body.firstChild); }
-        hero = null; showHero();
+        hero = null; follow = null; state.lastText = ''; showHero();
+        input.focus({ preventScroll: true });
     });
 
     // ---------- Kéo, đổi cỡ, phóng to (chỉ máy tính; điện thoại luôn dùng khung gần toàn màn hình) ----------
@@ -526,9 +567,10 @@
                     var on = b === btn; b.classList.toggle('is-on', on); b.setAttribute('aria-selected', on ? 'true' : 'false');
                 });
                 cfg.tabs.forEach(function (t) { if (t.id === state.tab) { input.placeholder = t.placeholder; } });
-                if (hero) { var h = hero; hero = null; h.parentNode.removeChild(h); showHero(); }
-                else if (state.tab === 'draft' && !state.msgs.some(function (m) { return m.task; })) {
+                if (hero) { hideHero(); showHero(); } else { showFollow(); }
+                if (!hero && state.tab === 'draft' && !state.msgs.some(function (m) { return m.task; })) {
                     addMsg({ who: 'bot', text: cfg.draftHint, task: 1 });
+                    showFollow();
                 }
                 input.focus();
             });
