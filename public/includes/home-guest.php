@@ -85,29 +85,41 @@
     </div>
 </section>
 
-<section class="sec" id="tinh-nang">
-    <div class="hm-wrap">
-        <div class="sec-head">
-            <h2>Mọi thứ bạn cần để tập đúng cách</h2>
-            <p>Hồ sơ của bạn quyết định lịch tập, lịch tập tạo ra buổi ghi log, log tạo ra biểu đồ tiến trình.</p>
+<section class="gh-section" id="tinh-nang" aria-labelledby="gh-features-title">
+    <div class="gh-wrap">
+        <div class="gh-head">
+            <h2 id="gh-features-title">Mọi thứ cần cho việc tập luyện, ở một nơi</h2>
+            <p>Hồ sơ của bạn quyết định lịch tập và dinh dưỡng, còn nhật ký buổi tập cho thấy bạn tiến bộ ra sao.</p>
         </div>
-        <div class="bento">
-            <?php
-            $cards = $features;
-            $cards[] = ['icon' => 'book', 'title' => 'Bài viết có nguồn nghiên cứu', 'href' => '/articles.php',
-                'text' => 'Dinh dưỡng, sức khỏe và tập luyện, nêu rõ mức độ bằng chứng. Chỉ để tham khảo.', 'ready' => true];
-            foreach ($cards as $i => $f):
-                $tag = $f['ready'] ? 'a' : 'div';
-                $wide = $i === 1 ? ' bento-card--wide' : '';
-            ?>
-                <<?= $tag ?> class="bento-card<?= $wide ?>" <?= $f['ready'] ? 'href="' . htmlspecialchars($f['href']) . '"' : '' ?>>
-                    <span class="bento-icon"><?= hmIcon($f['icon'], 26) ?></span>
-                    <h3><?= htmlspecialchars($f['title']) ?></h3>
-                    <p><?= htmlspecialchars($f['text']) ?></p>
-                    <span class="bento-foot"><?= $f['ready'] ? 'Xem chi tiết' : 'Sắp có' ?></span>
-                </<?= $tag /* audit:ok $tag chỉ là 'a' hoặc 'div' do mình đặt */ ?>>
+        <ul class="gh-features">
+            <?php foreach ($guestFeatures as [$icon, $title, $text]): ?>
+                <li class="gh-feature">
+                    <span class="gh-feature__icon"><?= hmIcon($icon, 24) ?></span>
+                    <h3><?= htmlspecialchars($title) ?></h3>
+                    <p><?= htmlspecialchars($text) ?></p>
+                </li>
             <?php endforeach; ?>
-        </div>
+        </ul>
+    </div>
+</section>
+
+<section class="gh-section gh-section--alt" aria-labelledby="gh-steps-title">
+    <div class="gh-wrap">
+        <div class="gh-head"><h2 id="gh-steps-title">Cách hoạt động</h2></div>
+        <ol class="gh-steps">
+            <li>
+                <h3>Đăng ký</h3>
+                <p>Tạo tài khoản miễn phí bằng email và mật khẩu.</p>
+            </li>
+            <li>
+                <h3>Nhập chỉ số cơ thể và mục tiêu</h3>
+                <p>Tuổi, chiều cao, cân nặng, mức vận động, trình độ tập và mục tiêu của bạn.</p>
+            </li>
+            <li>
+                <h3>Nhận lịch tập, thực đơn và theo dõi tiến trình</h3>
+                <p>Tập theo lịch gợi ý, xem gợi ý bữa ăn, ghi lại từng buổi và xem biểu đồ thay đổi.</p>
+            </li>
+        </ol>
     </div>
 </section>
 
@@ -134,17 +146,6 @@
     </div>
 </section>
 <?php endif; ?>
-
-<section class="sec">
-    <div class="hm-wrap">
-        <div class="sec-head"><h2>Bắt đầu chỉ với 3 bước</h2></div>
-        <ol class="steps">
-            <li><h3>Tạo tài khoản và hồ sơ</h3><p>Nhập tuổi, chiều cao, cân nặng, trình độ và mục tiêu. Chỉ mất vài phút.</p></li>
-            <li><h3>Nhận kế hoạch của bạn</h3><p>Hệ thống gợi ý lịch tập và mục tiêu dinh dưỡng phù hợp với hồ sơ của bạn.</p></li>
-            <li><h3>Tập, ghi lại, tiến bộ</h3><p>Làm theo video hướng dẫn, ghi lại buổi tập và xem mình tiến bộ qua từng tuần.</p></li>
-        </ol>
-    </div>
-</section>
 
 <section class="sec sec--tight">
     <div class="hm-wrap">

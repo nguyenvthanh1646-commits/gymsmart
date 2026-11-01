@@ -38,27 +38,23 @@ function hmIcon(string $name, int $size = 24): string
         'bolt'     => '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>',
         'book'     => '<path d="M5 4.5h10a3 3 0 013 3V20H8a3 3 0 01-3-3V4.5zM5 17a3 3 0 013-3h10"/>',
         'target'   => '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
+        'meal'     => '<path d="M7 3v7a2.5 2.5 0 005 0V3M9.5 3v18M17 3c-1.7 1-2.5 3.2-2.5 6 0 2 1 3.5 2.5 3.5V21"/>',
+        'chat'     => '<path d="M4 5.5h16v11H10l-4.5 3.5V16.5H4z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>',
     ];
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" fill="none" '
         . 'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
         . ($paths[$name] ?? '') . '</svg>';
 }
 
-// Các chức năng của website. "ready" tự bật khi file trang tương ứng đã tồn tại,
-// nên không phải sửa tay khi B, C hoàn thành trang của mình.
-$features = [
-    ['icon' => 'play',     'title' => 'Thư viện bài tập có video', 'href' => '/exercises.php',
-     'text' => 'Hàng chục bài tập kèm ảnh, video và hướng dẫn từng bước, lọc theo nhóm cơ, loại và độ khó.',
-     'ready' => is_file(__DIR__ . '/exercises.php')],
-    ['icon' => 'calendar', 'title' => 'Lịch tập cá nhân hóa', 'href' => '/workout-plan.php',
-     'text' => 'Gợi ý số buổi, bài tập và số hiệp theo trình độ, mục tiêu và số ngày bạn có thể tập.',
-     'ready' => is_file(__DIR__ . '/workout-plan.php')],
-    ['icon' => 'flame',    'title' => 'TDEE và Macro', 'href' => '/nutrition.php',
-     'text' => 'Tính nhu cầu năng lượng và tỉ lệ đạm, tinh bột, béo theo công thức khoa học và mục tiêu của bạn.',
-     'ready' => is_file(__DIR__ . '/nutrition.php')],
-    ['icon' => 'chart',    'title' => 'Theo dõi tiến trình', 'href' => '/progress.php',
-     'text' => 'Ghi lại cân nặng, số đo và buổi tập, xem biểu đồ thay đổi qua từng tuần.',
-     'ready' => is_file(__DIR__ . '/progress.php')],
+// 7 tính năng ở trang khách: [biểu tượng, tiêu đề, mô tả]
+$guestFeatures = [
+    ['calendar', 'Lịch tập cá nhân hóa', 'Gợi ý số buổi, bài tập và số hiệp theo trình độ, mục tiêu và số ngày bạn có thể tập.'],
+    ['play',     'Thư viện bài tập có ảnh, video', 'Xem kỹ thuật qua video, đọc hướng dẫn từng bước, lọc theo nhóm cơ, loại và độ khó.'],
+    ['flame',    'Tính TDEE và macro', 'Tính nhu cầu năng lượng và lượng đạm, tinh bột, béo theo chỉ số và mục tiêu của bạn.'],
+    ['meal',     'Lịch ăn gợi ý', 'Gợi ý chia bữa trong ngày theo mục tiêu dinh dưỡng và kiểu ăn bạn chọn.'],
+    ['chart',    'Nhật ký và biểu đồ', 'Ghi lại buổi tập, cân nặng, số đo và xem biểu đồ thay đổi theo thời gian.'],
+    ['book',     'Bài viết có dẫn nghiên cứu', 'Dinh dưỡng, sức khỏe và tập luyện, nêu rõ nguồn tham khảo.'],
+    ['chat',     'Chatbot AI', 'Hỏi nhanh về bài tập và tập luyện, có thể dựa trên hồ sơ của bạn nếu bạn cho phép.'],
 ];
 
 $muscleLabels = [

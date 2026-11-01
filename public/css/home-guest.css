@@ -168,6 +168,52 @@ body:has(.nb--guest-home) button:focus-visible { outline: 3px solid var(--gh-foc
     .gh-hud-node--late { animation-delay: 1.6s; }
 }
 
+/* ===== Các mục bên dưới hero ===== */
+.gh-section { padding: 64px 0; background: var(--gs-ink); color: var(--gh-text); }
+.gh-section--alt { background: #0e1530; }
+.gh-head { max-width: 660px; margin: 0 auto 36px; text-align: center; }
+.gh-head h2 { margin: 0; color: #fff; font-size: clamp(1.7rem, 5.6vw, 2.5rem); font-weight: 800; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance; }
+.gh-head p { margin: 14px 0 0; color: var(--gh-text-muted); font-size: 1.04rem; line-height: 1.65; }
+.gh-empty { margin: 0; padding: 32px 20px; border: 1px dashed rgba(255, 255, 255, .22); border-radius: 16px; color: var(--gh-text-muted); text-align: center; }
+.gh-more { margin-top: 32px; text-align: center; }
+.gh-link { margin-top: auto; padding-top: 12px; color: var(--gs-accent-2); font-size: .9rem; font-weight: 700; }
+.gh-features, .gh-exercises, .gh-articles, .gh-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+
+.gh-feature { padding: 22px; border: 1px solid var(--gs-line-dark); border-radius: 18px; background: var(--gh-card-bg); }
+.gh-feature__icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 90, 31, .15); color: var(--gs-accent-2); }
+.gh-feature h3 { margin: 16px 0 6px; color: #fff; font-size: 1.08rem; line-height: 1.35; }
+.gh-feature p { margin: 0; color: var(--gh-text-muted); font-size: .95rem; line-height: 1.6; }
+
+/* Số thứ tự vẽ bằng CSS counter: thẻ <ol> vẫn đọc đúng thứ tự với trình đọc màn hình */
+.gh-steps { gap: 28px; counter-reset: gh-step; }
+.gh-steps li { position: relative; padding-left: 60px; }
+.gh-steps li::before {
+    counter-increment: gh-step; content: counter(gh-step);
+    position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 44px; height: 44px;
+    border-radius: 50%; background: var(--gs-accent); color: var(--gs-ink); font-weight: 800;
+}
+.gh-steps li:not(:last-child)::after { content: ""; position: absolute; top: 52px; bottom: -20px; left: 21px; width: 2px; background: rgba(255, 255, 255, .14); }
+.gh-steps h3 { margin: 0 0 6px; color: #fff; font-size: 1.1rem; line-height: 1.4; }
+.gh-steps p { margin: 0; color: var(--gh-text-muted); line-height: 1.6; }
+
+@media (min-width: 620px) {
+    .gh-features, .gh-exercises, .gh-articles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 721px) {
+    .gh-section { padding: var(--gh-space-section) 0; }
+    .gh-head { margin-bottom: 48px; }
+    .gh-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+    .gh-steps li { padding: 64px 0 0; }
+    .gh-steps li:not(:last-child)::after { top: 21px; bottom: auto; left: 56px; right: -20px; width: auto; height: 2px; }
+}
+@media (min-width: 1020px) {
+    .gh-features { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    /* 7 thẻ trên lưới 4 cột: thẻ đầu rộng gấp đôi để hàng cuối không bị thừa ô */
+    .gh-feature:first-child { grid-column: span 2; }
+    .gh-exercises { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .gh-articles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     /* Tắt hết chuyển động: ảnh đứng yên, đường biểu đồ chỉ còn nét nền */
