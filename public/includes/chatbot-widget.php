@@ -39,8 +39,8 @@ if ($gcAdmin) {
             ['icon' => '🛠️', 'text' => 'Hướng dẫn thêm một bài tập mới'],
         ],
         'tabs'     => [
-            ['id' => 'chat',  'label' => 'Hỏi đáp',        'placeholder' => 'Hỏi về số liệu, nội dung, trang quản trị...'],
-            ['id' => 'draft', 'label' => 'Soạn bài tập',   'placeholder' => 'Tên bài tập, ví dụ: Hít đất kim cương'],
+            ['id' => 'chat',  'label' => 'Hỏi đáp',        'placeholder' => 'Hỏi về số liệu, nội dung...'],
+            ['id' => 'draft', 'label' => 'Soạn bài tập',   'placeholder' => 'Tên bài, ví dụ: Hít đất'],
         ],
         'draftHint'  => 'Nhập tên bài tập, mình soạn nháp mô tả, các bước và lỗi thường gặp. Bạn đọc lại rồi mới điền vào form.',
         'draftChips' => ['Hít đất kim cương', 'Romanian deadlift', 'Chạy interval 30 giây'],
@@ -60,7 +60,7 @@ if ($gcAdmin) {
             ['icon' => '🔥', 'text' => 'TDEE là gì và tính thế nào?'],
             ['icon' => '📅', 'text' => 'Người mới nên tập mấy buổi mỗi tuần?'],
         ],
-        'tabs'     => [['id' => 'chat', 'label' => 'Hỏi đáp', 'placeholder' => 'Hỏi về tập luyện hoặc dinh dưỡng...']],
+        'tabs'     => [['id' => 'chat', 'label' => 'Hỏi đáp', 'placeholder' => 'Hỏi về tập luyện, dinh dưỡng...']],
         'footer'   => 'Chỉ để tham khảo, không thay thế tư vấn y tế.',
         'personalize' => true,
     ];
