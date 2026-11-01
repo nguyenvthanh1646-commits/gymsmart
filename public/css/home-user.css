@@ -116,6 +116,25 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; min-heig
 .du-rest__next b { color: #fff; }
 .du-rest__detail { margin: 2px 0 0; color: var(--du-text-muted); font-size: .92rem; }
 
+/* ===== Thanh tiến độ dùng chung. Độ dài lấy từ biến --du-value gắn trên từng thanh ===== */
+.du-bar { display: block; height: 8px; border-radius: 8px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+.du-bar i { display: block; width: var(--du-value, 0%); height: 100%; border-radius: 8px; background: var(--gs-accent-2); transition: width var(--transition); }
+.du-note { margin: 10px 0 0; color: var(--du-text-muted); font-size: .86rem; line-height: 1.5; }
+.du-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ===== Thẻ Tuần này ===== */
+.du-days { list-style: none; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin: 14px 0 0; padding: 0; }
+.du-day { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; border: 1px solid transparent; border-radius: 10px; }
+.du-day.is-current { border-color: var(--gs-accent-2); }
+.du-day__name { color: var(--du-text-muted); font-size: .76rem; font-weight: 600; }
+.du-day__mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: var(--du-text-muted); font-size: .86rem; font-weight: 700; line-height: 1; }
+.is-done .du-day__mark { background: var(--gs-accent-2); color: var(--gs-ink); }
+.is-today-pending .du-day__mark { background: rgba(255, 138, 61, .2); color: #ffc196; }
+.is-missed .du-day__mark { border: 1px solid rgba(255, 255, 255, .34); color: #fff; }
+.is-upcoming .du-day__mark { border: 1px dashed rgba(255, 255, 255, .34); color: #dbe1f1; }
+.is-extra .du-day__mark { background: rgba(255, 255, 255, .14); color: #fff; }
+.du-legend { margin: 10px 0 0; color: var(--du-text-muted); font-size: .78rem; line-height: 1.5; }
+
 @media (min-width: 720px) {
     .du { padding-top: 32px; }
     .du-wrap { padding: 0 20px; }
