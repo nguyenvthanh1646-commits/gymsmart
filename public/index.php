@@ -5,8 +5,7 @@
  * Ba trạng thái:
  *   - ADMIN:            chuyển sang /admin/dashboard.php (có trang chủ riêng).
  *   - Chưa đăng nhập:   trang giới thiệu (hero, tính năng, 3 bước, lời kêu gọi đăng ký).
- *   - Đã đăng nhập:     chào tên, thanh tiến độ hồ sơ, lối tắt đến các chức năng, gợi ý bài tập
- *                       theo trình độ của người dùng.
+ *   - Đã đăng nhập:     bảng điều khiển cá nhân: hôm nay tập gì, tuần này ra sao, dinh dưỡng, cân nặng.
  *
  * Vì sao nhắc hoàn thiện hồ sơ? TDEE/Macro (C) và lịch tập (B) đều cần đủ 7 thông tin hồ sơ.
  */
@@ -15,6 +14,7 @@ require_once __DIR__ . '/includes/auth.php'; // có session + isLoggedIn()
 require_once __DIR__ . '/includes/db.php';   // có biến $pdo
 require_once __DIR__ . '/includes/logo.php';
 require_once __DIR__ . '/includes/functions.php'; // exerciseImageSrc()
+require_once __DIR__ . '/includes/csrf.php';      // mã bảo vệ cho form ghi nhanh
 
 $loggedIn = isLoggedIn();
 
@@ -61,14 +61,11 @@ $muscleLabels = [
     'CHEST' => 'Ngực', 'BACK' => 'Lưng', 'SHOULDERS' => 'Vai', 'LEGS' => 'Chân',
     'ARMS' => 'Tay', 'ABS' => 'Bụng', 'FULL_BODY' => 'Toàn thân',
 ];
-$typeLabels       = ['RESISTANCE' => 'Kháng lực', 'CARDIO' => 'Cardio'];
-$levelLabels      = ['BEGINNER' => 'Dễ', 'INTERMEDIATE' => 'Trung bình', 'ADVANCED' => 'Khó'];
-$experienceLabels = ['BEGINNER' => 'mới tập', 'INTERMEDIATE' => 'trung bình', 'ADVANCED' => 'nâng cao'];
+$levelLabels = ['BEGINNER' => 'Dễ', 'INTERMEDIATE' => 'Trung bình', 'ADVANCED' => 'Khó'];
 
 $missingFields = [];  // tên các mục hồ sơ còn thiếu
 $profileTotal  = 0;
-$recommended   = [];  // bài tập gợi ý
-$experience    = null;
+$row           = null;
 
 if ($loggedIn) {
     // Tên cột trong DB => chữ hiển thị khi báo thiếu
@@ -84,8 +81,9 @@ if ($loggedIn) {
     $profileTotal = count($profileFields);
 
     // Lấy id từ SESSION (không lấy từ URL/form) để không xem được hồ sơ người khác
+    // Lấy luôn CURDATE() trong truy vấn này để "hôm nay" khớp với ngày nhật ký được ghi (giờ của PHP và MySQL có thể lệch)
     $stmt = $pdo->prepare(
-        "SELECT age, height_cm, weight_kg, gender, activity_level, experience_level, goal
+        "SELECT age, height_cm, weight_kg, gender, activity_level, experience_level, goal, CURDATE() AS today
          FROM users WHERE id = ?"
     );
     $stmt->execute([$_SESSION['user_id']]);
@@ -105,19 +103,6 @@ if ($loggedIn) {
             $missingFields[] = $label;
         }
     }
-
-    $experience = isset($experienceLabels[$row['experience_level'] ?? '']) ? $row['experience_level'] : null;
-
-    // Gợi ý 3 bài ngẫu nhiên, ưu tiên bài đúng độ khó với trình độ của người dùng.
-    // ORDER BY (difficulty = ?) DESC đẩy bài cùng độ khó lên trước; thiếu thì lấy bài khác cho đủ 3.
-    $stmt = $pdo->prepare(
-        "SELECT id, name, type, muscle_group, difficulty, image_url
-         FROM exercises
-         ORDER BY (difficulty = ?) DESC, RAND()
-         LIMIT 3"
-    );
-    $stmt->execute([$experience ?? '']);
-    $recommended = $stmt->fetchAll();
 }
 
 $doneCount = $profileTotal - count($missingFields);
@@ -132,6 +117,13 @@ if ($loggedIn) {
 require_once __DIR__ . '/includes/articles.php';
 $allArticles = loadArticles();
 $mustReadArticles = array_filter($allArticles, fn($a) => $a['mustRead']);
+
+// Dữ liệu bảng điều khiển: user_id lấy từ session
+$dash = null;
+if ($loggedIn) {
+    require_once __DIR__ . '/includes/dashboard.php';
+    $dash = loadDashboard($pdo, (int)$_SESSION['user_id'], $row['today'], $row['goal'], count($missingFields), $mustReadArticles);
+}
 
 // Số liệu thật và nội dung xem trước cho trang khách. Không có số viết tay: thiếu dữ liệu thì trang ẩn câu đó.
 $guestStats = ['exercises' => 0, 'muscleGroups' => 0, 'sourcedArticles' => 0];
@@ -159,7 +151,7 @@ if (!$loggedIn) {
 }
 
 $pageTitle = 'Trang chủ';
-$pageCss = $loggedIn ? [] : ['/css/home-guest.css'];
+$pageCss = [$loggedIn ? '/css/home-user.css' : '/css/home-guest.css'];
 include __DIR__ . '/includes/header.php';
 ?>
 <?php if (!$loggedIn): ?>
@@ -170,107 +162,7 @@ include __DIR__ . '/includes/header.php';
 <?php else: ?>
 
 <!-- ================= NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP ================= -->
-<link rel="stylesheet" href="/css/home.css">
-<section class="hm-hero hm-hero--user">
-    <div class="hm-wrap hm-hero__in">
-        <div>
-            <span class="hm-chip"><i></i> Train Harder &amp; Smarter</span>
-            <h1 class="hm-hello">Chào <em><?= htmlspecialchars($firstName) ?></em>,<br>hôm nay tập gì nào?</h1>
-            <p class="hm-lead">Chọn một mục bên dưới để tiếp tục, hoặc xem vài bài tập gợi ý dành cho bạn.</p>
-            <div class="hm-cta">
-                <a class="hm-btn hm-btn--solid" href="/exercises.php">Xem thư viện bài tập</a>
-                <a class="hm-btn hm-btn--ghost" href="/profile.php">Cập nhật hồ sơ</a>
-            </div>
-        </div>
-
-        <div class="hm-prog">
-            <h3>Hồ sơ của bạn</h3>
-            <div class="hm-prog__num"><?= (int)$doneCount ?><small> / <?= (int)$profileTotal ?> mục</small></div>
-            <div class="hm-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int)$percent ?>"><i style="width:<?= (int)$percent ?>%"></i></div>
-            <?php if (!empty($missingFields)): ?>
-                <p>Còn thiếu: <?= htmlspecialchars(implode(', ', $missingFields)) ?>. Cần đủ thông tin này để tính TDEE/Macro và gợi ý lịch tập.</p>
-                <a class="hm-btn hm-btn--solid" href="/profile.php">Hoàn thiện hồ sơ</a>
-            <?php else: ?>
-                <p>Hồ sơ đã đầy đủ. Bạn sẵn sàng nhận lịch tập và mục tiêu dinh dưỡng cá nhân hóa.</p>
-                <a class="hm-btn hm-btn--ghost" href="/profile.php">Xem hồ sơ</a>
-            <?php endif; ?>
-        </div>
-    </div>
-</section>
-
-<div class="hm-wrap">
-    <div class="hm-tiles">
-        <?php
-        $tiles = [
-            ['dumbbell', 'Bài tập &amp; Video', 'Thư viện kỹ thuật', '/exercises.php', is_file(__DIR__ . '/exercises.php')],
-            ['calendar', 'Lịch tập', 'Kế hoạch theo tuần', '/workout-plan.php', is_file(__DIR__ . '/workout-plan.php')],
-            ['flame',    'TDEE &amp; Macro', 'Dinh dưỡng theo mục tiêu', '/nutrition.php', is_file(__DIR__ . '/nutrition.php')],
-            ['chart',    'Tiến trình', 'Biểu đồ thay đổi', '/progress.php', is_file(__DIR__ . '/progress.php')],
-            ['user',     'Hồ sơ', 'Chỉ số và mục tiêu', '/profile.php', true],
-            ['book',     'Bài viết', 'Kiến thức có nguồn', '/articles.php', is_file(__DIR__ . '/articles.php')],
-        ];
-        foreach ($tiles as [$icon, $label, $hint, $href, $ready]):
-            $tag = $ready ? 'a' : 'div';
-        ?>
-            <<?= $tag ?> class="hm-tile <?= $ready ? '' : 'is-soon' ?>" <?= $ready ? 'href="' . htmlspecialchars($href) . '"' : '' ?>>
-                <span class="hm-icon"><?= hmIcon($icon, 22) ?></span>
-                <span><b><?= $label ?></b><small><?= $ready ? htmlspecialchars($hint) : 'Sắp có' ?></small></span>
-            </<?= $tag /* audit:ok $tag chỉ là 'a' hoặc 'div' do mình đặt */ ?>>
-        <?php endforeach; ?>
-    </div>
-</div>
-
-<?php if (!empty($mustReadArticles)): ?>
-<div class="hm-wrap">
-    <!-- Nhắc đọc các bài nền tảng (gồng core, thở cơ hoành) trước khi bắt đầu tập -->
-    <aside class="hm-must" aria-labelledby="hm-must-title">
-        <div>
-            <span class="hm-eyebrow">Đọc trước khi tập</span>
-            <h2 id="hm-must-title">Học <?= count($mustReadArticles) ?> kỹ thuật nền tảng trước buổi tập đầu tiên</h2>
-        </div>
-        <ul>
-            <?php foreach ($mustReadArticles as $s => $a): ?>
-                <li><a href="/article.php?slug=<?= htmlspecialchars(rawurlencode($s)) ?>"><?= htmlspecialchars($a['title']) ?> <span aria-hidden="true">&rarr;</span></a></li>
-            <?php endforeach; ?>
-        </ul>
-    </aside>
-</div>
-<?php endif; ?>
-
-<?php if (!empty($recommended)): ?>
-<section class="hm-section">
-    <div class="hm-wrap">
-        <div class="hm-head" style="margin-bottom: 28px;">
-            <div class="hm-eyebrow">Gợi ý cho bạn</div>
-            <h2 class="hm-title">
-                <?= $experience !== null /* audit:ok các nhánh bên dưới đã htmlspecialchars */
-                    ? 'Bài tập phù hợp trình độ ' . htmlspecialchars($experienceLabels[$experience])
-                    : 'Vài bài tập để bắt đầu' ?>
-            </h2>
-        </div>
-        <div class="hm-recs">
-            <?php foreach ($recommended as $ex): ?>
-                <a class="hm-rec" href="/exercise-detail.php?id=<?= (int)$ex['id'] ?>">
-                    <?php if (($imgSrc = exerciseImageSrc($ex['image_url'])) !== null): ?>
-                        <img class="hm-rec__img" src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($ex['name']) ?>" loading="lazy">
-                    <?php else: ?>
-                        <div class="hm-rec__ph">Chưa có ảnh</div>
-                    <?php endif; ?>
-                    <div class="hm-rec__body">
-                        <h3><?= htmlspecialchars($ex['name']) ?></h3>
-                        <div class="hm-meta">
-                            <span><?= htmlspecialchars($muscleLabels[$ex['muscle_group']] ?? $ex['muscle_group']) ?></span>
-                            <span><?= htmlspecialchars($typeLabels[$ex['type']] ?? $ex['type']) ?></span>
-                            <span class="lv-<?= htmlspecialchars($ex['difficulty']) ?>"><?= htmlspecialchars($levelLabels[$ex['difficulty']] ?? $ex['difficulty']) ?></span>
-                        </div>
-                    </div>
-                </a>
-            <?php endforeach; ?>
-        </div>
-        <a class="hm-more" href="/exercises.php">Xem tất cả bài tập &rarr;</a>
-    </div>
-</section>
-<?php endif; ?>
+<?php include __DIR__ . '/includes/home-user.php'; ?>
 
 <?php endif; ?>
 
