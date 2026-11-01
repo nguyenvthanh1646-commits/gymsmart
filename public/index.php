@@ -37,6 +37,7 @@ function hmIcon(string $name, int $size = 24): string
         'user'     => '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.7-5.5 7-5.5s6.2 1.9 7 5.5"/>',
         'bolt'     => '<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>',
         'book'     => '<path d="M5 4.5h10a3 3 0 013 3V20H8a3 3 0 01-3-3V4.5zM5 17a3 3 0 013-3h10"/>',
+        'moon'     => '<path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z"/>',
         'target'   => '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
         'meal'     => '<path d="M7 3v7a2.5 2.5 0 005 0V3M9.5 3v18M17 3c-1.7 1-2.5 3.2-2.5 6 0 2 1 3.5 2.5 3.5V21"/>',
         'chat'     => '<path d="M4 5.5h16v11H10l-4.5 3.5V16.5H4z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/>',

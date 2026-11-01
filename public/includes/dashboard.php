@@ -249,6 +249,24 @@ function dashLoadLastWeights(PDO $pdo, int $userId, array $exerciseIds): array
     }
 }
 
+/** Tên file ảnh của nhiều bài trong MỘT truy vấn. Lỗi đọc DB thì trả mảng rỗng, giao diện hiện biểu tượng thay ảnh. */
+function dashLoadExerciseImages(PDO $pdo, array $exerciseIds): array
+{
+    $ids = array_values(array_unique(array_map('intval', $exerciseIds)));
+    if ($ids === []) {
+        return [];
+    }
+    $marks = implode(', ', array_fill(0, count($ids), '?'));
+    try {
+        $stmt = $pdo->prepare("SELECT id, image_url FROM exercises WHERE id IN ($marks)"); // audit:ok $marks chỉ gồm các dấu ?
+        $stmt->execute($ids);
+        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'image_url', 'id');
+    } catch (Throwable $e) {
+        error_log('dashboard: ảnh bài tập: ' . $e->getMessage());
+        return [];
+    }
+}
+
 /** Lần tính TDEE gần nhất. */
 function dashLoadNutrition(PDO $pdo, int $userId): array
 {
@@ -341,8 +359,16 @@ function loadDashboard(PDO $pdo, int $userId, string $today, ?string $goal, int 
     $todayLogged = count(array_filter($todayRows, fn($r) => $r['logged']));
 
     $next = dashNextSessionDay($todayN, $planDays);
-    $nextSummary = $next === null ? null : ['day' => $next['day'], 'nextWeek' => $next['nextWeek']]
-        + dashSessionSummary($planDays[$next['day']], $labels[$next['day']] ?? null);
+    $nextRows = $next === null ? [] : $planDays[$next['day']];
+
+    // Gắn ảnh vào các bài sẽ hiển thị. Buổi hôm nay có thì không hiện buổi kế tiếp, nên chỉ lấy ảnh của một trong hai.
+    $shownRows = $todayRows !== [] ? $todayRows : $nextRows;
+    $images = dashLoadExerciseImages($pdo, array_column($shownRows, 'exercise_id'));
+    $withImage = fn(array $rows) => array_map(fn($r) => $r + ['image' => $images[$r['exercise_id']] ?? null], $rows);
+    $todayRows = $withImage($todayRows);
+
+    $nextSummary = $next === null ? null : ['day' => $next['day'], 'nextWeek' => $next['nextWeek'], 'rows' => $withImage($nextRows)]
+        + dashSessionSummary($nextRows, $labels[$next['day']] ?? null);
 
     $read = dashLoadReadSlugs($pdo, $userId);
     $unread = array_filter($mustReadArticles, fn($slug) => !in_array($slug, $read, true), ARRAY_FILTER_USE_KEY);

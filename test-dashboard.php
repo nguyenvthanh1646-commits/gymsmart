@@ -112,6 +112,7 @@ check('DB lỗi: tuần này báo error', $d['week']['status'] === 'error');
 check('DB lỗi: dinh dưỡng báo error', $d['nutrition']['status'] === 'error');
 check('DB lỗi: tiến trình báo error', $d['progress']['status'] === 'error');
 check('DB lỗi: bài chưa đọc vẫn hiện đủ', isset($d['unreadArticles']['a']));
+check('DB lỗi: đọc ảnh bài tập trả mảng rỗng', dashLoadExerciseImages(new BrokenPdo(), [1]) === []);
 
 // ===== Lớp đọc DB trên SQLite in-memory: chỉ đọc đúng dữ liệu của user đang đăng nhập =====
 if (extension_loaded('pdo_sqlite')) {
@@ -121,6 +122,8 @@ if (extension_loaded('pdo_sqlite')) {
     $db->exec('CREATE TABLE nutrition_targets (id INTEGER PRIMARY KEY, user_id INT, tdee_kcal REAL, target_kcal REAL, protein_g REAL, carbs_g REAL, fat_g REAL, calculated_date TEXT)');
     $db->exec('CREATE TABLE body_metrics (id INTEGER PRIMARY KEY, user_id INT, recorded_date TEXT, weight_kg REAL)');
     $db->exec('CREATE TABLE article_reads (user_id INT, slug TEXT)');
+    $db->exec('CREATE TABLE exercises (id INTEGER PRIMARY KEY, image_url TEXT)');
+    $db->exec("INSERT INTO exercises (id, image_url) VALUES (1, '1.jpg'), (2, NULL), (3, '3.jpg')");
     $db->exec("INSERT INTO workout_logs (user_id, exercise_id, workout_plan_exercise_id, log_date, weight_kg_used) VALUES
         (1, 5, 50, '2026-10-20', 20), (1, 5, 50, '2026-10-27', 25), (2, 5, 90, '2026-10-28', 99), (1, 6, 60, '2026-10-19', NULL), (1, 7, 70, '2026-10-19', 30), (1, 7, 70, '2026-10-20', 0)");
     $db->exec("INSERT INTO nutrition_targets (user_id, tdee_kcal, target_kcal, protein_g, carbs_g, fat_g, calculated_date) VALUES
@@ -141,6 +144,8 @@ if (extension_loaded('pdo_sqlite')) {
     check('Số đo: xu hướng theo mục tiêu', $p['trend']['delta'] === 1.0 && $p['trend']['matches'] === true);
     check('Số đo: user chưa đo báo none', dashLoadMetrics($db, 3, null)['status'] === 'none');
     check('Bài đã đọc: chỉ của user này', dashLoadReadSlugs($db, 1) === ['da-doc']);
+    check('Ảnh bài tập: đúng các bài được hỏi', dashLoadExerciseImages($db, [1, 2]) === [1 => '1.jpg', 2 => null]);
+    check('Ảnh bài tập: danh sách rỗng thì không truy vấn', dashLoadExerciseImages(new BrokenPdo(), []) === []);
 } else {
     echo "[BỎ QUA] Không có pdo_sqlite nên không chạy phần DB\n";
 }
