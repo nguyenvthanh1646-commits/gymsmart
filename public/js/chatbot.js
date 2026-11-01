@@ -2,7 +2,8 @@
  * chatbot.js — hành vi của khung chat (markup: includes/chatbot-widget.php, giao diện: css/chatbot.css).
  *
  * Luồng chính:  người dùng gõ → send() → fetch POST /api/chatbot.php (JSON + header X-CSRF-Token)
- *               → hiện "đang soạn" → nhận { reply, links, draft } → vẽ tin nhắn.
+ *               → hiện "đang soạn" (kèm nút Dừng) → nhận { reply, links, draft } → vẽ tin nhắn.
+ * "Đang soạn" chỉ bật trong setBusy(true) và luôn được tắt khi xong, lỗi, hết giờ hoặc bấm Dừng.
  *
  * Lưu ý bảo mật: mọi chữ từ server/AI đều đưa vào trang bằng textContent (không innerHTML),
  * nên AI có trả về thẻ <script> cũng chỉ hiện như chữ thường (không bị XSS). Markdown cơ bản (**đậm**, danh sách,
@@ -26,7 +27,7 @@
 
     var $ = function (id) { return document.getElementById(id); };
     var fab = $('gc-fab'), panel = $('gc-panel'), body = $('gc-body'), form = $('gc-form');
-    var input = $('gc-input'), sendBtn = $('gc-send'), countEl = $('gc-count');
+    var input = $('gc-input'), sendBtn = $('gc-send'), stopBtn = $('gc-stop'), resetBtn = $('gc-reset'), countEl = $('gc-count');
     var statusText = $('gc-status-text'), nudge = $('gc-nudge'), dot = $('gc-dot'), toast = $('gc-toast');
     var tabsEl = $('gc-tabs'), persBox = $('gc-pers');
 
@@ -319,6 +320,12 @@
         // mất z-index (opacity tạo ngữ cảnh xếp chồng mới), nên các thẻ của trang đè lên khung trong lúc chờ.
         root.classList.toggle('gc-is-busy', b);
         statusText.textContent = b ? 'Đang soạn câu trả lời...' : cfg.subtitle;
+        stopBtn.hidden = !b;
+        sendBtn.hidden = b;
+        resetBtn.disabled = b;                             // đang chờ thì không xóa cuộc trò chuyện
+        // Nút vừa bấm biến mất thì chuyển focus sang nút thay thế, người dùng bàn phím không bị lạc
+        if (b && document.activeElement === sendBtn) { stopBtn.focus(); }
+        if (!b && document.activeElement === stopBtn) { input.focus({ preventScroll: true }); }
         refreshSend();
     }
     function refreshSend() {
@@ -335,58 +342,106 @@
         return state.msgs.filter(function (m) { return !m.err && !m.draft && !m.task; })
             .slice(-10).map(function (m) { return { role: m.who === 'me' ? 'user' : 'model', text: m.text }; });
     }
+    // Lời báo cho từng kiểu lỗi phía trình duyệt. Không có chi tiết kỹ thuật.
+    var MSG = {
+        stopped: 'Đã dừng. Bạn có thể bấm "Thử lại" hoặc hỏi câu khác.',
+        timeout: 'GymSmart AI phản hồi quá lâu nên mình đã dừng chờ. Bạn bấm "Thử lại" sau ít phút nhé.',
+        offline: 'Không kết nối được tới máy chủ. Bạn kiểm tra mạng rồi bấm "Thử lại" nhé.',
+        badResponse: 'GymSmart AI tạm thời không phản hồi. Bạn thử lại sau ít phút nhé.',
+        session: 'Phiên làm việc đã hết hạn. Bạn tải lại trang rồi hỏi lại nhé.',
+        login: 'Bạn cần đăng nhập lại để tiếp tục trò chuyện.',
+        unanswered: 'Câu này chưa có trả lời vì trang đã được tải lại hoặc chuyển trang. Bạn bấm "Gửi lại" nhé.'
+    };
+    // Thử lại cũng vô ích với các lỗi này: cấu hình sai, câu hỏi bị bộ lọc chặn, đã chạm giới hạn trong giờ
+    var NO_RETRY_CODES = ['AI_NO_CURL', 'AI_NO_KEY', 'AI_AUTH', 'AI_MODEL', 'AI_BLOCKED', 'RATE_HOUR'];
+    var leaving = false;                                  // trang đang được rời đi: yêu cầu bị hủy không phải lỗi cần báo
+    var request = null;                                   // yêu cầu đang chạy: { ctrl, reason }
+
     function send(text, task, isRetry) {
         text = String(text || '').trim();
         if (!text || state.busy) { return; }
         if (text.length > cfg.maxLen) { showToast('Tin nhắn tối đa ' + cfg.maxLen + ' ký tự.'); return; }
         task = task || 'chat';
         state.lastText = text; state.lastTask = task;
-        hideHero();
+        hideHero(); hideFollow();
 
         var hist = history();                              // lấy trước khi thêm tin hiện tại
         if (!isRetry) { addMsg({ who: 'me', text: text, task: task === 'exercise_draft' ? 1 : 0 }); }
         input.value = ''; autosize(); setBusy(true); showTyping();
-        sendBtn.classList.remove('fly'); void sendBtn.offsetWidth; sendBtn.classList.add('fly');
 
         var payload = { message: text, mode: cfg.mode, task: task, history: hist, personalize: !!(persBox && persBox.checked) };
-        var ctrl = window.AbortController ? new AbortController() : null;
-        var timer = setTimeout(function () { if (ctrl) { ctrl.abort(); } }, 50000);
+        var ctrl = new AbortController();
+        var current = { ctrl: ctrl, reason: '' };
+        request = current;
+        // Phải lớn hơn hạn tổng phía server (AI_TOTAL_TIMEOUT trong includes/ai.php) để thường nhận được lời báo từ server
+        var timer = setTimeout(function () { current.reason = 'timeout'; ctrl.abort(); }, 50000);
+
+        function finish() { clearTimeout(timer); request = null; hideTyping(); setBusy(false); }
+        function fail(text, extra) {
+            var m = { who: 'bot', text: text, err: true, retry: true };
+            for (var k in extra) { m[k] = extra[k]; }
+            addMsg(m);
+            if (!state.open) { dot.hidden = false; }
+        }
 
         fetch(cfg.endpoint, {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
             body: JSON.stringify(payload),
-            signal: ctrl ? ctrl.signal : undefined
+            signal: ctrl.signal
         }).then(function (res) {
             return res.text().then(function (raw) {
                 var data = null;
-                try { data = JSON.parse(raw); } catch (e) { /* server trả HTML → xử lý bên dưới */ }
-                return { ok: res.ok, status: res.status, data: data, raw: raw };
+                try { data = JSON.parse(raw); } catch (e) { /* server trả HTML: báo lỗi chung, không in nội dung ra giao diện */ }
+                return { ok: res.ok, status: res.status, data: data };
             });
         }).then(function (r) {
-            clearTimeout(timer); hideTyping(); setBusy(false);
+            finish();
             if (r.ok && r.data && typeof r.data.reply === 'string') {
                 var m = { who: 'bot', text: r.data.reply, links: r.data.links || [], draft: r.data.draft || null };
                 if (m.draft) { m.task = 1; }
                 addMsg(m);
                 if (!state.open) { dot.hidden = false; }
-            } else {
-                var msg = (r.data && r.data.error) ? r.data.error : 'Chatbot tạm thời không phản hồi, thử lại sau.';
-                var detail = (r.data && r.data.detail) ? r.data.detail : '';
-                if (!r.data && (root.getAttribute('data-mode') === 'admin' || /^(localhost|127\.|\[?::1)/.test(location.hostname))) {
-                    detail = 'Server trả về dữ liệu không phải JSON (HTTP ' + r.status + '): ' + r.raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
-                }
-                if (r.status === 403 && r.data && /tải lại/i.test(msg)) { msg += ' (bấm F5)'; }
-                var links = (r.data && Array.isArray(r.data.links)) ? r.data.links : [];   // bài tập liên quan, có cả khi AI lỗi
-                addMsg({ who: 'bot', text: msg, err: true, detail: detail, links: links, retry: r.status !== 401 && r.status !== 403 && r.status !== 429 });
+                showFollow();
+                return;
             }
-        }).catch(function (e) {
-            clearTimeout(timer); hideTyping(); setBusy(false);
-            var offline = e && e.name === 'AbortError' ? 'Chờ quá lâu mà chưa có phản hồi.' : 'Không kết nối được tới máy chủ.';
-            addMsg({ who: 'bot', text: offline + ' Kiểm tra mạng rồi thử lại nhé.', err: true, retry: true });
+            if (r.status === 401) { fail(MSG.login, { retry: false, links: [{ label: 'Đăng nhập', url: '/login.php' }] }); return; }
+            if (r.status === 403 && !(r.data && r.data.code)) {
+                var denied = r.data && /quản trị/.test(r.data.error || '');
+                fail(denied ? r.data.error : MSG.session, { retry: false });
+                return;
+            }
+            var code = r.data && r.data.code ? r.data.code : '';
+            fail(r.data && r.data.error ? r.data.error : MSG.badResponse, {
+                links: r.data && Array.isArray(r.data.links) ? r.data.links : [],   // bài tập liên quan, có cả khi AI lỗi
+                retry: NO_RETRY_CODES.indexOf(code) < 0,
+                retryAfter: r.data && r.data.retry_after > 0 ? r.data.retry_after : 0
+            });
+        }).catch(function () {
+            finish();
+            if (leaving) { return; }                       // rời trang: lần sau mở lại sẽ thấy nút "Gửi lại"
+            fail(current.reason === 'stop' ? MSG.stopped : (current.reason === 'timeout' ? MSG.timeout : MSG.offline));
         });
     }
+    // Nút Dừng chỉ hủy phía trình duyệt; server vẫn chạy nốt lần gọi AI đang dở rồi tự kết thúc.
+    stopBtn.addEventListener('click', function () {
+        if (request) { request.reason = 'stop'; request.ctrl.abort(); }
+    });
+
+    // Câu hỏi cuối chưa có trả lời (đã rời trang giữa chừng): báo rõ và cho gửi lại, không để người dùng chờ vô ích
+    function noteUnanswered() {
+        var last = state.msgs[state.msgs.length - 1];
+        if (!last || last.who !== 'me') { return; }
+        state.lastText = last.text;
+        state.lastTask = last.task ? 'exercise_draft' : 'chat';
+        addMsg({ who: 'bot', text: MSG.unanswered, err: true, retry: true, retryLabel: 'Gửi lại' }, false);
+    }
+    window.addEventListener('pagehide', function () { leaving = true; });
+    window.addEventListener('pageshow', function (e) {
+        leaving = false;
+        if (e.persisted) { noteUnanswered(); }             // quay lại bằng nút Back: trang được khôi phục từ bộ nhớ
+    });
 
     // ---------- Mở / đóng ----------
     function openPanel() {
@@ -620,7 +675,15 @@
     var saved = load(KEY);
     if (saved && saved.length) {
         state.msgs = saved;
-        saved.forEach(function (m) { m.retry = false; renderMsg(m, false); });   // sau khi tải lại trang không còn gì để "thử lại"
+        saved.forEach(function (m, i) {
+            // Sau khi tải lại trang, chỉ lỗi ở tin cuối còn "Thử lại" có ý nghĩa. Thời gian đếm ngược không còn đúng nữa nên bỏ.
+            m.retry = !!m.retry && i === saved.length - 1;
+            m.retryAfter = 0;
+            if (m.who === 'me') { state.lastText = m.text; state.lastTask = m.task ? 'exercise_draft' : 'chat'; }
+            renderMsg(m, false);
+        });
+        noteUnanswered();
+        showFollow();
     } else {
         showHero();
     }
