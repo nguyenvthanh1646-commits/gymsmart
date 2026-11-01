@@ -1,6 +1,16 @@
-// home-user.js — trang chủ sau đăng nhập: ghi nhật ký nhanh trong thẻ "Hôm nay".
+// home-user.js — trang chủ sau đăng nhập: ghi nhật ký nhanh trong thẻ "Hôm nay", mở chatbot từ lối tắt.
 (function () {
     'use strict';
+
+    // Lối tắt chatbot: mở widget chat có sẵn. Chỉ hiện nút khi trang thật sự có widget.
+    var chatFab = document.getElementById('gc-fab');
+    var chatShortcut = document.querySelector('[data-chat-shortcut]');
+    if (chatFab && chatShortcut) {
+        chatShortcut.hidden = false;
+        chatShortcut.querySelector('[data-open-chat]').addEventListener('click', function () {
+            chatFab.click();
+        });
+    }
 
     var todayCard = document.getElementById('hom-nay');
     if (!todayCard) {
