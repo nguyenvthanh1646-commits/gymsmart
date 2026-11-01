@@ -53,7 +53,7 @@ $guestFeatures = [
     ['flame',    'Tính TDEE và macro', 'Tính nhu cầu năng lượng và lượng đạm, tinh bột, béo theo chỉ số và mục tiêu của bạn.'],
     ['meal',     'Lịch ăn gợi ý', 'Gợi ý chia bữa trong ngày theo mục tiêu dinh dưỡng và kiểu ăn bạn chọn.'],
     ['chart',    'Nhật ký và biểu đồ', 'Ghi lại buổi tập, cân nặng, số đo và xem biểu đồ thay đổi theo thời gian.'],
-    ['book',     'Bài viết có dẫn nghiên cứu', 'Dinh dưỡng, sức khỏe và tập luyện, nêu rõ nguồn tham khảo.'],
+    ['book',     'Bài viết có dẫn nghiên cứu', 'Kiến thức về dinh dưỡng, sức khỏe và tập luyện, có trích nguồn để bạn tự kiểm tra.'],
     ['chat',     'Chatbot AI', 'Hỏi nhanh về bài tập và tập luyện, có thể dựa trên hồ sơ của bạn nếu bạn cho phép.'],
 ];
 
