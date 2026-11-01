@@ -230,6 +230,7 @@ body:has(.gh-hero) .ft__links a { display: inline-flex; align-items: center; min
 @media (min-width: 620px) {
     .gh-features, .gh-articles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .gh-feature { display: block; padding: 22px; border-radius: 18px; }
+    .gh-feature:last-child { grid-column: 1 / -1; } /* 7 thẻ trên lưới 2 cột: thẻ cuối rộng hết hàng để không thừa ô */
     .gh-feature h3 { margin: 16px 0 6px; }
     .gh-exercises { gap: 16px; }
     .gh-exercise__body { padding: 18px 20px 20px; }
@@ -240,6 +241,7 @@ body:has(.gh-hero) .ft__links a { display: inline-flex; align-items: center; min
     .gh-section { padding: var(--gh-space-section) 0; }
     .gh-head { margin-bottom: 48px; }
     .gh-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+    .gh-articles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .gh-steps li { padding: 64px 0 0; }
     .gh-steps li:not(:last-child)::after { top: 21px; bottom: auto; left: 56px; right: -20px; width: auto; height: 2px; }
 }
@@ -247,8 +249,8 @@ body:has(.gh-hero) .ft__links a { display: inline-flex; align-items: center; min
     .gh-features { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     /* 7 thẻ trên lưới 4 cột: thẻ đầu rộng gấp đôi để hàng cuối không bị thừa ô */
     .gh-feature:first-child { grid-column: span 2; }
+    .gh-feature:last-child { grid-column: auto; }
     .gh-exercises { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .gh-articles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
