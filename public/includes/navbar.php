@@ -2,7 +2,7 @@
 /**
  * navbar.php — thanh điều hướng trên cùng (có logo, đánh dấu trang đang mở,
  * thu gọn thành nút ☰ trên điện thoại). Hiển thị khác nhau theo trạng thái:
- *   - chưa đăng nhập: Đăng nhập / Đăng ký
+ *   - chưa đăng nhập: Đăng nhập / Đăng ký (riêng trang chủ có thêm liên kết tới các mục trong trang)
  *   - đã đăng nhập:  menu chức năng + chữ cái đầu tên + Đăng xuất
  *   - ADMIN:         thêm nút "Quản trị"
  * Cần session nên các trang include file này phải require auth.php trước (để có isLoggedIn()).
@@ -46,9 +46,11 @@ if ($loggedIn) {
         } catch (Throwable $e) { /* chưa import sql/users_avatar.sql: bỏ qua */ }
     }
 }
+// Khách ở trang chủ: các trang tính năng đều cần đăng nhập nên liên kết chỉ cuộn tới mục ngay trong trang
+$navGuestHome = !$loggedIn && $navCurrent === 'index.php';
 $navAvatar = ($loggedIn && is_string($_SESSION['avatar'] ?? null) && preg_match('#^uploads/avatars/[A-Za-z0-9._-]+\.jpg$#', $_SESSION['avatar'])) ? $_SESSION['avatar'] : null;
 ?>
-<header class="nb" id="nb">
+<header class="nb<?= $navGuestHome ? ' nb--guest-home' : '' ?>" id="nb">
     <div class="nb__in">
         <a href="/index.php" aria-label="GymSmart — trang chủ"><?= gsLogo('dark', false, 36) ?></a>
 
@@ -66,6 +68,13 @@ $navAvatar = ($loggedIn && is_string($_SESSION['avatar'] ?? null) && preg_match(
                 </nav>
             <?php endif; ?>
 
+            <?php if ($navGuestHome): ?>
+                <nav class="nb__links" aria-label="Chính">
+                    <a href="#tinh-nang">Tính năng</a>
+                    <a href="#kien-thuc">Bài viết</a>
+                </nav>
+            <?php endif; ?>
+
             <div class="nb__right">
                 <?php if ($loggedIn): ?>
                     <?php if ($isAdmin): ?>
@@ -75,7 +84,7 @@ $navAvatar = ($loggedIn && is_string($_SESSION['avatar'] ?? null) && preg_match(
                     <a class="nb__btn nb__btn--ghost" href="/api/logout.php">Đăng xuất</a>
                 <?php else: ?>
                     <a class="nb__btn nb__btn--ghost" href="/login.php">Đăng nhập</a>
-                    <a class="nb__btn nb__btn--solid" href="/register.php">Đăng ký miễn phí</a>
+                    <a class="nb__btn nb__btn--solid" href="/register.php"><?= $navGuestHome ? 'Tạo tài khoản miễn phí' : 'Đăng ký miễn phí' ?></a>
                 <?php endif; ?>
             </div>
         </div>

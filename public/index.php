@@ -165,6 +165,7 @@ if (!$loggedIn) {
 }
 
 $pageTitle = 'Trang chủ';
+$pageCss = $loggedIn ? [] : ['/css/home-guest.css'];
 include __DIR__ . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="/css/home.css">
@@ -172,6 +173,7 @@ include __DIR__ . '/includes/header.php';
 <?php if (!$loggedIn): ?>
 
 <!-- ================= KHÁCH CHƯA ĐĂNG NHẬP ================= -->
+<script src="/js/home-guest.js" defer></script>
 <section class="tp">
     <?php include __DIR__ . "/includes/hero-bg.php"; ?>
     <div class="hm-wrap">

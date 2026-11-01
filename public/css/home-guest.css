@@ -1,0 +1,44 @@
+/* home-guest.css — trang chủ khi chưa đăng nhập. Chỉ nạp cho khách, nên người đã đăng nhập không bị ảnh hưởng.
+   Class bắt đầu bằng "gh-". Màu nền lấy từ biến trong brand.css.
+   Nút cam dùng chữ tối (#0b1020 trên #ff5a1f đạt khoảng 6:1), vì chữ trắng trên nền cam này chỉ đạt 3,12:1. */
+
+:root {
+    --gh-space-section: 96px;  /* khoảng cách dọc giữa các mục */
+    --gh-card-bg: #121a33;
+    --gh-text: #eef1fa;
+    --gh-text-muted: #b4bfda;
+    --gh-focus: #ffb27a;
+}
+
+html { scroll-behavior: smooth; scroll-padding-top: 84px; } /* cuộn tới mục mà không bị thanh điều hướng che */
+body:has(.nb--guest-home) { background: var(--gs-ink); }
+
+/* Vòng focus đậm, nhìn rõ trên nền tối (biến dùng chung chỉ có độ đậm 18%) */
+body:has(.nb--guest-home) a:focus-visible,
+body:has(.nb--guest-home) button:focus-visible { outline: 3px solid var(--gh-focus); outline-offset: 3px; }
+
+/* ===== Thanh điều hướng: dính khi cuộn sẵn nhờ .nb trong brand.css, ở đây đổi sang tông tối ===== */
+.nb--guest-home { background: rgba(11, 16, 32, .9); border-bottom-color: var(--gs-line-dark); box-shadow: none; }
+.nb--guest-home .gs-logo__name { color: #fff; }
+.nb--guest-home a:has(> .gs-logo) { display: inline-flex; align-items: center; min-height: 44px; }
+.nb--guest-home .nb__links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gh-text); }
+.nb--guest-home .nb__links a:hover { color: var(--gs-accent-2); background: rgba(255, 255, 255, .07); text-decoration: none; }
+.nb--guest-home .nb__btn { min-height: 44px; }
+.nb--guest-home .nb__btn--ghost { color: var(--gh-text); border-color: rgba(255, 255, 255, .24); background: transparent; }
+.nb--guest-home .nb__btn--ghost:hover { color: var(--gs-accent-2); border-color: var(--gs-accent-2); text-decoration: none; }
+.nb--guest-home .nb__btn--solid { color: var(--gs-ink); box-shadow: none; }
+.nb--guest-home .nb__btn--solid:hover { color: var(--gs-ink); background: var(--gs-accent-2); text-decoration: none; }
+.nb--guest-home .nb__toggle { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .24); }
+.nb--guest-home .nb__toggle span,
+.nb--guest-home .nb__toggle span::before,
+.nb--guest-home .nb__toggle span::after { background: #fff; }
+
+@media (max-width: 980px) {
+    .nb--guest-home .nb__panel { background: #0f1730; border-bottom-color: var(--gs-line-dark); }
+    .nb--guest-home .nb__links a { padding: 0 12px; min-height: 48px; }
+    .nb--guest-home .nb__right .nb__btn { min-height: 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+}
