@@ -42,7 +42,7 @@ body:has(.du) input:focus-visible,
 }
 
 /* Liên kết chân trang đủ lớn để bấm, chỉ ở trang này */
-body:has(.du) .ft__links a { display: inline-flex; align-items: center; min-height: 44px; }
+body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
 
 /* ===== Khung trang và đầu trang ===== */
 .du { padding: 24px 0 96px; color: var(--du-text); } /* chừa chỗ dưới cùng để nút chat không che nội dung cuối */
@@ -182,8 +182,15 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; min-heig
 }
 @media (min-width: 1040px) {
     .du-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .du-card--today { grid-column: span 2; }
-    .du-reads { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    /* Cột phải xếp Tuần này, Lối tắt, Đọc trước: thẻ Hôm nay dài bao nhiêu cũng không để lại khoảng trống ở cột phải */
+    .du-card--today { grid-column: 1 / span 2; grid-row: 1 / span 2; }
+    .du-card--week { grid-column: 3; grid-row: 1; }
+    .du-card--shortcuts { grid-column: 3; grid-row: 2; }
+    .du-card--nutrition { grid-column: 1; grid-row: 3; }
+    .du-card--progress { grid-column: 2; grid-row: 3; }
+    .du-card--read { grid-column: 3; grid-row: 3; }
+    /* Đã đọc hết bài nền tảng thì không có thẻ Đọc trước, Lối tắt chiếm luôn chỗ đó */
+    .du-grid:not(:has(.du-card--read)) .du-card--shortcuts { grid-row: 2 / span 2; }
 }
 
 @media (prefers-reduced-motion: reduce) {
