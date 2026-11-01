@@ -54,7 +54,7 @@ body:has(.nb--guest-home) button:focus-visible { outline: 3px solid var(--gh-foc
 .gh-btn--line:hover { border-color: #fff; color: #fff; }
 
 /* ===== Hero: viết cho điện thoại trước, màn hình rộng ghi đè ở cuối mục ===== */
-/* Màu nền trùng màu nền ảnh để khi ảnh chưa tải xong trang không bị nháy, và ảnh nằm absolute nên không làm nhảy bố cục */
+/* Màu nền tối gần với ảnh để khi ảnh chưa tải xong trang không bị nháy, và ảnh nằm absolute nên không làm nhảy bố cục */
 .gh-hero { position: relative; isolation: isolate; overflow: hidden; background: #000001; color: var(--gh-text); }
 .gh-hero__photo {
     position: absolute; top: 0; left: 0; z-index: -3; width: 100%; height: 520px; object-fit: cover; object-position: 50% 0;
