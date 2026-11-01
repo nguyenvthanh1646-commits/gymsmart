@@ -45,6 +45,7 @@ Quy ước dùng chung:
 - [x] A-16 Đăng ký 3 bước (tài khoản, cơ thể, mục tiêu): thu đủ tuổi, giới tính, chiều cao, cân nặng, vận động, trình độ, mục tiêu ngay lúc đăng ký (`register.php`, `css/register.css`, `js/register.js`)
 - [x] A-23 Nâng cấp trang chủ khi chưa đăng nhập (`includes/home-guest.php`, `css/home-guest.css`, `js/home-guest.js`, ảnh hero trong `assets/img/hero/`, nguồn ảnh ở `assets/img/CREDITS.md`): hero ảnh gym và lớp công nghệ, thẻ "Ví dụ", 7 tính năng, 3 bước, xem trước bài tập từ DB, mục kiến thức. Giao diện khi đã đăng nhập không đổi
 - [x] A-24 Bảng điều khiển sau đăng nhập ở trang chủ (`includes/dashboard.php`, `includes/home-user.php`, `includes/dash-*.php`, `css/home-user.css`, `js/home-user.js`, test `test-dashboard.php`): hôm nay, tuần này, dinh dưỡng, tiến trình, lối tắt, ghi nhanh. Thêm bảng `article_reads` (`sql/article_reads.sql`, đã gộp vào `schema.sql` và `ERD.md`). DB cũ cần import file này
+- [x] A-25 Sửa chatbot (`css/chatbot.css`, `js/chatbot.js`, `includes/chatbot-widget.php`, `includes/ai.php`, `api/chatbot.php`): khung bị mờ và bị thẻ trang đè khi đang chờ (trùng class `.is-busy` của `ui.css`), giao diện tối nền đặc, nút Dừng và Thử lại, markdown an toàn, không hiện lỗi kỹ thuật, chuyển sang model dự phòng khi model chính treo (mỗi lần gọi tối đa 15 giây, tổng 40 giây)
 
 ---
 
