@@ -62,6 +62,7 @@
     // Lưu xong: đổi nút thành "Đã ghi" để không ghi trùng, rồi cập nhật số liệu trên trang mà không cần tải lại
     function markLogged(form) {
         var row = form.closest('[data-log-row]');
+        row.classList.add('is-logged');
         var toggle = row.querySelector('[data-log-toggle]');
         var done = document.createElement('span');
         done.className = 'du-ex__done';
@@ -104,6 +105,7 @@
         }
         today.className = today.className.replace('is-today-pending', 'is-done');
         today.querySelector('[data-week-mark]').textContent = '✓';
+        today.querySelector('[data-week-label]').textContent = 'Đã tập';
         today.querySelector('[data-week-state]').textContent = 'đã tập';
 
         var done = Number(week.dataset.done) + 1;
@@ -111,9 +113,9 @@
         var percent = Math.round(done / planned * 100);
         week.dataset.done = done;
         week.querySelector('[data-week-done]').textContent = done;
-        var bar = week.querySelector('[role="progressbar"]');
-        bar.setAttribute('aria-valuenow', percent);
-        bar.setAttribute('aria-label', 'Đã tập ' + done + ' trên ' + planned + ' buổi trong tuần');
-        bar.firstElementChild.style.setProperty('--du-value', percent + '%');
+        var ring = week.querySelector('[role="progressbar"]');
+        ring.setAttribute('aria-valuenow', percent);
+        ring.setAttribute('aria-label', 'Đã tập ' + done + ' trên ' + planned + ' buổi trong tuần');
+        ring.style.setProperty('--du-value', percent + '%');
     }
 })();

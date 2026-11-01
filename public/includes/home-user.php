@@ -4,11 +4,12 @@
  * Dữ liệu nằm trong $dash, do loadDashboard() trong dashboard.php chuẩn bị. Mỗi thẻ là một file trong includes/dash-*.php.
  */
 
-/** Khối báo trạng thái rỗng hoặc lỗi của một thẻ: giải thích ngắn kèm nút cho bước tiếp theo. */
-function duState(string $title, string $text, string $href, string $label): void
+/** Khối báo trạng thái rỗng hoặc lỗi của một thẻ: biểu tượng, giải thích ngắn và nút cho bước tiếp theo. */
+function duState(string $icon, string $title, string $text, string $href, string $label): void
 {
     ?>
     <div class="du-state">
+        <span class="du-state__icon"><?= hmIcon($icon, 26) ?></span>
         <p class="du-state__title"><?= htmlspecialchars($title) ?></p>
         <p class="du-state__text"><?= htmlspecialchars($text) ?></p>
         <a class="du-link du-link--button" href="<?= htmlspecialchars($href) ?>"><?= htmlspecialchars($label) ?></a>
@@ -19,7 +20,15 @@ function duState(string $title, string $text, string $href, string $label): void
 /** Trạng thái lỗi dùng chung: lỗi đọc dữ liệu thường hết khi tải lại. */
 function duError(string $what): void
 {
-    duState("Chưa tải được $what", 'Có lỗi khi đọc dữ liệu. Bạn thử tải lại trang.', '/index.php', 'Tải lại trang');
+    duState('bolt', "Chưa tải được $what", 'Có lỗi khi đọc dữ liệu. Bạn thử tải lại trang.', '/index.php', 'Tải lại trang');
+}
+
+/** Tiêu đề thẻ: biểu tượng trong ô màu và chữ. */
+function duCardTitle(string $icon, string $id, string $title): void
+{
+    ?>
+    <h2 class="du-card__title" id="<?= htmlspecialchars($id) ?>"><span class="du-card__icon"><?= hmIcon($icon, 20) ?></span><?= htmlspecialchars($title) ?></h2>
+    <?php
 }
 
 $session = $dash['session'];
@@ -42,20 +51,49 @@ if (!empty($missingFields)) {
 } else {
     $duLead = 'Hôm nay có ' . $session['summary']['count'] . ' bài, khoảng ' . $session['summary']['minutes'] . ' phút.';
 }
+
+// Số liệu nhanh ở đầu trang: chỉ hiện số thật đã có, chưa có thì bỏ ô đó
+$duStats = [];
+if ($dash['nutrition']['status'] === 'ok') {
+    $duStats[] = ['flame', 'Calo mục tiêu', dashNumber((float)$dash['nutrition']['target_kcal'], 0), 'kcal'];
+}
+if ($dash['progress']['status'] === 'ok') {
+    $duStats[] = ['chart', 'Cân nặng', dashNumber((float)$dash['progress']['latest']['weight_kg']), 'kg'];
+}
 ?>
 <script src="/js/home-user.js" defer></script>
 
 <div class="du">
-    <div class="du-wrap">
-        <div class="du-top">
-            <div>
-                <p class="du-top__date"><?= htmlspecialchars($dash['dateLabel']) ?></p>
-                <h1 class="du-top__title">Chào <em><?= htmlspecialchars($firstName) ?></em></h1>
-                <p class="du-top__lead" data-dash-lead><?= htmlspecialchars($duLead) ?></p>
+    <div class="du-hero">
+        <!-- Ảnh trang trí nên alt rỗng. Nguồn ảnh ghi ở assets/img/CREDITS.md -->
+        <picture>
+            <source media="(max-width: 720px)" type="image/webp" srcset="/assets/img/hero/hero-800.webp" width="800" height="1000">
+            <source media="(max-width: 720px)" type="image/jpeg" srcset="/assets/img/hero/hero-800.jpg" width="800" height="1000">
+            <source type="image/webp" srcset="/assets/img/hero/hero-1920.webp" width="1920" height="1080">
+            <img class="du-hero__photo" src="/assets/img/hero/hero-1920.jpg" alt="" width="1920" height="1080" fetchpriority="high" decoding="async">
+        </picture>
+        <div class="du-wrap du-hero__in">
+            <div class="du-hero__copy">
+                <p class="du-hero__date"><?= htmlspecialchars($dash['dateLabel']) ?></p>
+                <h1 class="du-hero__title">Chào <em><?= htmlspecialchars($firstName) ?></em></h1>
+                <p class="du-hero__lead" data-dash-lead><?= htmlspecialchars($duLead) ?></p>
+                <a class="du-btn" href="<?= htmlspecialchars($dash['action']['href']) ?>" data-dash-primary><?= htmlspecialchars($dash['action']['label']) ?></a>
             </div>
-            <a class="du-btn" href="<?= htmlspecialchars($dash['action']['href']) ?>" data-dash-primary><?= htmlspecialchars($dash['action']['label']) ?></a>
+            <?php if ($duStats !== []): ?>
+                <dl class="du-hero__stats">
+                    <?php foreach ($duStats as [$statIcon, $statName, $statValue, $statUnit]): ?>
+                        <div class="du-stat">
+                            <span class="du-stat__icon"><?= hmIcon($statIcon, 20) ?></span>
+                            <dt><?= htmlspecialchars($statName) ?></dt>
+                            <dd><?= htmlspecialchars($statValue) ?> <small><?= htmlspecialchars($statUnit) ?></small></dd>
+                        </div>
+                    <?php endforeach; ?>
+                </dl>
+            <?php endif; ?>
         </div>
+    </div>
 
+    <div class="du-wrap du-body">
         <?php if (!empty($missingFields)): ?>
             <p class="du-notice">
                 <b>Hồ sơ <?= (int)$doneCount ?>/<?= (int)$profileTotal ?> mục.</b>
@@ -63,9 +101,10 @@ if (!empty($missingFields)) {
             </p>
         <?php endif; ?>
 
+        <?php include __DIR__ . '/dash-week.php'; ?>
+
         <div class="du-grid">
             <?php include __DIR__ . '/dash-today.php'; ?>
-            <?php include __DIR__ . '/dash-week.php'; ?>
             <?php include __DIR__ . '/dash-nutrition.php'; ?>
             <?php include __DIR__ . '/dash-progress.php'; ?>
             <?php include __DIR__ . '/dash-shortcuts.php'; ?>

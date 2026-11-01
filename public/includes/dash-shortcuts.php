@@ -5,23 +5,30 @@
  */
 ?>
 <section class="du-card du-card--shortcuts" aria-labelledby="du-shortcuts-title">
-    <div class="du-card__head"><h2 id="du-shortcuts-title">Lối tắt</h2></div>
+    <div class="du-card__head"><?php duCardTitle('bolt', 'du-shortcuts-title', 'Lối tắt'); ?></div>
     <ul class="du-shortcuts">
-        <li><a href="/exercises.php"><?= hmIcon('dumbbell', 22) ?><span>Thư viện bài tập</span></a></li>
-        <li><a href="/articles.php"><?= hmIcon('book', 22) ?><span>Bài viết</span></a></li>
-        <li data-chat-shortcut hidden><button type="button" data-open-chat><?= hmIcon('chat', 22) ?><span>Hỏi chatbot AI</span></button></li>
+        <li><a href="/exercises.php"><span class="du-shortcuts__icon"><?= hmIcon('play', 22) ?></span><span><b>Thư viện bài tập</b><small>Video và hướng dẫn</small></span></a></li>
+        <li><a href="/articles.php"><span class="du-shortcuts__icon"><?= hmIcon('book', 22) ?></span><span><b>Bài viết</b><small>Kiến thức có dẫn nguồn</small></span></a></li>
+        <li data-chat-shortcut hidden><button type="button" data-open-chat><span class="du-shortcuts__icon"><?= hmIcon('chat', 22) ?></span><span><b>Hỏi chatbot AI</b><small>Hỏi nhanh về tập luyện</small></span></button></li>
     </ul>
 </section>
 
 <?php if (!empty($dash['unreadArticles'])): ?>
     <section class="du-card du-card--read" aria-labelledby="du-read-title">
         <div class="du-card__head">
-            <h2 id="du-read-title">Đọc trước khi tập</h2>
+            <?php duCardTitle('target', 'du-read-title', 'Đọc trước khi tập'); ?>
             <span class="du-card__meta">Còn <?= count($dash['unreadArticles']) ?> bài chưa đọc</span>
         </div>
         <ul class="du-reads">
             <?php foreach ($dash['unreadArticles'] as $slug => $article): ?>
-                <li><a href="/article.php?slug=<?= htmlspecialchars(rawurlencode((string)$slug)) ?>"><?= htmlspecialchars($article['title']) ?> <span aria-hidden="true">&rarr;</span></a></li>
+                <li>
+                    <a href="/article.php?slug=<?= htmlspecialchars(rawurlencode((string)$slug)) ?>">
+                        <?php if (($article['image'] ?? '') !== ''): ?>
+                            <img src="<?= htmlspecialchars($article['image']) ?>" alt="" width="1200" height="675" loading="lazy" decoding="async">
+                        <?php endif; ?>
+                        <span><?= htmlspecialchars($article['title']) ?></span>
+                    </a>
+                </li>
             <?php endforeach; ?>
         </ul>
     </section>
