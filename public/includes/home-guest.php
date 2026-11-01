@@ -155,3 +155,49 @@
         <?php endif; ?>
     </div>
 </section>
+
+<section class="gh-section gh-section--alt" id="kien-thuc" aria-labelledby="gh-know-title">
+    <div class="gh-wrap">
+        <div class="gh-head">
+            <h2 id="gh-know-title">Kiến thức đáng tin: đọc trước khi tập</h2>
+            <p>
+                <?php if ($guestStats['sourcedArticles'] > 0): ?>
+                    <?= (int)$guestStats['sourcedArticles'] ?> bài viết có dẫn nguồn nghiên cứu.
+                <?php endif; ?>
+                Chỉ để tham khảo, không thay tư vấn y tế.
+            </p>
+        </div>
+        <?php if (empty($articleTeasers)): ?>
+            <p class="gh-empty">Bài viết đang được cập nhật. Bạn quay lại sau nhé.</p>
+        <?php else: ?>
+            <ul class="gh-articles">
+                <?php foreach ($articleTeasers as $s => $a): ?>
+                    <li>
+                        <a class="gh-article" href="/article.php?slug=<?= htmlspecialchars(rawurlencode($s)) ?>">
+                            <?php if ($a['image'] !== ''): ?>
+                                <img class="gh-article__img" src="<?= htmlspecialchars($a['image']) ?>" alt="" width="1200" height="675" loading="lazy" decoding="async">
+                            <?php endif; ?>
+                            <div class="gh-article__body">
+                                <?php if ($a['mustRead']): ?><span class="gh-article__tag">Đọc trước khi tập</span><?php endif; ?>
+                                <h3><?= htmlspecialchars($a['title']) ?></h3>
+                                <p class="gh-article__summary"><?= htmlspecialchars($a['summary']) ?></p>
+                                <span class="gh-link">Đăng nhập để đọc <span aria-hidden="true">&rarr;</span></span>
+                            </div>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+            <div class="gh-more"><a class="gh-btn gh-btn--line" href="/articles.php">Đăng nhập để xem tất cả bài viết</a></div>
+        <?php endif; ?>
+    </div>
+</section>
+
+<section class="gh-section gh-section--final" aria-labelledby="gh-final-title">
+    <div class="gh-wrap">
+        <div class="gh-final">
+            <h2 id="gh-final-title">Sẵn sàng có lịch tập của riêng bạn?</h2>
+            <p>Tạo tài khoản miễn phí, nhập chỉ số cơ thể và bắt đầu buổi tập đầu tiên.</p>
+            <a class="gh-btn gh-btn--solid" href="/register.php">Tạo tài khoản miễn phí</a>
+        </div>
+    </div>
+</section>
