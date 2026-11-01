@@ -230,6 +230,24 @@ function articleRecordView(string $slug): void
     }
 }
 
+/**
+ * Ghi nhận người đang đăng nhập đã mở một bài nền tảng, để trang chủ không nhắc lại bài đó.
+ * INSERT IGNORE: đã có dòng thì bỏ qua. user_id lấy từ session, không lấy từ request.
+ */
+function articleRecordRead(string $slug): void
+{
+    global $pdo;
+    $userId = (int)($_SESSION['user_id'] ?? 0);
+    if (!($pdo instanceof PDO) || $userId <= 0) {
+        return;
+    }
+    try {
+        $pdo->prepare('INSERT IGNORE INTO article_reads (user_id, slug) VALUES (?, ?)')->execute([$userId, $slug]);
+    } catch (Throwable $e) {
+        // bảng article_reads chưa import: bỏ qua, trang chủ sẽ vẫn nhắc đọc
+    }
+}
+
 /** Số phút đọc ước tính (khoảng 180 từ mỗi phút), tối thiểu 1 phút. */
 function articleReadingMinutes(array $article): int
 {

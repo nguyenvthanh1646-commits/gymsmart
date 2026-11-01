@@ -29,6 +29,9 @@ if (!is_string($slug) || !isset($all[$slug])) {
 
 if (!$isPreview) {
     articleRecordView($slug); // đếm lượt xem cho trang thống kê của admin
+    if ($all[$slug]['mustRead']) {
+        articleRecordRead($slug); // trang chủ thôi nhắc bài nền tảng đã đọc
+    }
 }
 
 $categories = articleCategories();
