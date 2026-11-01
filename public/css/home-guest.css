@@ -196,6 +196,19 @@ body:has(.nb--guest-home) button:focus-visible { outline: 3px solid var(--gh-foc
 .gh-steps h3 { margin: 0 0 6px; color: #fff; font-size: 1.1rem; line-height: 1.4; }
 .gh-steps p { margin: 0; color: var(--gh-text-muted); line-height: 1.6; }
 
+.gh-exercise, .gh-article {
+    display: flex; flex-direction: column; height: 100%; overflow: hidden; border: 1px solid var(--gs-line-dark); border-radius: 18px;
+    background: var(--gh-card-bg); color: inherit; transition: border-color var(--transition), transform var(--transition);
+}
+.gh-exercise:hover, .gh-article:hover { border-color: var(--gs-accent-2); color: inherit; text-decoration: none; transform: translateY(-3px); }
+.gh-exercise__img, .gh-article__img { display: block; width: 100%; height: auto; object-fit: cover; background: #0f1630; }
+.gh-exercise__img { aspect-ratio: 16 / 9; }
+.gh-exercise__img--none { display: grid; place-items: center; color: var(--gh-text-muted); font-size: .9rem; }
+.gh-article__img { aspect-ratio: 16 / 9; }
+.gh-exercise__body, .gh-article__body { display: flex; flex-direction: column; flex: 1; padding: 18px 20px 20px; }
+.gh-exercise h3, .gh-article h3 { margin: 0; color: #fff; font-size: 1.05rem; line-height: 1.4; }
+.gh-exercise__meta { margin: 4px 0 0; color: var(--gh-text-muted); font-size: .88rem; }
+
 @media (min-width: 620px) {
     .gh-features, .gh-exercises, .gh-articles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

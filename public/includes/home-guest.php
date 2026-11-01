@@ -123,36 +123,35 @@
     </div>
 </section>
 
-<?php if (!empty($articleTeasers)): ?>
-<section class="sec sec--dark" id="kien-thuc">
-    <div class="hm-wrap">
-        <div class="sec-head">
-            <h2>Đọc trước khi tập</h2>
-            <p>Mỗi bài nêu rõ mức độ bằng chứng và dẫn nguồn nghiên cứu. Chỉ để tham khảo, không thay tư vấn y tế. Bài viết dành cho thành viên, đăng ký miễn phí.</p>
+<section class="gh-section" aria-labelledby="gh-preview-title">
+    <div class="gh-wrap">
+        <div class="gh-head">
+            <h2 id="gh-preview-title">Xem trước thư viện bài tập</h2>
+            <?php if ($guestStats['exercises'] > 0 && $guestStats['muscleGroups'] > 0): ?>
+                <p><?= (int)$guestStats['exercises'] ?> bài tập thuộc <?= (int)$guestStats['muscleGroups'] ?> nhóm cơ, mỗi bài có ảnh, video và hướng dẫn từng bước.</p>
+            <?php endif; ?>
         </div>
-        <div class="arts">
-            <?php foreach ($articleTeasers as $s => $a): ?>
-                <a class="art" href="/article.php?slug=<?= htmlspecialchars(rawurlencode($s)) ?>">
-                    <span class="art-img"><?php if ($a['image'] !== ''): ?><img src="<?= htmlspecialchars($a['image']) ?>" alt="" loading="lazy"><?php endif; ?></span>
-                    <span class="art-body">
-                        <b><?= htmlspecialchars($a['title']) ?></b>
-                        <small><?= htmlspecialchars($a['summary']) ?></small>
-                        <span class="art-foot">Đăng nhập để đọc &rarr;</span>
-                    </span>
-                </a>
-            <?php endforeach; ?>
-        </div>
-        <div class="sec-more"><a class="hm-btn hm-btn--ghost" href="/articles.php">Xem tất cả bài viết</a></div>
-    </div>
-</section>
-<?php endif; ?>
-
-<section class="sec sec--tight">
-    <div class="hm-wrap">
-        <div class="final">
-            <h2>Sẵn sàng tập nặng hơn, thông minh hơn?</h2>
-            <p>Tạo tài khoản miễn phí và có kế hoạch của riêng bạn ngay hôm nay.</p>
-            <a class="hm-btn hm-btn--solid" href="/register.php">Tạo tài khoản miễn phí</a>
-        </div>
+        <?php if (empty($previewExercises)): ?>
+            <p class="gh-empty">Thư viện bài tập đang được cập nhật. Bạn quay lại sau nhé.</p>
+        <?php else: ?>
+            <ul class="gh-exercises">
+                <?php foreach ($previewExercises as $ex): ?>
+                    <li>
+                        <a class="gh-exercise" href="/exercise-detail.php?id=<?= (int)$ex['id'] ?>">
+                            <?php if (($imgSrc = exerciseImageSrc($ex['image_url'])) !== null): ?>
+                                <img class="gh-exercise__img" src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($ex['name']) ?>" width="800" height="448" loading="lazy" decoding="async">
+                            <?php else: ?>
+                                <div class="gh-exercise__img gh-exercise__img--none">Chưa có ảnh</div>
+                            <?php endif; ?>
+                            <div class="gh-exercise__body">
+                                <h3><?= htmlspecialchars($ex['name']) ?></h3>
+                                <p class="gh-exercise__meta"><?= htmlspecialchars($muscleLabels[$ex['muscle_group']] ?? $ex['muscle_group']) ?> · <?= htmlspecialchars($levelLabels[$ex['difficulty']] ?? $ex['difficulty']) ?></p>
+                                <span class="gh-link">Đăng nhập để xem <span aria-hidden="true">&rarr;</span></span>
+                            </div>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
     </div>
 </section>

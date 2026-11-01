@@ -133,17 +133,15 @@ require_once __DIR__ . '/includes/articles.php';
 $allArticles = loadArticles();
 $mustReadArticles = array_filter($allArticles, fn($a) => $a['mustRead']);
 
-// Số liệu và bài viết nổi bật cho trang giới thiệu (khách). Lỗi database thì dùng giá trị mặc định, trang vẫn chạy.
-$exerciseCount = 0;
+// Số liệu thật và nội dung xem trước cho trang khách. Không có số viết tay: thiếu dữ liệu thì trang ẩn câu đó.
+$guestStats = ['exercises' => 0, 'muscleGroups' => 0, 'sourcedArticles' => 0];
+$previewExercises = [];
 $articleTeasers = [];
-$articleCount = 0;
 if (!$loggedIn) {
-    try {
-        $exerciseCount = (int)$pdo->query('SELECT COUNT(*) FROM exercises')->fetchColumn();
-    } catch (Throwable $e) {
-        $exerciseCount = 0;
-    }
-    $articleCount = count($allArticles);
+    $guestStats = guestExerciseStats($pdo);
+    $previewExercises = guestPreviewExercises($pdo);
+    // Chỉ đếm bài có ghi nguồn thật (một số bài không có mục nguồn)
+    $guestStats['sourcedArticles'] = count(array_filter($allArticles, fn($a) => !empty($a['sources'])));
     // Mục có tiêu đề "Đọc trước khi tập" nên đặt các bài nền tảng lên trước, còn chỗ mới thêm bài khác
     $articleTeasers = array_slice($mustReadArticles, 0, 3, true);
     foreach (['bao-nhieu-buoc-moi-ngay', 'protein-bao-nhieu-la-du', 'ta-nang-hay-ta-nhe'] as $s) {
@@ -164,8 +162,6 @@ $pageTitle = 'Trang chủ';
 $pageCss = $loggedIn ? [] : ['/css/home-guest.css'];
 include __DIR__ . '/includes/header.php';
 ?>
-<link rel="stylesheet" href="/css/home.css">
-
 <?php if (!$loggedIn): ?>
 
 <!-- ================= KHÁCH CHƯA ĐĂNG NHẬP ================= -->
@@ -174,6 +170,7 @@ include __DIR__ . '/includes/header.php';
 <?php else: ?>
 
 <!-- ================= NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP ================= -->
+<link rel="stylesheet" href="/css/home.css">
 <section class="hm-hero hm-hero--user">
     <div class="hm-wrap hm-hero__in">
         <div>
