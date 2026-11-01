@@ -67,6 +67,7 @@ if (!empty($missingFields)) {
             <?php include __DIR__ . '/dash-today.php'; ?>
             <?php include __DIR__ . '/dash-week.php'; ?>
             <?php include __DIR__ . '/dash-nutrition.php'; ?>
+            <?php include __DIR__ . '/dash-progress.php'; ?>
         </div>
     </div>
 </div>
