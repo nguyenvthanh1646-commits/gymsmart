@@ -10,7 +10,8 @@
  *   define('AI_BASE_URL', 'http://127.0.0.1:8099/v1beta');                    // tùy chọn, chỉ dùng khi thử bằng server giả
  *
  * Vì sao có file này? Trước đây hằng AI_MODEL / AI_API_KEY chưa khai báo thì PHP dừng giữa chừng
- * (Fatal error), còn khung chat chỉ hiện chung chung "không phản hồi". Giờ mọi lỗi đều có MÃ + lời giải thích.
+ * (Fatal error), còn khung chat chỉ hiện chung chung "không phản hồi". Giờ mọi lỗi đều có MÃ; chi tiết kỹ thuật chỉ ghi
+ * vào log của server và hiện trong tools/chatbot-check.php, không đưa lên giao diện.
  */
 
 /** Giá trị hằng cấu hình, hoặc $default nếu chưa khai báo (tránh Fatal error "Undefined constant"). */
@@ -73,16 +74,16 @@ function aiScrub(string $text): string
  */
 function aiGenerate(string $system, array $turns, array $options = []): array
 {
-    // Lỗi 5xx của Google (đặc biệt 503 "quá tải") và lỗi quá thời gian chờ thường chỉ thoáng qua: thử lại tối đa 3 lần
-    // (kết nối mới mỗi lần), chờ lâu dần (1,2 giây, 2,4 giây). Vẫn lỗi thì đổi sang model dự phòng nếu có khai báo AI_MODEL_FALLBACK.
+    // Lỗi 5xx của Google (đặc biệt 503 "quá tải") thường chỉ thoáng qua: thử lại tối đa 3 lần (kết nối mới mỗi lần),
+    // chờ lâu dần (1,2 giây, 2,4 giây). Vẫn lỗi thì đổi sang model dự phòng nếu có khai báo AI_MODEL_FALLBACK.
     $models = [aiModel()];
     $fb = trim((string)aiConst('AI_MODEL_FALLBACK', ''));
     if ($fb !== '' && preg_match('/^[A-Za-z0-9._-]{3,64}$/', $fb) && $fb !== $models[0]) {
         $models[] = $fb;
     }
-    // Hạn TỔNG cho mọi lần thử (mặc định 90 giây), phải nhỏ hơn set_time_limit(120) của api/chatbot.php.
-    // Không có hạn này thì trường hợp xấu nhất 2 model × 3 lần × 30 giây ≈ 190 giây: PHP bị dừng giữa chừng.
-    $deadline = microtime(true) + max(10, (int)aiConst('AI_TOTAL_TIMEOUT', 90));
+    // Hạn TỔNG cho mọi lần thử (mặc định 40 giây), phải nhỏ hơn hạn 50 giây của js/chatbot.js để người dùng luôn nhận được
+    // lời báo lỗi từ server, thay vì trình duyệt tự bỏ cuộc trong khi server vẫn chạy (php -S bị chặn toàn site lúc đó).
+    $deadline = microtime(true) + max(10, (int)aiConst('AI_TOTAL_TIMEOUT', 40));
     $res = null;
     foreach ($models as $i => $model) {
         $hasNext = isset($models[$i + 1]);
@@ -96,9 +97,9 @@ function aiGenerate(string $system, array $turns, array $options = []): array
             if ($res['ok']) {
                 return $res;
             }
-            // Hết hạn mức (429) hoặc tên model sai: thử lại cùng model vô ích (hạn mức tính riêng theo từng model),
-            // nên chuyển ngay sang model dự phòng nếu có.
-            if ($hasNext && in_array($res['code'], ['AI_QUOTA', 'AI_MODEL'], true)) {
+            // Hết hạn mức (429), tên model sai hoặc model treo không trả lời: thử lại cùng model vô ích (hạn mức tính riêng
+            // theo từng model, model đã treo thường treo tiếp), nên chuyển ngay sang model dự phòng nếu có.
+            if ($hasNext && in_array($res['code'], ['AI_QUOTA', 'AI_MODEL', 'AI_TIMEOUT'], true)) {
                 break;
             }
             if (!in_array($res['code'], ['AI_BUSY', 'AI_TIMEOUT'], true)) {
@@ -162,7 +163,7 @@ function aiGenerateOnce(string $system, array $turns, array $options, string $mo
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 10,
         // quá hạn thì thử lại bằng kết nối mới (xem aiGenerate); không vượt phần thời gian tổng còn lại
-        CURLOPT_TIMEOUT        => max(5, min((int)aiConst('AI_TIMEOUT', 30), (int)($options['timeout'] ?? 30))),
+        CURLOPT_TIMEOUT        => max(5, min((int)aiConst('AI_TIMEOUT', 15), (int)($options['timeout'] ?? 15))),
         CURLOPT_FRESH_CONNECT  => true,
         CURLOPT_HTTPHEADER     => ['content-type: application/json', 'x-goog-api-key: ' . $key],
         CURLOPT_POSTFIELDS     => $payload,
@@ -244,14 +245,17 @@ function aiFriendlyError(string $code): string
         case 'AI_MODEL':
             return 'Chatbot chưa được cấu hình xong. Vui lòng báo quản trị viên.';
         case 'AI_TIMEOUT':
-            return 'Máy chủ AI phản hồi quá chậm. Bạn kiểm tra mạng rồi bấm "Thử lại" nhé.';
+            return 'GymSmart AI đang phản hồi chậm. Bạn bấm "Thử lại" sau ít phút nhé.';
         case 'AI_BUSY':
-            return 'Máy chủ AI đang quá tải, bạn bấm "Thử lại" sau vài giây nhé.';
+            return 'GymSmart AI đang quá tải. Bạn bấm "Thử lại" sau vài giây nhé.';
         case 'AI_QUOTA':
-            return 'Chatbot đang quá tải, bạn thử lại sau ít phút nhé.';
+            return 'GymSmart AI đã hết lượt trả lời trong lúc này. Bạn thử lại sau ít phút nhé.';
+        case 'AI_NETWORK':
+        case 'AI_SSL':
+            return 'GymSmart AI tạm thời không kết nối được. Bạn thử lại sau ít phút nhé.';
         case 'AI_BLOCKED':
             return 'Mình không thể trả lời câu này. Bạn thử hỏi cách khác về tập luyện hoặc dinh dưỡng nhé.';
         default:
-            return 'Chatbot tạm thời không phản hồi, thử lại sau.';
+            return 'GymSmart AI tạm thời không phản hồi. Bạn thử lại sau ít phút nhé.';
     }
 }
