@@ -19,6 +19,8 @@
     --gc-ease: cubic-bezier(.2, .7, .2, 1);
     --gc-spring: cubic-bezier(.34, 1.56, .64, 1);
     --gc-gap: 22px;
+    /* Ngữ cảnh xếp chồng riêng, luôn trên mọi nội dung của trang (kể cả thẻ có z-index), bất kể rule chung nào áp vào */
+    position: relative; z-index: 1000;
     font-family: inherit;
     color: var(--gc-ink);
 }
@@ -136,7 +138,7 @@
 .gc-tag { font-style: normal; font-size: .62rem; font-weight: 800; letter-spacing: .08em; padding: 2px 7px; border-radius: 6px; background: var(--gc-a); color: #fff; }
 .gc-status { display: flex; align-items: center; gap: 6px; font-size: .78rem; opacity: .92; }
 .gc-status__dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 0 rgba(74, 222, 128, .7); animation: gcLive 2s infinite; }
-.gc.is-busy .gc-status__dot { background: #fbbf24; animation-duration: .9s; }
+.gc.gc-is-busy .gc-status__dot { background: #fbbf24; animation-duration: .9s; }
 .gc button.gc-ibtn {
     position: relative; z-index: 1; flex: none; width: 34px; height: 34px; padding: 0; display: grid; place-items: center;
     border: 0; border-radius: 11px; cursor: pointer; background: rgba(255, 255, 255, .16); color: #fff; box-shadow: none;
@@ -262,7 +264,7 @@
 /* Ô nhập */
 .gc-form { display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px 4px; background: #fff; border-top: 1px solid var(--gc-line); }
 .gc-form textarea {
-    flex: 1; min-width: 0; max-height: 112px; padding: 10px 13px; resize: none; border: 1px solid #d5dbe8; border-radius: 14px;
+    flex: 1; min-width: 0; min-height: 44px; max-height: 112px; margin: 0; padding: 10px 13px; resize: none; border: 1px solid #d5dbe8; border-radius: 14px;
     background: #fff; color: var(--gc-ink); font-size: .93rem; line-height: 1.4; transition: border-color .15s, box-shadow .15s;
 }
 .gc-form textarea::placeholder { color: #98a2b3; }

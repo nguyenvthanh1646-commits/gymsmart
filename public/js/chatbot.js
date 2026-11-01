@@ -275,7 +275,9 @@
     // ---------- Trạng thái bận / rảnh ----------
     function setBusy(b) {
         state.busy = b;
-        root.classList.toggle('is-busy', b);
+        // Không dùng tên .is-busy: ui.css có rule chung cùng tên làm mờ 0,65. Rule đó làm khung chat mờ đi và
+        // mất z-index (opacity tạo ngữ cảnh xếp chồng mới), nên các thẻ của trang đè lên khung trong lúc chờ.
+        root.classList.toggle('gc-is-busy', b);
         statusText.textContent = b ? 'Đang soạn câu trả lời...' : cfg.subtitle;
         refreshSend();
     }
