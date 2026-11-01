@@ -21,4 +21,18 @@
             toggle.focus(); // trả focus về nút ☰ để người dùng bàn phím không bị lạc
         }
     });
+
+    // Dừng chuyển động của hero khi không ai nhìn thấy: tab bị ẩn hoặc đã cuộn qua hero, cho đỡ tốn CPU và pin.
+    var hero = document.getElementById('gh-hero');
+    var heroOnScreen = true;
+
+    function updateHeroMotion() {
+        hero.classList.toggle('is-paused', document.hidden || !heroOnScreen);
+    }
+
+    document.addEventListener('visibilitychange', updateHeroMotion);
+    new IntersectionObserver(function (entries) {
+        heroOnScreen = entries[0].isIntersecting;
+        updateHeroMotion();
+    }).observe(hero);
 })();
