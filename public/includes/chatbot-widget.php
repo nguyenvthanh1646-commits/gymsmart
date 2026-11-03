@@ -39,8 +39,8 @@ if ($gcAdmin) {
             ['icon' => '🛠️', 'text' => 'Hướng dẫn thêm một bài tập mới'],
         ],
         'tabs'     => [
-            ['id' => 'chat',  'label' => 'Hỏi đáp',        'placeholder' => 'Hỏi về số liệu, nội dung, trang quản trị...'],
-            ['id' => 'draft', 'label' => 'Soạn bài tập',   'placeholder' => 'Tên bài tập, ví dụ: Hít đất kim cương'],
+            ['id' => 'chat',  'label' => 'Hỏi đáp',        'placeholder' => 'Hỏi về số liệu, nội dung...'],
+            ['id' => 'draft', 'label' => 'Soạn bài tập',   'placeholder' => 'Tên bài, ví dụ: Hít đất'],
         ],
         'draftHint'  => 'Nhập tên bài tập, mình soạn nháp mô tả, các bước và lỗi thường gặp. Bạn đọc lại rồi mới điền vào form.',
         'draftChips' => ['Hít đất kim cương', 'Romanian deadlift', 'Chạy interval 30 giây'],
@@ -60,7 +60,7 @@ if ($gcAdmin) {
             ['icon' => '🔥', 'text' => 'TDEE là gì và tính thế nào?'],
             ['icon' => '📅', 'text' => 'Người mới nên tập mấy buổi mỗi tuần?'],
         ],
-        'tabs'     => [['id' => 'chat', 'label' => 'Hỏi đáp', 'placeholder' => 'Hỏi về tập luyện hoặc dinh dưỡng...']],
+        'tabs'     => [['id' => 'chat', 'label' => 'Hỏi đáp', 'placeholder' => 'Hỏi về tập luyện, dinh dưỡng...']],
         'footer'   => 'Chỉ để tham khảo, không thay thế tư vấn y tế.',
         'personalize' => true,
     ];
@@ -96,18 +96,15 @@ $cfg['uid']      = (int)($_SESSION['user_id'] ?? 0);   // để mỗi tài kho�
 
     <button class="gc-fab" id="gc-fab" type="button" aria-expanded="false" aria-controls="gc-panel"
             aria-label="<?= $gcAdmin ? 'Mở trợ lý quản trị' : 'Mở chatbot GymSmart AI' ?>">
-        <span class="gc-fab__ring" aria-hidden="true"></span>
         <span class="gc-fab__face" aria-hidden="true">
             <?php if ($gcAdmin): ?>
                 <svg class="gc-fab__glyph" viewBox="0 0 64 64"><use href="#gc-glyph"/></svg>
                 <span class="gc-fab__badge gc-fab__badge--admin">AD</span>
             <?php else: ?>
                 <svg class="gc-fab__logo" viewBox="0 0 64 64"><use href="#gc-logo"/></svg>
-                <span class="gc-fab__badge"><i></i><i></i><i></i></span>
             <?php endif; ?>
         </span>
         <span class="gc-fab__dot" id="gc-dot" hidden aria-hidden="true"></span>
-        <svg class="gc-fab__x" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>
     </button>
 
     <section class="gc-panel" id="gc-panel" role="dialog" aria-label="<?= htmlspecialchars($cfg['title']) ?>" hidden>
@@ -116,9 +113,7 @@ $cfg['uid']      = (int)($_SESSION['user_id'] ?? 0);   // để mỗi tài kho�
         <span class="gc-edge gc-edge--t" data-edge="t" aria-hidden="true"></span>
         <span class="gc-edge gc-edge--b" data-edge="b" aria-hidden="true"></span>
         <span class="gc-grip" id="gc-grip" data-edge="lt" title="Kéo để đổi cỡ (bấm đúp để về mặc định)" aria-hidden="true"></span>
-        <header class="gc-head" title="Kéo để di chuyển, bấm đúp để phóng to">
-            <span class="gc-head__orb" aria-hidden="true"></span>
-            <span class="gc-head__orb gc-head__orb--b" aria-hidden="true"></span>
+        <header class="gc-head">
             <div class="gc-av gc-av--lg" aria-hidden="true">
                 <?php if ($gcAdmin): ?>
                     <svg viewBox="0 0 64 64"><use href="#gc-glyph"/></svg>
@@ -137,8 +132,8 @@ $cfg['uid']      = (int)($_SESSION['user_id'] ?? 0);   // để mỗi tài kho�
                 <svg class="gc-ic-max" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <svg class="gc-ic-min" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10h-6V4M4 14h6v6M14 10l7-7M10 14l-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <button class="gc-ibtn" id="gc-close" type="button" title="Thu nhỏ" aria-label="Thu nhỏ khung chat">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            <button class="gc-ibtn" id="gc-close" type="button" title="Đóng (Esc)" aria-label="Đóng khung chat">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>
             </button>
         </header>
 
@@ -158,6 +153,9 @@ $cfg['uid']      = (int)($_SESSION['user_id'] ?? 0);   // để mỗi tài kho�
             <button class="gc-send" id="gc-send" type="submit" aria-label="Gửi" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12L20 4l-5 16-3.2-6.8L4 12z" fill="currentColor"/></svg>
             </button>
+            <button class="gc-send gc-stop" id="gc-stop" type="button" aria-label="Dừng chờ câu trả lời" title="Dừng" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>
+            </button>
         </form>
         <div class="gc-foot">
             <?php if ($cfg['personalize']): ?>
@@ -167,8 +165,8 @@ $cfg['uid']      = (int)($_SESSION['user_id'] ?? 0);   // để mỗi tài kho�
                     <span>Dùng hồ sơ của tôi</span>
                 </label>
             <?php endif; ?>
-            <span class="gc-foot__note"><?= htmlspecialchars($cfg['footer']) ?></span>
             <span class="gc-count" id="gc-count" aria-hidden="true">0/<?= (int)$cfg['maxLen'] ?></span>
+            <span class="gc-foot__note"><?= htmlspecialchars($cfg['footer']) ?></span>
         </div>
     </section>
 

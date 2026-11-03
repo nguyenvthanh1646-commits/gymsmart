@@ -8,7 +8,12 @@
     if (chatFab && chatShortcut) {
         chatShortcut.hidden = false;
         chatShortcut.querySelector('[data-open-chat]').addEventListener('click', function () {
-            chatFab.click();
+            // Khung đang mở thì chỉ đưa con trỏ vào ô nhập, vì bấm nút nổi lúc này sẽ đóng khung
+            if (chatFab.getAttribute('aria-expanded') === 'true') {
+                document.getElementById('gc-input').focus();
+            } else {
+                chatFab.click();
+            }
         });
     }
 

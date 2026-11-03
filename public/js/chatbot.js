@@ -2,10 +2,12 @@
  * chatbot.js — hành vi của khung chat (markup: includes/chatbot-widget.php, giao diện: css/chatbot.css).
  *
  * Luồng chính:  người dùng gõ → send() → fetch POST /api/chatbot.php (JSON + header X-CSRF-Token)
- *               → hiện "đang soạn" → nhận { reply, links, draft } → vẽ tin nhắn.
+ *               → hiện "đang soạn" (kèm nút Dừng) → nhận { reply, links, draft } → vẽ tin nhắn.
+ * "Đang soạn" chỉ bật trong setBusy(true) và luôn được tắt khi xong, lỗi, hết giờ hoặc bấm Dừng.
  *
  * Lưu ý bảo mật: mọi chữ từ server/AI đều đưa vào trang bằng textContent (không innerHTML),
- * nên AI có trả về thẻ <script> cũng chỉ hiện như chữ thường (không bị XSS).
+ * nên AI có trả về thẻ <script> cũng chỉ hiện như chữ thường (không bị XSS). Markdown cơ bản (**đậm**, danh sách,
+ * xuống dòng) được dựng bằng các phần tử DOM, không phải bằng cách chèn HTML.
  *
  * Hai chế độ (cfg.mode): "user" = huấn luyện viên ảo, "admin" = trợ lý quản trị (có thêm thẻ "Soạn bài tập").
  * Lịch sử chat lưu trong sessionStorage của trình duyệt (mất khi đóng tab), mỗi tài khoản + chế độ một khóa riêng.
@@ -25,7 +27,7 @@
 
     var $ = function (id) { return document.getElementById(id); };
     var fab = $('gc-fab'), panel = $('gc-panel'), body = $('gc-body'), form = $('gc-form');
-    var input = $('gc-input'), sendBtn = $('gc-send'), countEl = $('gc-count');
+    var input = $('gc-input'), sendBtn = $('gc-send'), stopBtn = $('gc-stop'), resetBtn = $('gc-reset'), countEl = $('gc-count');
     var statusText = $('gc-status-text'), nudge = $('gc-nudge'), dot = $('gc-dot'), toast = $('gc-toast');
     var tabsEl = $('gc-tabs'), persBox = $('gc-pers');
 
@@ -34,7 +36,7 @@
     var DRAFT_KEY = 'gc:draft:' + cfg.uid;               // bản nháp bài tập chờ điền vào form
     var NUDGE_KEY = 'gc:nudged';
 
-    var state = { open: false, busy: false, tab: 'chat', msgs: [], lastText: '', lastTask: 'chat' };
+    var state = { open: false, busy: false, tab: 'chat', msgs: [], lastText: '', lastTask: 'chat', opener: null };
 
     // ---------- Lưu trữ (có thể bị chặn ở chế độ ẩn danh → luôn bọc try/catch) ----------
     function store(kind) { try { return window[kind]; } catch (e) { return null; } }
@@ -82,12 +84,12 @@
     }
     function safeUrl(u) { return typeof u === 'string' && u.charAt(0) === '/' && u.charAt(1) !== '/'; }  // chỉ link nội bộ
 
-    // ---------- Vẽ nội dung chữ: đoạn văn + danh sách "- ", hiện dần từng từ ----------
+    // ---------- Vẽ nội dung chữ: đoạn văn, danh sách, **đậm**, hiện dần từng từ. Không bao giờ dùng innerHTML ----------
     function fillRich(container, text, animate) {
         var lines = String(text).replace(/\r/g, '').split('\n');
-        var total = text.split(/\s+/).length;
+        var total = String(text).split(/\s+/).length;
         var step = animate && !reduceMotion ? Math.min(0.03, 1.5 / Math.max(total, 1)) : 0;   // tối đa ~1,5 giây cho cả tin
-        var n = 0, list = null, para = null;
+        var n = 0, list = null, listTag = '', para = null;
 
         function words(target, str) {
             var parts = str.split(/(\s+)/);
@@ -101,21 +103,34 @@
                 target.appendChild(w);
             }
         }
+        // Tách **đậm**: phần tử lẻ của split là chữ nằm giữa hai cặp dấu sao
+        function inline(target, str) {
+            str.split(/\*\*(.+?)\*\*/g).forEach(function (part, i) {
+                if (part === '') { return; }
+                if (i % 2 === 1) { var b = el('strong'); words(b, part); target.appendChild(b); } else { words(target, part); }
+            });
+        }
+        function addItem(tag, str) {
+            if (!list || listTag !== tag) { list = el(tag); listTag = tag; container.appendChild(list); }
+            var li = el('li'); inline(li, str); list.appendChild(li);
+            para = null;
+        }
         lines.forEach(function (line) {
             var t = line.trim();
             if (t === '') { list = null; para = null; return; }
-            var m = /^[-•*]\s+(.*)$/.exec(t);
-            if (m) {
-                if (!list) { list = el('ul'); container.appendChild(list); }
-                var li = el('li'); words(li, m[1]); list.appendChild(li);
-                para = null;
-            } else {
-                list = null;
-                if (!para) { para = el('p'); container.appendChild(para); } else { para.appendChild(document.createElement('br')); }
-                words(para, t);
-            }
+            var bullet = /^[-•*]\s+(.*)$/.exec(t);
+            var numbered = /^\d+[.)]\s+(.*)$/.exec(t);
+            var heading = /^#{1,4}\s+(.*)$/.exec(t);          // AI lỡ viết tiêu đề Markdown thì hiện thành dòng đậm
+            if (bullet) { addItem('ul', bullet[1]); return; }
+            if (numbered) { addItem('ol', numbered[1]); return; }
+            list = null;
+            if (!para) { para = el('p'); container.appendChild(para); } else { para.appendChild(document.createElement('br')); }
+            if (heading) { var h = el('strong'); inline(h, heading[1]); para.appendChild(h); } else { inline(para, t); }
         });
         return step * n;                                  // thời gian hiệu ứng (giây)
+    }
+    function timeLabel(ms) {
+        return typeof ms === 'number' ? new Date(ms).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
     }
 
     // ---------- Tin nhắn ----------
@@ -165,7 +180,7 @@
         return c;
     }
 
-    /** Vẽ một tin nhắn. m = {who:'me'|'bot', text, links?, draft?, err?, detail?, retry?} */
+    /** Vẽ một tin nhắn. m = {who:'me'|'bot', text, at?, links?, draft?, err?, retry?, retryAfter?, retryLabel?} */
     function renderMsg(m, animate) {
         var row = el('div', 'gc-msg' + (m.who === 'me' ? ' gc-msg--me' : '') + (m.err ? ' gc-msg--err' : '') + (animate ? '' : ' is-static'));
         if (m.who !== 'me') { row.appendChild(avatar()); }
@@ -176,13 +191,8 @@
         } else {
             fillRich(bub, m.text, animate);
         }
-        if (m.err && m.detail) {
-            var d = el('div', 'gc-detail');
-            d.appendChild(el('b', '', 'Chi tiết kỹ thuật (chỉ quản trị viên / localhost thấy):'));
-            d.appendChild(document.createTextNode(m.detail));
-            bub.appendChild(d);
-        }
         col.appendChild(bub);
+        if (timeLabel(m.at)) { col.appendChild(el('span', 'gc-time', timeLabel(m.at))); }
 
         if (m.draft) { col.appendChild(draftCard(m.draft)); }
         if (m.links && m.links.length) {
@@ -201,13 +211,25 @@
             col.appendChild(acts);
         }
         if (m.err && m.retry) {
-            var rt = el('button', 'gc-btn gc-btn--ghost', 'Thử lại');
+            var label = m.retryLabel || 'Thử lại';
+            var rt = el('button', 'gc-btn gc-btn--ghost', label);
             rt.type = 'button';
             rt.addEventListener('click', function () {
                 row.parentNode.removeChild(row);
                 state.msgs = state.msgs.filter(function (x) { return x !== m; });
+                persist();
                 send(state.lastText, state.lastTask, true);
             });
+            // Server báo gửi quá nhanh: đếm ngược rồi mới cho bấm, khỏi bị từ chối lần nữa
+            if (m.retryAfter > 0) {
+                var left = m.retryAfter;
+                rt.disabled = true;
+                rt.textContent = label + ' sau ' + left + ' giây';
+                var cd = setInterval(function () {
+                    left--;
+                    if (left <= 0) { clearInterval(cd); rt.disabled = false; rt.textContent = label; } else { rt.textContent = label + ' sau ' + left + ' giây'; }
+                }, 1000);
+            }
             col.appendChild(rt);
         }
         row.appendChild(col);
@@ -216,6 +238,7 @@
         return row;
     }
     function addMsg(m, animate) {
+        m.at = Date.now();
         state.msgs.push(m);
         persist();
         var row = renderMsg(m, animate !== false);
@@ -232,7 +255,7 @@
         typingRow = el('div', 'gc-msg');
         typingRow.appendChild(avatar());
         var b = el('div', 'gc-bub gc-typing');
-        b.setAttribute('aria-label', 'Đang soạn câu trả lời');
+        b.appendChild(el('span', 'gc-sr', 'Đang soạn câu trả lời'));
         b.appendChild(el('i')); b.appendChild(el('i')); b.appendChild(el('i'));
         typingRow.appendChild(b);
         body.appendChild(typingRow);
@@ -240,43 +263,69 @@
     }
     function hideTyping() { if (typingRow && typingRow.parentNode) { typingRow.parentNode.removeChild(typingRow); } typingRow = null; }
 
-    // ---------- Màn chào ----------
-    var hero = null;
+    // ---------- Chip gợi ý: hiện khi chưa có tin nhắn (màn chào) hoặc ngay sau một câu trả lời ----------
+    function chipList() {
+        return (isAdmin && state.tab === 'draft') ? (cfg.draftChips || []).map(function (t) { return { text: t, icon: '' }; }) : cfg.chips;
+    }
+    function buildChip(c, i) {
+        var b = el('button', 'gc-chip' + (c.icon ? '' : ' gc-chip--plain'));
+        b.type = 'button';
+        b.style.setProperty('--i', i);
+        if (c.icon) { b.appendChild(el('span', 'gc-chip__ic', c.icon)); }
+        b.appendChild(el('span', '', c.text));
+        b.addEventListener('click', function () {
+            input.value = c.text;                         // điền vào ô nhập rồi gửi như người dùng tự gõ
+            send(c.text, state.tab === 'draft' ? 'exercise_draft' : 'chat');
+        });
+        return b;
+    }
+
+    var hero = null, follow = null;
     function showHero() {
         hero = el('div', 'gc-hero');
         var av = el('div', 'gc-hero__av');
         av.appendChild(svgUse(isAdmin ? 'gc-glyph' : 'gc-logo'));
         hero.appendChild(av);
-        hero.appendChild(el('p', '', cfg.welcome));
+        hero.appendChild(el('p', '', (isAdmin && state.tab === 'draft') ? cfg.draftHint : cfg.welcome));
         var chips = el('div', 'gc-chips');
-        var list = (isAdmin && state.tab === 'draft') ? (cfg.draftChips || []).map(function (t) { return { text: t, icon: '' }; }) : cfg.chips;
-        if (isAdmin && state.tab === 'draft') {
-            hero.querySelector('p').textContent = cfg.draftHint;
-        }
-        list.forEach(function (c, i) {
-            var b = el('button', 'gc-chip' + (c.icon ? '' : ' gc-chip--plain'));
-            b.type = 'button';
-            b.style.setProperty('--i', i);
-            if (c.icon) { b.appendChild(el('span', 'gc-chip__ic', c.icon)); }
-            b.appendChild(el('span', '', c.text));
-            b.addEventListener('click', function () { send(c.text, state.tab === 'draft' ? 'exercise_draft' : 'chat'); });
-            chips.appendChild(b);
-        });
+        chipList().forEach(function (c, i) { chips.appendChild(buildChip(c, i)); });
         hero.appendChild(chips);
         body.appendChild(hero);
     }
     function hideHero() {
-        if (!hero) { return; }
-        var h = hero; hero = null;
-        h.classList.add('is-gone');
-        setTimeout(function () { if (h.parentNode) { h.parentNode.removeChild(h); } }, reduceMotion ? 0 : 360);
+        if (hero && hero.parentNode) { hero.parentNode.removeChild(hero); }
+        hero = null;
+    }
+    function hideFollow() {
+        if (follow && follow.parentNode) { follow.parentNode.removeChild(follow); }
+        follow = null;
+    }
+    // Sau câu trả lời bình thường mới gợi ý tiếp; lỗi hay bản nháp thì thôi. Bỏ câu vừa hỏi và chỉ lấy tối đa 3 chip cho gọn.
+    function showFollow() {
+        hideFollow();
+        var last = state.msgs[state.msgs.length - 1];
+        if (state.busy || !last || last.who !== 'bot' || last.err || last.draft) { return; }
+        var list = chipList().filter(function (c) { return c.text !== state.lastText; }).slice(0, 3);
+        if (!list.length) { return; }
+        follow = el('div', 'gc-follow');
+        list.forEach(function (c, i) { follow.appendChild(buildChip(c, i)); });
+        body.appendChild(follow);
+        scrollDown(true);
     }
 
     // ---------- Trạng thái bận / rảnh ----------
     function setBusy(b) {
         state.busy = b;
-        root.classList.toggle('is-busy', b);
+        // Không dùng tên .is-busy: ui.css có rule chung cùng tên làm mờ 0,65. Rule đó làm khung chat mờ đi và
+        // mất z-index (opacity tạo ngữ cảnh xếp chồng mới), nên các thẻ của trang đè lên khung trong lúc chờ.
+        root.classList.toggle('gc-is-busy', b);
         statusText.textContent = b ? 'Đang soạn câu trả lời...' : cfg.subtitle;
+        stopBtn.hidden = !b;
+        sendBtn.hidden = b;
+        resetBtn.disabled = b;                             // đang chờ thì không xóa cuộc trò chuyện
+        // Nút vừa bấm biến mất thì chuyển focus sang nút thay thế, người dùng bàn phím không bị lạc
+        if (b && document.activeElement === sendBtn) { stopBtn.focus(); }
+        if (!b && document.activeElement === stopBtn) { input.focus({ preventScroll: true }); }
         refreshSend();
     }
     function refreshSend() {
@@ -293,72 +342,124 @@
         return state.msgs.filter(function (m) { return !m.err && !m.draft && !m.task; })
             .slice(-10).map(function (m) { return { role: m.who === 'me' ? 'user' : 'model', text: m.text }; });
     }
+    // Lời báo cho từng kiểu lỗi phía trình duyệt. Không có chi tiết kỹ thuật.
+    var MSG = {
+        stopped: 'Đã dừng. Bạn có thể bấm "Thử lại" hoặc hỏi câu khác.',
+        timeout: 'GymSmart AI phản hồi quá lâu nên mình đã dừng chờ. Bạn bấm "Thử lại" sau ít phút nhé.',
+        offline: 'Không kết nối được tới máy chủ. Bạn kiểm tra mạng rồi bấm "Thử lại" nhé.',
+        badResponse: 'GymSmart AI tạm thời không phản hồi. Bạn thử lại sau ít phút nhé.',
+        session: 'Phiên làm việc đã hết hạn. Bạn tải lại trang rồi hỏi lại nhé.',
+        login: 'Bạn cần đăng nhập lại để tiếp tục trò chuyện.',
+        unanswered: 'Câu này chưa có trả lời vì trang đã được tải lại hoặc chuyển trang. Bạn bấm "Gửi lại" nhé.'
+    };
+    // Thử lại cũng vô ích với các lỗi này: cấu hình sai, câu hỏi bị bộ lọc chặn, đã chạm giới hạn trong giờ
+    var NO_RETRY_CODES = ['AI_NO_CURL', 'AI_NO_KEY', 'AI_AUTH', 'AI_MODEL', 'AI_BLOCKED', 'RATE_HOUR'];
+    var leaving = false;                                  // trang đang được rời đi: yêu cầu bị hủy không phải lỗi cần báo
+    var request = null;                                   // yêu cầu đang chạy: { ctrl, reason }
+
     function send(text, task, isRetry) {
         text = String(text || '').trim();
         if (!text || state.busy) { return; }
         if (text.length > cfg.maxLen) { showToast('Tin nhắn tối đa ' + cfg.maxLen + ' ký tự.'); return; }
         task = task || 'chat';
         state.lastText = text; state.lastTask = task;
-        hideHero();
+        hideHero(); hideFollow();
 
         var hist = history();                              // lấy trước khi thêm tin hiện tại
         if (!isRetry) { addMsg({ who: 'me', text: text, task: task === 'exercise_draft' ? 1 : 0 }); }
         input.value = ''; autosize(); setBusy(true); showTyping();
-        sendBtn.classList.remove('fly'); void sendBtn.offsetWidth; sendBtn.classList.add('fly');
 
         var payload = { message: text, mode: cfg.mode, task: task, history: hist, personalize: !!(persBox && persBox.checked) };
-        var ctrl = window.AbortController ? new AbortController() : null;
-        var timer = setTimeout(function () { if (ctrl) { ctrl.abort(); } }, 50000);
+        var ctrl = new AbortController();
+        var current = { ctrl: ctrl, reason: '' };
+        request = current;
+        // Phải lớn hơn hạn tổng phía server (AI_TOTAL_TIMEOUT trong includes/ai.php) để thường nhận được lời báo từ server
+        var timer = setTimeout(function () { current.reason = 'timeout'; ctrl.abort(); }, 50000);
+
+        function finish() { clearTimeout(timer); request = null; hideTyping(); setBusy(false); }
+        function fail(text, extra) {
+            var m = { who: 'bot', text: text, err: true, retry: true };
+            for (var k in extra) { m[k] = extra[k]; }
+            addMsg(m);
+            if (!state.open) { dot.hidden = false; }
+        }
 
         fetch(cfg.endpoint, {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
             body: JSON.stringify(payload),
-            signal: ctrl ? ctrl.signal : undefined
+            signal: ctrl.signal
         }).then(function (res) {
             return res.text().then(function (raw) {
                 var data = null;
-                try { data = JSON.parse(raw); } catch (e) { /* server trả HTML → xử lý bên dưới */ }
-                return { ok: res.ok, status: res.status, data: data, raw: raw };
+                try { data = JSON.parse(raw); } catch (e) { /* server trả HTML: báo lỗi chung, không in nội dung ra giao diện */ }
+                return { ok: res.ok, status: res.status, data: data };
             });
         }).then(function (r) {
-            clearTimeout(timer); hideTyping(); setBusy(false);
+            finish();
             if (r.ok && r.data && typeof r.data.reply === 'string') {
                 var m = { who: 'bot', text: r.data.reply, links: r.data.links || [], draft: r.data.draft || null };
                 if (m.draft) { m.task = 1; }
                 addMsg(m);
                 if (!state.open) { dot.hidden = false; }
-            } else {
-                var msg = (r.data && r.data.error) ? r.data.error : 'Chatbot tạm thời không phản hồi, thử lại sau.';
-                var detail = (r.data && r.data.detail) ? r.data.detail : '';
-                if (!r.data && (root.getAttribute('data-mode') === 'admin' || /^(localhost|127\.|\[?::1)/.test(location.hostname))) {
-                    detail = 'Server trả về dữ liệu không phải JSON (HTTP ' + r.status + '): ' + r.raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
-                }
-                if (r.status === 403 && r.data && /tải lại/i.test(msg)) { msg += ' (bấm F5)'; }
-                var links = (r.data && Array.isArray(r.data.links)) ? r.data.links : [];   // bài tập liên quan, có cả khi AI lỗi
-                addMsg({ who: 'bot', text: msg, err: true, detail: detail, links: links, retry: r.status !== 401 && r.status !== 403 && r.status !== 429 });
+                showFollow();
+                return;
             }
-        }).catch(function (e) {
-            clearTimeout(timer); hideTyping(); setBusy(false);
-            var offline = e && e.name === 'AbortError' ? 'Chờ quá lâu mà chưa có phản hồi.' : 'Không kết nối được tới máy chủ.';
-            addMsg({ who: 'bot', text: offline + ' Kiểm tra mạng rồi thử lại nhé.', err: true, retry: true });
+            if (r.status === 401) { fail(MSG.login, { retry: false, links: [{ label: 'Đăng nhập', url: '/login.php' }] }); return; }
+            if (r.status === 403 && !(r.data && r.data.code)) {
+                var denied = r.data && /quản trị/.test(r.data.error || '');
+                fail(denied ? r.data.error : MSG.session, { retry: false });
+                return;
+            }
+            var code = r.data && r.data.code ? r.data.code : '';
+            fail(r.data && r.data.error ? r.data.error : MSG.badResponse, {
+                links: r.data && Array.isArray(r.data.links) ? r.data.links : [],   // bài tập liên quan, có cả khi AI lỗi
+                retry: NO_RETRY_CODES.indexOf(code) < 0,
+                retryAfter: r.data && r.data.retry_after > 0 ? r.data.retry_after : 0
+            });
+        }).catch(function () {
+            finish();
+            if (leaving) { return; }                       // rời trang: lần sau mở lại sẽ thấy nút "Gửi lại"
+            fail(current.reason === 'stop' ? MSG.stopped : (current.reason === 'timeout' ? MSG.timeout : MSG.offline));
         });
     }
+    // Nút Dừng chỉ hủy phía trình duyệt; server vẫn chạy nốt lần gọi AI đang dở rồi tự kết thúc.
+    stopBtn.addEventListener('click', function () {
+        if (request) { request.reason = 'stop'; request.ctrl.abort(); }
+    });
+
+    // Câu hỏi cuối chưa có trả lời (đã rời trang giữa chừng): báo rõ và cho gửi lại, không để người dùng chờ vô ích
+    function noteUnanswered() {
+        var last = state.msgs[state.msgs.length - 1];
+        if (!last || last.who !== 'me') { return; }
+        state.lastText = last.text;
+        state.lastTask = last.task ? 'exercise_draft' : 'chat';
+        addMsg({ who: 'bot', text: MSG.unanswered, err: true, retry: true, retryLabel: 'Gửi lại' }, false);
+    }
+    window.addEventListener('pagehide', function () { leaving = true; });
+    window.addEventListener('pageshow', function (e) {
+        leaving = false;
+        if (e.persisted) { noteUnanswered(); }             // quay lại bằng nút Back: trang được khôi phục từ bộ nhớ
+    });
 
     // ---------- Mở / đóng ----------
     function openPanel() {
         if (state.open) { return; }
         state.open = true;
+        // Nhớ nơi focus đang đứng (nút nổi hoặc lối tắt trên trang) để trả về đúng chỗ khi đóng
+        state.opener = document.activeElement && document.activeElement !== document.body ? document.activeElement : fab;
         root.classList.add('is-open');
         fab.setAttribute('aria-expanded', 'true');
         panel.classList.remove('is-out');
         if (panel.classList.contains('is-max')) { root.classList.add('is-max'); }
         panel.hidden = false;
+        var g = styleGeo();
+        if (g && !isMobile()) { applyGeo(fitGeo(g)); }   // cửa sổ có thể đã đổi cỡ trong lúc khung đóng
         nudge.hidden = true; dot.hidden = true;
         save(NUDGE_KEY, 1);
         if (hero) { body.scrollTop = 0; } else { scrollDown(true); }   // màn chào thì đọc từ trên xuống
-        setTimeout(function () { input.focus({ preventScroll: true }); }, reduceMotion ? 0 : 280);
+        input.focus({ preventScroll: true });
     }
     function closePanel() {
         if (!state.open) { return; }
@@ -367,8 +468,9 @@
         fab.setAttribute('aria-expanded', 'false');
         panel.classList.add('is-out');
         root.classList.remove('is-max');
-        setTimeout(function () { if (!state.open) { panel.hidden = true; } }, reduceMotion ? 0 : 200);
-        fab.focus({ preventScroll: true });
+        setTimeout(function () { if (!state.open) { panel.hidden = true; } }, reduceMotion ? 0 : 160);
+        var back = state.opener && state.opener.isConnected ? state.opener : fab;
+        back.focus({ preventScroll: true });
     }
     fab.addEventListener('click', function () { state.open ? closePanel() : openPanel(); });
     $('gc-close').addEventListener('click', closePanel);
@@ -379,7 +481,8 @@
         if (state.busy) { return; }
         state.msgs = []; drop(KEY);
         while (body.firstChild) { body.removeChild(body.firstChild); }
-        hero = null; showHero();
+        hero = null; follow = null; state.lastText = ''; showHero();
+        input.focus({ preventScroll: true });
     });
 
     // ---------- Kéo, đổi cỡ, phóng to (chỉ máy tính; điện thoại luôn dùng khung gần toàn màn hình) ----------
@@ -389,10 +492,16 @@
     function isMobile() { return window.matchMedia && window.matchMedia('(max-width: 520px)').matches; }
     function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
     function curGeo() { var r = panel.getBoundingClientRect(); return { l: r.left, t: r.top, w: r.width, h: r.height }; }
-    function fitGeo(g) {                                 // giữ khung nằm trọn trong cửa sổ
+    // Vị trí đã đặt qua style. Khác curGeo(): vẫn đúng khi khung đang ẩn (đo khung ẩn sẽ ra toàn số 0) hoặc đang chạy hiệu ứng mở.
+    function styleGeo() {
+        if (!panel.style.left) { return null; }
+        return { l: parseFloat(panel.style.left), t: parseFloat(panel.style.top), w: parseFloat(panel.style.width), h: parseFloat(panel.style.height) };
+    }
+    function fitGeo(g) {                                 // giữ khung nằm trọn trong cửa sổ, kể cả cửa sổ nhỏ hơn cỡ tối thiểu
         var vw = window.innerWidth, vh = window.innerHeight;
-        g.w = clamp(g.w, MIN_W, Math.max(MIN_W, vw - 16));
-        g.h = clamp(g.h, MIN_H, Math.max(MIN_H, vh - 16));
+        var maxW = Math.max(200, vw - 16), maxH = Math.max(200, vh - 16);
+        g.w = clamp(g.w, Math.min(MIN_W, maxW), maxW);
+        g.h = clamp(g.h, Math.min(MIN_H, maxH), maxH);
         g.l = clamp(g.l, 8, Math.max(8, vw - g.w - 8));
         g.t = clamp(g.t, 8, Math.max(8, vh - g.h - 8));
         return g;
@@ -403,7 +512,7 @@
         panel.style.width = g.w + 'px'; panel.style.height = g.h + 'px';
     }
     function clearGeo() { ['left', 'top', 'right', 'bottom', 'width', 'height'].forEach(function (k) { panel.style[k] = ''; }); }
-    function saveGeo() { if (panel.style.left) { save(GEO_KEY, curGeo(), 'localStorage'); } }
+    function saveGeo() { var g = styleGeo(); if (g) { save(GEO_KEY, g, 'localStorage'); } }
 
     function drag(handle, onMove, cls) {                 // khung chung cho kéo/đổi cỡ bằng chuột, cảm ứng, bút
         handle.addEventListener('pointerdown', function (e) {
@@ -462,8 +571,23 @@
     var geo = load(GEO_KEY, 'localStorage');
     if (geo && typeof geo.l === 'number' && typeof geo.w === 'number' && !isMobile()) { applyGeo(fitGeo(geo)); }
     window.addEventListener('resize', function () {
-        if (panel.style.left && !panel.classList.contains('is-max')) { if (isMobile()) { return; } applyGeo(fitGeo(curGeo())); }
+        var g = styleGeo();
+        if (g && !panel.hidden && !panel.classList.contains('is-max') && !isMobile()) { applyGeo(fitGeo(g)); }
     });
+
+    // Bàn phím ảo trên điện thoại: khung bám theo vùng nhìn thấy thật để ô nhập không bị che (dùng trong css/chatbot.css)
+    function syncViewport() {
+        var vv = window.visualViewport;
+        if (!vv) { return; }
+        root.style.setProperty('--gc-vv', vv.height + 'px');
+        root.style.setProperty('--gc-vv-top', vv.offsetTop + 'px');
+        if (state.open) { scrollDown(false); }
+    }
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', syncViewport);
+        window.visualViewport.addEventListener('scroll', syncViewport);
+        syncViewport();
+    }
 
     // ---------- Ô nhập ----------
     input.addEventListener('input', function () { autosize(); refreshSend(); });
@@ -498,9 +622,10 @@
                     var on = b === btn; b.classList.toggle('is-on', on); b.setAttribute('aria-selected', on ? 'true' : 'false');
                 });
                 cfg.tabs.forEach(function (t) { if (t.id === state.tab) { input.placeholder = t.placeholder; } });
-                if (hero) { var h = hero; hero = null; h.parentNode.removeChild(h); showHero(); }
-                else if (state.tab === 'draft' && !state.msgs.some(function (m) { return m.task; })) {
+                if (hero) { hideHero(); showHero(); } else { showFollow(); }
+                if (!hero && state.tab === 'draft' && !state.msgs.some(function (m) { return m.task; })) {
                     addMsg({ who: 'bot', text: cfg.draftHint, task: 1 });
+                    showFollow();
                 }
                 input.focus();
             });
@@ -550,7 +675,15 @@
     var saved = load(KEY);
     if (saved && saved.length) {
         state.msgs = saved;
-        saved.forEach(function (m) { m.retry = false; renderMsg(m, false); });   // sau khi tải lại trang không còn gì để "thử lại"
+        saved.forEach(function (m, i) {
+            // Sau khi tải lại trang, chỉ lỗi ở tin cuối còn "Thử lại" có ý nghĩa. Thời gian đếm ngược không còn đúng nữa nên bỏ.
+            m.retry = !!m.retry && i === saved.length - 1;
+            m.retryAfter = 0;
+            if (m.who === 'me') { state.lastText = m.text; state.lastTask = m.task ? 'exercise_draft' : 'chat'; }
+            renderMsg(m, false);
+        });
+        noteUnanswered();
+        showFollow();
     } else {
         showHero();
     }

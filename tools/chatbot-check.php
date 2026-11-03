@@ -91,7 +91,7 @@ if ($res['ok']) {
 line('LỖI', "{$res['code']} (HTTP {$res['http']}): {$res['detail']}");
 $fix = [
     'AI_SSL'     => "Thiếu chứng chỉ gốc trên XAMPP/Windows. Tải https://curl.se/ca/cacert.pem → lưu thành C:\\xampp\\php\\extras\\ssl\\cacert.pem → thêm vào config.php:\n        define('AI_CA_BUNDLE', 'C:/xampp/php/extras/ssl/cacert.pem');\n      (hoặc đặt curl.cainfo trong php.ini rồi restart Apache).",
-    'AI_TIMEOUT' => 'Kết nối được nhưng Google không trả lời trong thời gian chờ (mặc định 30 giây). Thử: tắt/bật VPN, đổi mạng (4G), chạy lại sau ít phút. Trong config.php có thể tăng define(\'AI_TIMEOUT\', 60); hoặc dùng model nhẹ hơn.',
+    'AI_TIMEOUT' => 'Kết nối được nhưng Google không trả lời trong thời gian chờ (mặc định 15 giây mỗi lần gọi). Thử: tắt/bật VPN, đổi mạng (4G), chạy lại sau ít phút. Trong config.php có thể tăng define(\'AI_TIMEOUT\', 60); hoặc dùng model nhẹ hơn.',
     'AI_NETWORK' => 'Máy không ra được internet, hoặc bị tường lửa/proxy/VPN chặn. Thử mở https://generativelanguage.googleapis.com trong trình duyệt.',
     'AI_AUTH'    => 'Khóa API sai, hết hạn hoặc bị thu hồi. Tạo khóa mới ở https://aistudio.google.com/apikey và dán lại vào config.php (không thừa dấu cách).',
     'AI_MODEL'   => "Tên model không tồn tại/đã ngừng. Đổi: define('AI_MODEL', 'gemini-3.8-flash');",

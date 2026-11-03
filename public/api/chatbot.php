@@ -6,8 +6,9 @@
  *   { "message": "...", "mode": "user" | "admin", "task": "chat" | "exercise_draft",
  *     "history": [ {"role":"user"|"model","text":"..."} ... ], "personalize": true|false }
  * Response 200: { "reply": "...", "links": [ {"label","url"} ], "draft": {...}  (draft chỉ có khi task=exercise_draft) }
- * Response lỗi: { "error": "lời nhắn cho người dùng", "code": "AI_...", "detail": "chi tiết kỹ thuật (chỉ admin/localhost)",
+ * Response lỗi: { "error": "lời nhắn cho người dùng", "code": "AI_...", "retry_after": số giây (khi gửi quá nhanh),
  *                 "links": [...] (chỉ khi AI lỗi mà vẫn tìm được bài tập liên quan) }
+ * Chi tiết kỹ thuật của lỗi chỉ ghi vào log server, không bao giờ trả về trình duyệt.
  *
  * Hai trợ lý KHÁC NHAU, chọn ở phía server (không tin client):
  *   - user : huấn luyện viên AI — hỏi đáp tập luyện/dinh dưỡng, biết bài tập trong thư viện, (tùy chọn) hồ sơ cá nhân
@@ -23,9 +24,7 @@ require_once __DIR__ . '/../includes/auth.php';   // có session + isLoggedIn()
 require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/ai.php';
 
-$isLocal = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
 $isAdmin = ($_SESSION['role'] ?? '') === 'ADMIN';
-$showDetail = $isLocal || $isAdmin;               // chi tiết kỹ thuật chỉ cho người vận hành
 
 function jsonOut(int $code, array $data): void
 {
@@ -40,22 +39,18 @@ function jsonOut(int $code, array $data): void
 }
 
 /** Lỗi bất ngờ (exception hoặc fatal) vẫn trả JSON, không để khung chat nhận trang HTML lỗi. */
-function failServer(string $detail, bool $showDetail): void
+function failServer(string $detail): void
 {
     error_log('chatbot: ' . aiScrub($detail));
-    $out = ['error' => 'Chatbot gặp sự cố, thử lại sau.', 'code' => 'SERVER'];
-    if ($showDetail) {
-        $out['detail'] = aiScrub($detail);
-    }
-    jsonOut(500, $out);
+    jsonOut(500, ['error' => 'GymSmart AI gặp sự cố. Bạn thử lại sau ít phút nhé.', 'code' => 'SERVER']);
 }
-set_exception_handler(function (Throwable $e) use ($showDetail) {
-    failServer(get_class($e) . ': ' . $e->getMessage() . ' (' . basename($e->getFile()) . ':' . $e->getLine() . ')', $showDetail);
+set_exception_handler(function (Throwable $e) {
+    failServer(get_class($e) . ': ' . $e->getMessage() . ' (' . basename($e->getFile()) . ':' . $e->getLine() . ')');
 });
-register_shutdown_function(function () use ($showDetail) {
+register_shutdown_function(function () {
     $err = error_get_last();
     if ($err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
-        failServer($err['message'] . ' (' . basename($err['file']) . ':' . $err['line'] . ')', $showDetail);
+        failServer($err['message'] . ' (' . basename($err['file']) . ':' . $err['line'] . ')');
     }
 });
 
@@ -140,8 +135,11 @@ $perHour = $mode === 'admin' ? 120 : 30;
 $now  = time();
 $last = $_SESSION['chat_last'] ?? 0;
 $hist = array_filter($_SESSION['chat_hist'] ?? [], fn($t) => $now - $t < 3600);
-if ($now - $last < $minGap || count($hist) >= $perHour) {
-    jsonOut(429, ['error' => 'Bạn gửi quá nhanh, vui lòng chờ một chút.']);
+if (count($hist) >= $perHour) {
+    jsonOut(429, ['error' => 'Bạn đã hỏi khá nhiều trong giờ vừa qua. Bạn quay lại sau ít phút nhé.', 'code' => 'RATE_HOUR']);
+}
+if ($now - $last < $minGap) {
+    jsonOut(429, ['error' => 'Bạn gửi hơi nhanh, chờ một chút rồi bấm "Thử lại" nhé.', 'code' => 'RATE_GAP', 'retry_after' => $minGap - ($now - $last)]);
 }
 $hist[] = $now;
 $_SESSION['chat_hist'] = array_values($hist);
@@ -484,14 +482,11 @@ if ($task === 'exercise_draft') {
 
 if (!$res['ok']) {
     error_log('chatbot: ' . $res['code'] . ' http=' . $res['http'] . ' ' . $res['detail']);
-    $out = ['error' => aiFriendlyError($res['code']), 'code' => $res['code']];
+    $out = ['error' => aiFriendlyError($res['code']), 'code' => $res['code']];   // $res['detail'] đã ghi log ở dòng trên, không gửi về trình duyệt
     // AI lỗi nhưng phần tra bảng exercises (RAG) không cần AI vẫn có kết quả: trả kèm để người dùng có bài để xem
     if ($links) {
         $out['error'] .= ' Trong lúc chờ, bạn xem các trang liên quan bên dưới nhé.';
         $out['links'] = array_slice($links, 0, 4);
-    }
-    if ($showDetail) {
-        $out['detail'] = $res['detail'];
     }
     jsonOut(in_array($res['code'], ['AI_NO_CURL', 'AI_NO_KEY'], true) ? 503 : 502, $out);
 }
