@@ -44,6 +44,7 @@ Quy ước dùng chung:
 - [x] A-15 Giao diện Hồ sơ mới + ảnh đại diện đổi được (`profile.php`, `css/profile.css`, `js/profile.js`, `sql/users_avatar.sql`; ảnh lưu ở `public/uploads/avatars/`, JPG/PNG/WebP tối đa 2 MB, vẽ lại thành JPG)
 - [x] A-16 Đăng ký 3 bước (tài khoản, cơ thể, mục tiêu): thu đủ tuổi, giới tính, chiều cao, cân nặng, vận động, trình độ, mục tiêu ngay lúc đăng ký (`register.php`, `css/register.css`, `js/register.js`)
 - [x] A-23 Nâng cấp trang chủ khi chưa đăng nhập (`includes/home-guest.php`, `css/home-guest.css`, `js/home-guest.js`, ảnh hero trong `assets/img/hero/`, nguồn ảnh ở `assets/img/CREDITS.md`): hero ảnh gym và lớp công nghệ, thẻ "Ví dụ", 7 tính năng, 3 bước, xem trước bài tập từ DB, mục kiến thức. Giao diện khi đã đăng nhập không đổi
+- [x] A-24 Bảng điều khiển sau đăng nhập ở trang chủ (`includes/dashboard.php`, `includes/home-user.php`, `includes/dash-*.php`, `css/home-user.css`, `js/home-user.js`, test `test-dashboard.php`): hôm nay, tuần này, dinh dưỡng, tiến trình, lối tắt, ghi nhanh. Thêm bảng `article_reads` (`sql/article_reads.sql`, đã gộp vào `schema.sql` và `ERD.md`). DB cũ cần import file này
 
 ---
 

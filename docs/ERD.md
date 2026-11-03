@@ -266,6 +266,9 @@ Bài viết do admin soạn trên giao diện (`admin/articles.php`, `admin/arti
 ### `article_views`
 Lượt xem bài gộp theo ngày (mỗi bài mỗi ngày một dòng). `slug` dùng chung cho bài file và bài DB nên không có khóa ngoại.
 
+### `article_reads`
+Người dùng đã đọc bài nền tảng nào (khóa chính `user_id` + `slug`), chỉ ghi các bài có nhãn "Đọc trước khi tập". Trang chủ dùng bảng này để nhắc bài chưa đọc. `user_id` có khóa ngoại tới `users` (xóa tài khoản thì xóa theo); `slug` không có khóa ngoại vì bài có thể nằm trong file.
+
 ---
 
 ## Ghi chú khi triển khai

@@ -212,3 +212,12 @@ CREATE TABLE IF NOT EXISTS article_views (
     views INT NOT NULL DEFAULT 0,
     PRIMARY KEY (slug, view_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Người dùng đã đọc bài nền tảng nào (trang chủ dựa vào đây để nhắc). slug dùng chung cho bài file và bài DB nên không có khóa ngoại tới articles.
+CREATE TABLE IF NOT EXISTS article_reads (
+    user_id INT NOT NULL,
+    slug VARCHAR(100) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, slug),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

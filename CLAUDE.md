@@ -29,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Document root phải là `public/`.** Mọi link/redirect dùng đường dẫn tuyệt đối (`/login.php`, `/css/...`), nên mở thẳng `localhost/gymsmart-starter/...` sẽ hỏng. `config.php` nằm ở **gốc repo** (ngoài `public/`), được nạp qua `public/includes/db.php` bằng `__DIR__ . '/../../config.php'`.
 
-- **Trang** (`public/*.php`, `public/admin/*.php`): mỗi file là 1 tính năng. Mở đầu bằng `require includes/auth.php` (tự bật session với cookie an toàn) rồi `requireLogin()` / `requireAdmin()`, nạp `includes/db.php` (tạo biến `$pdo`), gọi hàm từ `includes/*`, rồi include `header.php` → `navbar.php` → HTML → `footer.php`. Đặt `$pageTitle` trước khi include `header.php` (có thể đặt thêm `$pageCss` để nạp CSS riêng trong `<head>`). CSS/JS riêng từng trang nằm ở `public/css/<feature>.css`, `public/js/<feature>.js`. Trang chủ của khách nằm ở `includes/home-guest.php`, không dùng `home.css`.
+- **Trang** (`public/*.php`, `public/admin/*.php`): mỗi file là 1 tính năng. Mở đầu bằng `require includes/auth.php` (tự bật session với cookie an toàn) rồi `requireLogin()` / `requireAdmin()`, nạp `includes/db.php` (tạo biến `$pdo`), gọi hàm từ `includes/*`, rồi include `header.php` → `navbar.php` → HTML → `footer.php`. Đặt `$pageTitle` trước khi include `header.php` (có thể đặt thêm `$pageCss` để nạp CSS riêng trong `<head>`). CSS/JS riêng từng trang nằm ở `public/css/<feature>.css`, `public/js/<feature>.js`. Trang chủ của khách nằm ở `includes/home-guest.php`; bảng điều khiển sau đăng nhập nằm ở `includes/home-user.php` và `includes/dash-*.php`, dữ liệu từ `includes/dashboard.php`.
 - **API** (`public/api/*.php`): trả JSON cho `fetch()`. Có **2 kiểu đang tồn tại**:
   - Kiểu mới (GET, chỉ đọc): dùng `includes/api.php` → `apiBoot()` (chỉ GET, bắt buộc đăng nhập → 401 JSON, biến exception thành 500 JSON), trả `{success, data}` / `{success:false, error}`. Xem `body-metrics.php`, `nutrition-history.php`.
   - Kiểu cũ (POST): tự kiểm tra method/session và trả `{success, message}` (`log-workout.php`, `workout-plan-*.php`, `chatbot.php`). Khi sửa file nào thì giữ đúng kiểu của file đó, vì JS phía trang đang đọc đúng key đó.
@@ -46,7 +46,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Database và file SQL
 
-`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `body_metrics.sql`, `password_resets.sql`, `split_types.sql`, `split_type_ap.sql`, `users_avatar.sql`). Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
+`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `article_reads.sql`, `body_metrics.sql`, `password_resets.sql`, `split_types.sql`, `split_type_ap.sql`, `users_avatar.sql`). Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
 
 ## Phạm vi tính năng
 
@@ -125,6 +125,7 @@ php -S localhost:8000 -t public
 # Test: script PHP tự viết, không dùng PHPUnit. In [OK]/[FAIL], cuối cùng in "TẤT CẢ ĐỀU PASS"
 php test-workout-plan.php       # thuật toán lịch tập, dữ liệu từ test-exercises-fixture.php (không cần DB)
 php test-workout-plan-db.php    # lớp workout-plan-db.php trên SQLite in-memory (cần pdo_sqlite)
+php test-dashboard.php          # hàm thuần và lớp đọc DB của bảng điều khiển (phần DB cần pdo_sqlite)
 
 # Lint 1 file
 php -l public/path/to/file.php
