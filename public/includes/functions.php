@@ -40,3 +40,42 @@ function exerciseImageSrc(?string $file): ?string
 {
     return exerciseImageFileOk($file) ? '/img/exercises/' . $file : null;
 }
+
+/**
+ * Vài bài tập cho khách xem trước ở trang chủ: mỗi nhóm cơ lấy bài có id nhỏ nhất và có ảnh.
+ * Lỗi database thì trả mảng rỗng để trang vẫn chạy và hiện trạng thái rỗng.
+ */
+function guestPreviewExercises(PDO $pdo, int $limit = 4): array
+{
+    try {
+        $stmt = $pdo->prepare(
+            "SELECT id, name, muscle_group, difficulty, image_url
+             FROM exercises
+             WHERE id IN (
+                 SELECT MIN(id) FROM exercises
+                 WHERE image_url IS NOT NULL AND image_url <> ''
+                 GROUP BY muscle_group
+             )
+             ORDER BY id
+             LIMIT ?"
+        );
+        $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+/** Số liệu thật của thư viện bài tập. Lỗi database thì trả 0 để trang ẩn câu có số. */
+function guestExerciseStats(PDO $pdo): array
+{
+    try {
+        $stmt = $pdo->prepare('SELECT COUNT(*) AS total, COUNT(DISTINCT muscle_group) AS muscle_groups FROM exercises');
+        $stmt->execute();
+        $row = $stmt->fetch();
+        return ['exercises' => (int)$row['total'], 'muscleGroups' => (int)$row['muscle_groups']];
+    } catch (Throwable $e) {
+        return ['exercises' => 0, 'muscleGroups' => 0];
+    }
+}

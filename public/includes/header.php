@@ -2,6 +2,7 @@
 /**
  * header.php — phần <head> + mở thẻ <body>, include ở đầu mỗi trang.
  * Biến $pageTitle có thể set trước khi include file này để đổi tiêu đề.
+ * Biến $pageCss (tùy chọn) là mảng đường dẫn CSS riêng của trang, nạp trong <head> để trang không bị nhấp nháy.
  *
  * Nạp style.css (chung) → fonts.css (font) → brand.css (logo + thanh điều hướng) → ui.css (nút, thẻ, form...).
  * Thứ tự quan trọng: file nạp sau ghi đè file nạp trước.
@@ -31,6 +32,9 @@ if (!headers_sent()) {
     <link rel="stylesheet" href="/css/fonts.css">
     <link rel="stylesheet" href="/css/brand.css">
     <link rel="stylesheet" href="/css/ui.css">
+    <?php foreach ($pageCss ?? [] as $cssHref): ?>
+        <link rel="stylesheet" href="<?= htmlspecialchars($cssHref) ?>">
+    <?php endforeach; ?>
 </head>
 <body>
 <?php include __DIR__ . '/navbar.php'; ?>

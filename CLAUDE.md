@@ -29,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Document root phải là `public/`.** Mọi link/redirect dùng đường dẫn tuyệt đối (`/login.php`, `/css/...`), nên mở thẳng `localhost/gymsmart-starter/...` sẽ hỏng. `config.php` nằm ở **gốc repo** (ngoài `public/`), được nạp qua `public/includes/db.php` bằng `__DIR__ . '/../../config.php'`.
 
-- **Trang** (`public/*.php`, `public/admin/*.php`): mỗi file là 1 tính năng. Mở đầu bằng `require includes/auth.php` (tự bật session với cookie an toàn) rồi `requireLogin()` / `requireAdmin()`, nạp `includes/db.php` (tạo biến `$pdo`), gọi hàm từ `includes/*`, rồi include `header.php` → `navbar.php` → HTML → `footer.php`. Đặt `$pageTitle` trước khi include `header.php`. CSS/JS riêng từng trang nằm ở `public/css/<feature>.css`, `public/js/<feature>.js`.
+- **Trang** (`public/*.php`, `public/admin/*.php`): mỗi file là 1 tính năng. Mở đầu bằng `require includes/auth.php` (tự bật session với cookie an toàn) rồi `requireLogin()` / `requireAdmin()`, nạp `includes/db.php` (tạo biến `$pdo`), gọi hàm từ `includes/*`, rồi include `header.php` → `navbar.php` → HTML → `footer.php`. Đặt `$pageTitle` trước khi include `header.php` (có thể đặt thêm `$pageCss` để nạp CSS riêng trong `<head>`). CSS/JS riêng từng trang nằm ở `public/css/<feature>.css`, `public/js/<feature>.js`. Trang chủ của khách nằm ở `includes/home-guest.php`, không dùng `home.css`.
 - **API** (`public/api/*.php`): trả JSON cho `fetch()`. Có **2 kiểu đang tồn tại**:
   - Kiểu mới (GET, chỉ đọc): dùng `includes/api.php` → `apiBoot()` (chỉ GET, bắt buộc đăng nhập → 401 JSON, biến exception thành 500 JSON), trả `{success, data}` / `{success:false, error}`. Xem `body-metrics.php`, `nutrition-history.php`.
   - Kiểu cũ (POST): tự kiểm tra method/session và trả `{success, message}` (`log-workout.php`, `workout-plan-*.php`, `chatbot.php`). Khi sửa file nào thì giữ đúng kiểu của file đó, vì JS phía trang đang đọc đúng key đó.
@@ -168,7 +168,7 @@ Không có bước build, không có bundler, không dùng Composer/npm. Chart.j
 - Không dùng framework/ORM (Laravel, Composer package nặng) — vi phạm yêu cầu hiểu bản chất
 - Không nối chuỗi SQL trực tiếp với biến từ `$_POST`/`$_GET`
 - Không tự sinh dữ liệu bài tập giả hoặc gắn nguồn không có thật
-- Không dùng ảnh/video có bản quyền lấy từ mạng xã hội. Chỉ dùng: video YouTube nhúng bằng iframe, ảnh từ nguồn mở (như wger, ghi nguồn theo giấy phép) hoặc ảnh nhóm tự chụp
+- Không dùng ảnh/video có bản quyền lấy từ mạng xã hội. Chỉ dùng: video YouTube nhúng bằng iframe, ảnh từ nguồn mở (như wger, ghi nguồn theo giấy phép), ảnh Unsplash theo Unsplash License (tải về lưu trong repo, ghi vào `public/assets/img/CREDITS.md`) hoặc ảnh nhóm tự chụp
 - Không lưu API key trong code commit
 - Không nhờ AI viết hộ nguyên tính năng/trang hoàn chỉnh ngay từ đầu — chỉ hỏi khi bí ở điểm cụ thể
 - Không copy-paste code từ AI mà không đọc hiểu trước

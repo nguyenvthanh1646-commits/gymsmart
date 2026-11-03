@@ -1,0 +1,261 @@
+/* home-guest.css — trang chủ khi chưa đăng nhập. Chỉ nạp cho khách, nên người đã đăng nhập không bị ảnh hưởng.
+   Class bắt đầu bằng "gh-". Màu nền lấy từ biến trong brand.css.
+   Nút cam dùng chữ tối (#0b1020 trên #ff5a1f đạt khoảng 6:1), vì chữ trắng trên nền cam này chỉ đạt 3,12:1. */
+
+:root {
+    --gh-space-section: 96px;  /* khoảng cách dọc giữa các mục */
+    --gh-card-bg: #121a33;
+    --gh-text: #eef1fa;
+    --gh-text-muted: #b4bfda;
+    --gh-focus: #ffb27a;
+}
+
+html { scroll-behavior: smooth; scroll-padding-top: 84px; } /* cuộn tới mục mà không bị thanh điều hướng che */
+body:has(.nb--guest-home) { background: var(--gs-ink); }
+
+/* Vòng focus đậm, nhìn rõ trên nền tối (biến dùng chung chỉ có độ đậm 18%) */
+body:has(.nb--guest-home) a:focus-visible,
+body:has(.nb--guest-home) button:focus-visible { outline: 3px solid var(--gh-focus); outline-offset: 3px; }
+
+/* ===== Thanh điều hướng: dính khi cuộn sẵn nhờ .nb trong brand.css, ở đây đổi sang tông tối ===== */
+.nb--guest-home { background: rgba(11, 16, 32, .9); border-bottom-color: var(--gs-line-dark); box-shadow: none; }
+.nb--guest-home .gs-logo__name { color: #fff; }
+.nb--guest-home a:has(> .gs-logo) { display: inline-flex; align-items: center; min-height: 44px; }
+.nb--guest-home .nb__links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gh-text); }
+.nb--guest-home .nb__links a:hover { color: var(--gs-accent-2); background: rgba(255, 255, 255, .07); text-decoration: none; }
+.nb--guest-home .nb__btn { min-height: 44px; }
+.nb--guest-home .nb__btn--ghost { color: var(--gh-text); border-color: rgba(255, 255, 255, .24); background: transparent; }
+.nb--guest-home .nb__btn--ghost:hover { color: var(--gs-accent-2); border-color: var(--gs-accent-2); text-decoration: none; }
+.nb--guest-home .nb__btn--solid { color: var(--gs-ink); box-shadow: none; }
+.nb--guest-home .nb__btn--solid:hover { color: var(--gs-ink); background: var(--gs-accent-2); text-decoration: none; }
+.nb--guest-home .nb__toggle { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .24); }
+.nb--guest-home .nb__toggle span,
+.nb--guest-home .nb__toggle span::before,
+.nb--guest-home .nb__toggle span::after { background: #fff; }
+
+@media (max-width: 980px) {
+    .nb--guest-home .nb__panel { background: #0f1730; border-bottom-color: var(--gs-line-dark); }
+    .nb--guest-home .nb__links a { padding: 0 12px; min-height: 48px; }
+    .nb--guest-home .nb__right .nb__btn { min-height: 48px; }
+}
+
+/* ===== Khung và nút dùng chung ===== */
+.container:has(> .gh-hero) { max-width: none; padding: 0; }
+.gh-wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+.gh-btn {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 26px;
+    border: 1px solid transparent; border-radius: 999px; font-size: 1rem; font-weight: 700; text-align: center;
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+.gh-btn:hover { text-decoration: none; }
+.gh-btn--solid { background: var(--gs-accent); color: var(--gs-ink); }
+.gh-btn--solid:hover { background: var(--gs-accent-2); color: var(--gs-ink); }
+.gh-btn--line { border-color: rgba(255, 255, 255, .34); background: rgba(11, 16, 32, .55); color: #fff; }
+.gh-btn--line:hover { border-color: #fff; color: #fff; }
+
+/* ===== Hero: viết cho điện thoại trước, màn hình rộng ghi đè ở cuối mục ===== */
+/* Màu nền tối gần với ảnh để khi ảnh chưa tải xong trang không bị nháy, và ảnh nằm absolute nên không làm nhảy bố cục */
+.gh-hero { position: relative; isolation: isolate; overflow: hidden; background: #000001; color: var(--gh-text); }
+.gh-hero__photo {
+    position: absolute; top: 0; left: 0; z-index: -3; width: 100%; height: 520px; object-fit: cover; object-position: 50% 0;
+    transform-origin: 50% 30%; animation: gh-zoom 30s ease-in-out infinite alternate;
+}
+/* Lớp phủ giữ chữ luôn dễ đọc: phần đầu để lộ người tập, từ chỗ có chữ trở xuống gần như đặc */
+.gh-hero__shade {
+    position: absolute; inset: 0; z-index: -2;
+    background:
+        radial-gradient(70% 26% at 50% 20%, rgba(255, 90, 31, .16), transparent 70%),
+        linear-gradient(180deg, rgba(0, 0, 1, .05) 0, rgba(0, 0, 1, .2) 170px, rgba(11, 16, 32, .88) 245px, var(--gs-ink) 340px);
+}
+
+.gh-tech { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.gh-tech__dots {
+    position: absolute; inset: 0; opacity: .5;
+    background-image: radial-gradient(rgba(255, 178, 122, .3) 1px, transparent 1.5px); background-size: 26px 26px;
+    -webkit-mask-image: linear-gradient(180deg, #000, transparent 260px); mask-image: linear-gradient(180deg, #000, transparent 260px);
+}
+.gh-tech__ring { position: absolute; top: 12px; left: 50%; width: 220px; height: 220px; margin-left: -110px; animation: gh-spin 80s linear infinite; }
+.gh-ring-ticks { fill: none; stroke: rgba(255, 178, 122, .32); stroke-width: 1.5; stroke-dasharray: 2 12; }
+.gh-ring-arc { fill: none; stroke: var(--gs-accent-2); stroke-opacity: .45; stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 210 846; }
+.gh-tech__hud { display: none; }
+.gh-tech__line { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 90px; }
+.gh-line-base, .gh-line-run { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.gh-line-base { stroke: rgba(255, 138, 61, .3); stroke-width: 1.5; }
+.gh-line-run { stroke: var(--gs-accent-2); stroke-width: 2.5; stroke-dasharray: 12 88; animation: gh-run 9s linear infinite; }
+
+.gh-hero__in { display: grid; gap: 32px; padding-top: 250px; padding-bottom: 72px; }
+.gh-hero__eyebrow { width: fit-content; margin: 0 0 12px; color: #ffc196; font-size: .9rem; font-weight: 700; letter-spacing: .02em; }
+.gh-hero__title { margin: 0; color: #fff; font-size: clamp(2.05rem, 8.6vw, 2.6rem); font-weight: 800; line-height: 1.14; letter-spacing: -.025em; text-wrap: balance; }
+.gh-hero__lead { margin: 16px 0 0; max-width: 36em; color: #dbe1f1; font-size: 1.05rem; line-height: 1.65; }
+.gh-hero__cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.gh-hero__cta .gh-btn { flex: 1 1 100%; }
+.gh-hero__fine { margin: 14px 0 0; color: #c7d0e6; font-size: .9rem; }
+
+/* Thẻ ví dụ: không dùng thẻ tiêu đề để dàn ý của trang chỉ gồm các mục thật */
+.gh-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.gh-card { position: relative; padding: 14px; border: 1px solid rgba(255, 255, 255, .13); border-radius: 16px; background: rgba(18, 26, 51, .94); font-size: .86rem; }
+.gh-card--plan { grid-column: 1 / -1; }
+.gh-card__tag { position: absolute; top: 12px; right: 12px; padding: 1px 8px; border-radius: 999px; background: rgba(255, 138, 61, .16); color: #ffc196; font-size: .72rem; font-weight: 700; }
+.gh-card__name { margin: 0 44px 10px 0; color: var(--gh-text-muted); font-size: .8rem; font-weight: 600; }
+.gh-card ul { list-style: none; margin: 0; padding: 0; }
+.gh-card b { color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.gh-kcal { display: flex; align-items: center; gap: 10px; }
+.gh-kcal p { margin: 0; color: var(--gh-text-muted); line-height: 1.3; }
+.gh-kcal b { display: block; font-size: 1.25rem; font-weight: 800; }
+.gh-kcal__ring { flex: none; transform: rotate(-90deg); }
+.gh-kcal__track, .gh-kcal__value { fill: none; stroke-width: 6; }
+.gh-kcal__track { stroke: rgba(255, 255, 255, .12); }
+.gh-kcal__value { stroke: var(--gs-accent-2); stroke-linecap: round; stroke-dasharray: 72 100; }
+
+.gh-macro li { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; color: var(--gh-text-muted); }
+.gh-macro li + li { margin-top: 6px; }
+.gh-macro__bar { grid-column: 1 / -1; display: block; height: 3px; margin-top: 3px; border-radius: 3px; background: var(--gs-accent-2); }
+/* Độ dài vạch theo tỉ lệ năng lượng của mẫu: đạm 25%, tinh bột 50%, béo 25% */
+.gh-macro__bar--protein, .gh-macro__bar--fat { width: 25%; }
+.gh-macro__bar--carb { width: 50%; background: #ffb27a; }
+.gh-macro__bar--fat { background: #ffd9c4; }
+
+.gh-plan li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid rgba(255, 255, 255, .09); color: #dbe1f1; }
+.gh-plan li:first-child { border-top: 0; padding-top: 0; }
+.gh-plan li:last-child { padding-bottom: 0; }
+
+@keyframes gh-zoom { from { transform: scale(1); } to { transform: scale(1.05); } }
+@keyframes gh-spin { to { transform: rotate(360deg); } }
+@keyframes gh-run { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes gh-pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+
+/* home-guest.js thêm .is-paused khi tab bị ẩn hoặc hero đã cuộn khỏi màn hình */
+.gh-hero.is-paused, .gh-hero.is-paused * { animation-play-state: paused !important; }
+
+@media (min-width: 560px) {
+    .gh-hero__cta .gh-btn { flex: 0 1 auto; }
+    .gh-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .gh-card--plan { grid-column: auto; }
+}
+@media (min-width: 721px) {
+    .gh-hero__photo { height: 100%; object-position: 63% 40%; transform-origin: 63% 45%; }
+    .gh-hero__shade {
+        background:
+            linear-gradient(180deg, transparent 62%, var(--gs-ink) 100%),
+            linear-gradient(90deg, rgba(11, 16, 32, .95) 0, rgba(11, 16, 32, .82) 72%, rgba(11, 16, 32, .55) 100%);
+    }
+    .gh-tech__dots { -webkit-mask-image: linear-gradient(115deg, transparent 38%, #000 66%, transparent 96%); mask-image: linear-gradient(115deg, transparent 38%, #000 66%, transparent 96%); }
+    .gh-tech__ring { top: 50%; left: 63.5%; width: 500px; height: 500px; margin: -280px 0 0 -250px; }
+    .gh-hero__in { padding-top: 88px; padding-bottom: 96px; }
+    .gh-hero__copy { max-width: 620px; }
+    .gh-hero__title { font-size: clamp(2.6rem, 5vw, 3.85rem); }
+    .gh-hero__lead { font-size: 1.14rem; }
+}
+/* Màn hình rộng: chữ bên trái, người tập ở giữa, thẻ ví dụ xếp dọc bên phải.
+   Từ 1200px chữ mới không đè lên người tập; hẹp hơn thì dùng bố cục một cột với lớp phủ đậm đều. */
+@media (min-width: 1200px) {
+    .gh-hero__in {
+        grid-template-columns: minmax(0, 620px) 236px; justify-content: space-between; align-items: center;
+        min-height: clamp(640px, calc(100svh - 68px), 860px);
+    }
+    .gh-cards { grid-template-columns: 1fr; }
+    .gh-card--plan { grid-column: auto; }
+    /* Chữ đã nằm bên trái người tập nên lớp phủ chỉ cần đậm ở nửa trái */
+    .gh-hero__shade {
+        background:
+            radial-gradient(34% 48% at 64% 44%, rgba(255, 90, 31, .13), transparent 72%),
+            linear-gradient(180deg, transparent 62%, var(--gs-ink) 100%),
+            linear-gradient(90deg, rgba(11, 16, 32, .96) 0, rgba(11, 16, 32, .9) 50%, rgba(11, 16, 32, .15) 68%, transparent 80%);
+    }
+    .gh-tech__hud { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+    .gh-tech__hud path { fill: none; stroke: rgba(255, 178, 122, .4); stroke-width: 1.2; }
+    .gh-hud-node { fill: var(--gs-accent-2); animation: gh-pulse 4s ease-in-out infinite; }
+    .gh-hud-node--late { animation-delay: 1.6s; }
+}
+
+/* ===== Các mục bên dưới hero ===== */
+.gh-section { padding: 64px 0; background: var(--gs-ink); color: var(--gh-text); }
+.gh-section--alt { background: #0e1530; }
+.gh-head { max-width: 660px; margin: 0 auto 36px; text-align: center; }
+.gh-head h2 { margin: 0; color: #fff; font-size: clamp(1.7rem, 5.6vw, 2.5rem); font-weight: 800; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance; }
+.gh-head p { margin: 14px 0 0; color: var(--gh-text-muted); font-size: 1.04rem; line-height: 1.65; }
+.gh-empty { margin: 0; padding: 32px 20px; border: 1px dashed rgba(255, 255, 255, .22); border-radius: 16px; color: var(--gh-text-muted); text-align: center; }
+.gh-more { margin-top: 32px; text-align: center; }
+.gh-link { margin-top: auto; padding-top: 12px; color: var(--gs-accent-2); font-size: .9rem; font-weight: 700; }
+.gh-features, .gh-exercises, .gh-articles, .gh-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+
+.gh-feature { display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 14px; padding: 16px; border: 1px solid var(--gs-line-dark); border-radius: 16px; background: var(--gh-card-bg); }
+.gh-feature__icon { grid-row: span 2; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 90, 31, .15); color: var(--gs-accent-2); }
+.gh-feature h3 { margin: 0 0 4px; color: #fff; font-size: 1.08rem; line-height: 1.35; }
+.gh-feature p { margin: 0; color: var(--gh-text-muted); font-size: .95rem; line-height: 1.6; }
+
+/* Số thứ tự vẽ bằng CSS counter: thẻ <ol> vẫn đọc đúng thứ tự với trình đọc màn hình */
+.gh-steps { gap: 28px; counter-reset: gh-step; }
+.gh-exercises { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.gh-steps li { position: relative; padding-left: 60px; }
+.gh-steps li::before {
+    counter-increment: gh-step; content: counter(gh-step);
+    position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 44px; height: 44px;
+    border-radius: 50%; background: var(--gs-accent); color: var(--gs-ink); font-weight: 800;
+}
+.gh-steps li:not(:last-child)::after { content: ""; position: absolute; top: 52px; bottom: -20px; left: 21px; width: 2px; background: rgba(255, 255, 255, .14); }
+.gh-steps h3 { margin: 0 0 6px; color: #fff; font-size: 1.1rem; line-height: 1.4; }
+.gh-steps p { margin: 0; color: var(--gh-text-muted); line-height: 1.6; }
+
+.gh-exercise, .gh-article {
+    display: flex; flex-direction: column; height: 100%; overflow: hidden; border: 1px solid var(--gs-line-dark); border-radius: 18px;
+    background: var(--gh-card-bg); color: inherit; transition: border-color var(--transition), transform var(--transition);
+}
+.gh-exercise:hover, .gh-article:hover { border-color: var(--gs-accent-2); color: inherit; text-decoration: none; transform: translateY(-3px); }
+.gh-exercise__img, .gh-article__img { display: block; width: 100%; height: auto; object-fit: cover; background: #0f1630; }
+.gh-exercise__img { aspect-ratio: 16 / 9; }
+.gh-exercise__img--none { display: grid; place-items: center; color: var(--gh-text-muted); font-size: .9rem; }
+.gh-article__img { aspect-ratio: 16 / 9; }
+.gh-exercise__body, .gh-article__body { display: flex; flex-direction: column; flex: 1; padding: 18px 20px 20px; }
+.gh-exercise__body { padding: 12px 14px 14px; }
+.gh-exercise h3, .gh-article h3 { margin: 0; color: #fff; font-size: 1.05rem; line-height: 1.4; }
+.gh-exercise h3 { font-size: .98rem; }
+.gh-exercise__meta { margin: 4px 0 0; color: var(--gh-text-muted); font-size: .88rem; }
+
+.gh-article__tag { align-self: flex-start; margin-bottom: 10px; padding: 2px 10px; border-radius: 999px; background: rgba(255, 138, 61, .16); color: #ffc196; font-size: .76rem; font-weight: 700; }
+.gh-article__summary { margin: 8px 0 0; color: var(--gh-text-muted); font-size: .9rem; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+.gh-section--final { padding-bottom: 72px; }
+.gh-final { padding: 44px 20px; border: 1px solid rgba(255, 138, 61, .35); border-radius: 24px; background: linear-gradient(135deg, rgba(255, 90, 31, .18), rgba(18, 26, 51, .9) 62%); text-align: center; }
+.gh-final h2 { margin: 0; color: #fff; font-size: clamp(1.7rem, 5.6vw, 2.5rem); font-weight: 800; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance; }
+.gh-final p { margin: 12px auto 24px; max-width: 32em; color: #dbe1f1; line-height: 1.6; text-wrap: balance; }
+.gh-final .gh-btn { width: 100%; }
+
+/* Chân trang gọn: chỉ áp dụng ở trang này, các trang khác giữ nguyên */
+body:has(.gh-hero) .ft__brand p { display: none; }
+body:has(.gh-hero) .ft__in { padding-top: 24px; padding-bottom: 12px; align-items: center; }
+body:has(.gh-hero) .ft__links a { display: inline-flex; align-items: center; min-height: 44px; }
+
+@media (min-width: 620px) {
+    .gh-features, .gh-articles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .gh-feature { display: block; padding: 22px; border-radius: 18px; }
+    .gh-feature:last-child { grid-column: 1 / -1; } /* 7 thẻ trên lưới 2 cột: thẻ cuối rộng hết hàng để không thừa ô */
+    .gh-feature h3 { margin: 16px 0 6px; }
+    .gh-exercises { gap: 16px; }
+    .gh-exercise__body { padding: 18px 20px 20px; }
+    .gh-final { padding: 60px 32px; }
+    .gh-final .gh-btn { width: auto; }
+}
+@media (min-width: 721px) {
+    .gh-section { padding: var(--gh-space-section) 0; }
+    .gh-head { margin-bottom: 48px; }
+    .gh-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+    .gh-articles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .gh-steps li { padding: 64px 0 0; }
+    .gh-steps li:not(:last-child)::after { top: 21px; bottom: auto; left: 56px; right: -20px; width: auto; height: 2px; }
+}
+@media (min-width: 1020px) {
+    .gh-features { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    /* 7 thẻ trên lưới 4 cột: thẻ đầu rộng gấp đôi để hàng cuối không bị thừa ô */
+    .gh-feature:first-child { grid-column: span 2; }
+    .gh-feature:last-child { grid-column: auto; }
+    .gh-exercises { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    /* Tắt hết chuyển động: ảnh đứng yên, đường biểu đồ chỉ còn nét nền */
+    .gh-hero *, .gh-btn { animation: none !important; transition: none !important; }
+    .gh-line-run { display: none; }
+}
