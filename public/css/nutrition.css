@@ -1,7 +1,7 @@
 /* nutrition.css — giao diện trang Dinh dưỡng (nutrition.php). Class bắt đầu bằng "nt-".
    Nạp sau ui.css và brand.css nên dùng lại biến màu (--gs-*, --ui-*) và thành phần chung (.card, .btn, .chip, .alert, .field, .tag). */
 
-.nt { --nt-p: var(--gs-accent); --nt-c: #3b5bdb; --nt-f: #12b5a2; max-width: 1180px; margin: 0 auto; }
+.nt { --nt-p: var(--macro-protein); --nt-c: var(--macro-carb); --nt-f: var(--macro-fat); max-width: 1180px; margin: 0 auto; }
 .nt .card + .card { margin-top: 0; }                    /* khoảng cách do lưới quyết định */
 .nt .pg-head { margin-bottom: 18px; }
 
@@ -35,7 +35,7 @@
 }
 .nt button.nt-goal:hover { border-color: #ffb08a; background: #fff; color: var(--color-text); transform: none; filter: none; }
 .nt button.nt-goal.is-active { border-color: var(--gs-accent); background: var(--ui-accent-soft); box-shadow: 0 0 0 3px rgba(255, 90, 31, .14); }
-.nt button.nt-goal:focus-visible { outline: 3px solid rgba(255, 90, 31, .45); outline-offset: 2px; }
+.nt button.nt-goal:focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 2px; }
 .nt-goal__name { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1rem; color: var(--color-text); }
 .nt-goal__name i { font-style: normal; font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--gs-accent); color: #fff; }
 .nt-goal__kcal { font-size: 1.15rem; font-weight: 800; letter-spacing: -.01em; color: var(--gs-ink); white-space: nowrap; }
@@ -103,7 +103,7 @@
 .nt-style__box small { color: var(--color-text-muted); font-size: .85rem; line-height: 1.45; }
 .nt-style:hover .nt-style__box { border-color: #ffb08a; }
 .nt-style input:checked + .nt-style__box { border-color: var(--color-accent); background: var(--ui-accent-soft); box-shadow: 0 0 0 3px rgba(255, 90, 31, .12); }
-.nt-style input:focus-visible + .nt-style__box { outline: 3px solid rgba(255, 90, 31, .45); outline-offset: 2px; }
+.nt-style input:focus-visible + .nt-style__box { outline: 3px solid var(--ui-focus); outline-offset: 2px; }
 
 .nt-custom { display: none; margin: 0 0 14px; padding: 14px; border: 1px dashed #d5dbe8; border-radius: 12px; background: #fafbfe; }
 .nt-custom.is-open { display: block; }

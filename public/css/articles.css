@@ -3,7 +3,7 @@
    tập luyện tím, sức khỏe đỏ, kiến thức chung xám xanh.
    Thêm chuyên mục mới: thêm 1 dòng trong articleCategories() (includes/articles.php) và 1 khối màu ở đây. */
 
-:root { --c-protein: #ff5a1f; --c-carb: #3b5bdb; --c-fat: #12b5a2; --c-general: #475467; --c-nutrition: #b45309; --c-training: #6250d6; --c-health: #d92d20; }   /* ở :root để cả trang đọc (.ar-read) dùng được */
+:root { --c-protein: var(--macro-protein); --c-carb: var(--macro-carb); --c-fat: var(--macro-fat); --c-general: #475467; --c-nutrition: #b45309; --c-training: #6250d6; --c-health: #d92d20; }   /* ở :root để cả trang đọc (.ar-read) dùng được */
 .ar { max-width: 1100px; margin: 0 auto; }
 .ar-protein   { --ar-c: var(--c-protein);   --ar-soft: #fff0e8; --ar-ink: #c2410c; }
 .ar-carb      { --ar-c: var(--c-carb);      --ar-soft: #e8edff; --ar-ink: #2b3fa8; }

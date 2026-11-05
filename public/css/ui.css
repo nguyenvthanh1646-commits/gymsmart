@@ -21,6 +21,14 @@
     --ui-shadow-md: 0 8px 24px rgba(16, 24, 40, .08);
     --ui-shadow-lg: 0 24px 48px rgba(16, 24, 40, .14);
     --ui-ease: cubic-bezier(.2, .7, .2, 1);
+    --ui-accent-text: #c2410c;   /* chữ cam nhỏ trên nền sáng: 5,18:1 trên trắng, --color-accent chỉ đạt 3,12:1 */
+    --ui-focus: #c2410c;         /* vòng focus: đạt từ 3:1 trên cả nền sáng lẫn nền tối */
+    --ui-track: #eef1f7;         /* phần chưa đạt của vòng và thanh tiến độ */
+    --ui-success: #067647;       /* chữ trạng thái thành công trên nền sáng */
+    --ui-radius-card: 18px;      /* bo góc của thẻ */
+    --macro-protein: var(--color-accent);   /* 3 màu macro dùng chung cho trang TDEE, bài viết, trang chủ */
+    --macro-carb: #3b5bdb;
+    --macro-fat: #12b5a2;
 }
 
 /* ===== Nền tảng ===== */
@@ -35,7 +43,7 @@ body {
 }
 button, input, select, textarea { font: inherit; }              /* ô nhập và nút dùng cùng font với trang */
 ::selection { background: #ffd9c7; color: #1a1a1a; }
-:focus-visible { outline: 3px solid rgba(255, 90, 31, .45); outline-offset: 2px; border-radius: 6px; }
+:focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 2px; border-radius: 6px; }
 img { max-width: 100%; }
 
 /* Tiêu đề: dấu tiếng Việt xếp chồng nên cần line-height >= 1.2 và KHÔNG ép chữ quá sát nhau */
@@ -48,16 +56,16 @@ a { color: var(--ui-accent-dark); }
 .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     min-height: 46px; padding: 0 22px; border: 1px solid transparent; border-radius: 12px;
-    background: linear-gradient(135deg, #ff7a3a, var(--color-accent)); color: #fff;
+    background: linear-gradient(135deg, #ff7a3a, var(--color-accent)); color: var(--gs-ink, #0b1020);   /* chữ tối trên cam đạt từ 6:1, chữ trắng chỉ đạt 3,12:1 */
     font-size: .98rem; font-weight: 600; line-height: 1; text-decoration: none; cursor: pointer;
     box-shadow: 0 8px 18px rgba(255, 90, 31, .26);
     transition: transform .15s var(--ui-ease), box-shadow .15s var(--ui-ease), filter .15s;
 }
-.btn:hover { opacity: 1; filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 12px 24px rgba(255, 90, 31, .32); }
+.btn:hover { color: var(--gs-ink, #0b1020); opacity: 1; filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 12px 24px rgba(255, 90, 31, .32); }
 .btn:active { transform: translateY(0); }
 .btn--block { display: flex; width: 100%; }
 .btn--ghost { background: #fff; color: var(--color-text); border-color: #d5dbe8; box-shadow: none; }
-.btn--ghost:hover { border-color: var(--color-accent); color: var(--color-accent); box-shadow: none; filter: none; }
+.btn--ghost:hover { border-color: var(--color-accent); color: var(--ui-accent-text); box-shadow: none; filter: none; }
 
 /* ===== Thẻ ===== */
 .card {

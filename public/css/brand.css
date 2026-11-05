@@ -51,8 +51,8 @@
     border-radius: 999px; font-size: .9rem; font-weight: 600; text-decoration: none; cursor: pointer;
     border: 1px solid transparent; white-space: nowrap;
 }
-.nb__btn--solid { background: var(--gs-accent); color: #fff; box-shadow: 0 6px 16px rgba(255, 90, 31, .28); }
-.nb__btn--solid:hover { background: #e84a12; }
+.nb__btn--solid { background: var(--gs-accent); color: var(--gs-ink); box-shadow: 0 6px 16px rgba(255, 90, 31, .28); }
+.nb__btn--solid:hover { background: var(--gs-accent-2); color: var(--gs-ink); text-decoration: none; }
 .nb__btn--ghost { color: #111827; border-color: #d1d5db; background: #fff; }
 .nb__btn--ghost:hover { border-color: var(--gs-accent); color: var(--gs-accent); }
 .nb__btn--admin { background: var(--gs-ink); color: #fff; }

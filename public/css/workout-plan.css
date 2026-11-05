@@ -132,7 +132,7 @@
 .wp-log__field input { width: 96px; height: 40px; padding: 0 10px; border: 1px solid #d5dbe8; border-radius: 10px; font: inherit; font-size: .95rem; text-align: center; }
 .wp-log__field input:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; border-color: transparent; }
 .wp-log__submit { min-height: 40px; }
-.wp-log__submit.is-done { background: #067647; border-color: #067647; }
+.wp-log__submit.is-done { background: #067647; border-color: #067647; color: #fff; }
 
 /* ===== Chế độ chỉnh sửa (B11) ===== */
 .workout-plan__edit, .workout-plan__edit-only { display: none; }
@@ -146,7 +146,7 @@
 .wp-edit select { flex: 1 1 200px; width: auto; height: 38px; max-width: 100%; padding: 0 10px; border: 1px solid #d5dbe8; border-radius: 8px; font: inherit; background: #fff; }
 .wp-edit .btn { min-height: 38px; padding: 0 14px; }
 .wp-edit__remove { color: #b42318; }
-.workout-plan--editing #workout-plan-toggle-edit { background: var(--gs-ink, #0b1020); border-color: var(--gs-ink, #0b1020); }
+.workout-plan--editing #workout-plan-toggle-edit { background: var(--gs-ink, #0b1020); border-color: var(--gs-ink, #0b1020); color: #fff; }
 
 /* ===== Cột phải ===== */
 .wp-vol { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
