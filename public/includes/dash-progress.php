@@ -44,8 +44,8 @@ $progress = $dash['progress'];
                  aria-label="Biểu đồ cân nặng từ <?= htmlspecialchars(dashNumber((float)$progress['metrics'][0]['weight_kg'])) ?> kg ngày <?= htmlspecialchars($dateOf($trend['from'])) ?> đến <?= htmlspecialchars(dashNumber((float)$latest['weight_kg'])) ?> kg ngày <?= htmlspecialchars($dateOf($latest['recorded_date'])) ?>">
                 <defs>
                     <linearGradient id="du-spark-fill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0" stop-color="#ff8a3d" stop-opacity=".35"/>
-                        <stop offset="1" stop-color="#ff8a3d" stop-opacity="0"/>
+                        <stop class="du-spark__stop" offset="0" stop-opacity=".28"/>
+                        <stop class="du-spark__stop" offset="1" stop-opacity="0"/>
                     </linearGradient>
                 </defs>
                 <polygon class="du-spark__area" points="0,64 <?= htmlspecialchars($sparkPoints) ?> 240,64"/>
