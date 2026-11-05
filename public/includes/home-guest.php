@@ -44,8 +44,8 @@
             <h1 class="gh-hero__title" id="gh-title">Lịch tập và dinh dưỡng được may đo cho riêng bạn</h1>
             <p class="gh-hero__lead">Nhập chỉ số cơ thể và mục tiêu, GymSmart gợi ý lịch tập, tính calo và macro, rồi giúp bạn ghi lại từng buổi để thấy mình tiến bộ.</p>
             <div class="gh-hero__cta">
-                <a class="gh-btn gh-btn--solid" href="/register.php">Tạo tài khoản miễn phí</a>
-                <a class="gh-btn gh-btn--line" href="#tinh-nang">Xem tính năng</a>
+                <a class="btn" href="/register.php">Tạo tài khoản miễn phí</a>
+                <a class="btn gh-btn--line" href="#tinh-nang">Xem tính năng</a>
             </div>
             <p class="gh-hero__fine">Miễn phí. Đăng ký 3 bước rồi tạo lịch tập đầu tiên.</p>
         </div>
@@ -187,7 +187,7 @@
                     </li>
                 <?php endforeach; ?>
             </ul>
-            <div class="gh-more"><a class="gh-btn gh-btn--line" href="/articles.php">Đăng nhập để xem tất cả bài viết</a></div>
+            <div class="gh-more"><a class="btn btn--ghost" href="/articles.php">Đăng nhập để xem tất cả bài viết</a></div>
         <?php endif; ?>
     </div>
 </section>
@@ -197,7 +197,7 @@
         <div class="gh-final">
             <h2 id="gh-final-title">Sẵn sàng có lịch tập của riêng bạn?</h2>
             <p>Tạo tài khoản miễn phí, nhập chỉ số cơ thể và bắt đầu buổi tập đầu tiên.</p>
-            <a class="gh-btn gh-btn--solid" href="/register.php">Tạo tài khoản miễn phí</a>
+            <a class="btn" href="/register.php">Tạo tài khoản miễn phí</a>
         </div>
     </div>
 </section>
