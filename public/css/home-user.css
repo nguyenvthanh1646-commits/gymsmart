@@ -196,6 +196,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 84px; }
     .du-hero__in { grid-template-areas: "copy media" "stats media"; grid-template-columns: minmax(0, 1fr) minmax(0, 44%); grid-template-rows: auto 1fr; column-gap: 24px; padding-top: 28px; }
     .du-hero__media { height: auto; min-height: 280px; }
     .du-hero__photo { object-position: 63% 30%; }
+    .du-hero__in:not(:has(.du-hero__stats)) .du-hero__copy { grid-row: 1 / -1; align-self: center; } /* chưa có số liệu: chữ căn giữa theo ảnh */
     .du-week { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 24px; padding: 22px; }
     .du-week__empty { grid-column: 1 / -1; }
     .du-day { padding: 12px 2px; }
