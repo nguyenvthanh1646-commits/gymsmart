@@ -48,9 +48,11 @@ if ($loggedIn) {
 }
 // Khách ở trang chủ: các trang tính năng đều cần đăng nhập nên liên kết chỉ cuộn tới mục ngay trong trang
 $navGuestHome = !$loggedIn && $navCurrent === 'index.php';
+// Trang chủ sau đăng nhập dùng chủ đề tối (css/home-user.css), các trang khác giữ nền sáng
+$navUserHome = $loggedIn && $navCurrent === 'index.php';
 $navAvatar = ($loggedIn && is_string($_SESSION['avatar'] ?? null) && preg_match('#^uploads/avatars/[A-Za-z0-9._-]+\.jpg$#', $_SESSION['avatar'])) ? $_SESSION['avatar'] : null;
 ?>
-<header class="nb" id="nb">
+<header class="nb<?= $navUserHome ? ' nb--user-home' : '' ?>" id="nb">
     <div class="nb__in">
         <a href="/index.php" aria-label="GymSmart — trang chủ"><?= gsLogo('dark', false, 36) ?></a>
 

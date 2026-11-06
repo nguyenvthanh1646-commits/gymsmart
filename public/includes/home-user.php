@@ -12,7 +12,7 @@ function duState(string $icon, string $title, string $text, string $href, string
         <span class="du-state__icon"><?= hmIcon($icon, 26) ?></span>
         <p class="du-state__title"><?= htmlspecialchars($title) ?></p>
         <p class="du-state__text"><?= htmlspecialchars($text) ?></p>
-        <a class="btn btn--ghost du-state__action" href="<?= htmlspecialchars($href) ?>"><?= htmlspecialchars($label) ?></a>
+        <a class="du-link du-link--button" href="<?= htmlspecialchars($href) ?>"><?= htmlspecialchars($label) ?></a>
     </div>
     <?php
 }
@@ -65,21 +65,19 @@ if ($dash['progress']['status'] === 'ok') {
 
 <div class="du">
     <div class="du-hero">
+        <!-- Ảnh trang trí nên alt rỗng. Nguồn ảnh ghi ở assets/img/CREDITS.md -->
+        <picture>
+            <source media="(max-width: 720px)" type="image/webp" srcset="/assets/img/hero/hero-800.webp" width="800" height="1000">
+            <source media="(max-width: 720px)" type="image/jpeg" srcset="/assets/img/hero/hero-800.jpg" width="800" height="1000">
+            <source type="image/webp" srcset="/assets/img/hero/hero-1920.webp" width="1920" height="1080">
+            <img class="du-hero__photo" src="/assets/img/hero/hero-1920.jpg" alt="" width="1920" height="1080" fetchpriority="high" decoding="async">
+        </picture>
         <div class="du-wrap du-hero__in">
-            <!-- Ảnh trang trí nên alt rỗng. Nguồn ảnh ghi ở assets/img/CREDITS.md -->
-            <div class="du-hero__media">
-                <picture>
-                    <source media="(max-width: 720px)" type="image/webp" srcset="/assets/img/hero/hero-800.webp" width="800" height="1000">
-                    <source media="(max-width: 720px)" type="image/jpeg" srcset="/assets/img/hero/hero-800.jpg" width="800" height="1000">
-                    <source type="image/webp" srcset="/assets/img/hero/hero-1920.webp" width="1920" height="1080">
-                    <img class="du-hero__photo" src="/assets/img/hero/hero-1920.jpg" alt="" width="1920" height="1080" fetchpriority="high" decoding="async">
-                </picture>
-            </div>
             <div class="du-hero__copy">
                 <p class="du-hero__date"><?= htmlspecialchars($dash['dateLabel']) ?></p>
                 <h1 class="du-hero__title">Chào <em><?= htmlspecialchars($firstName) ?></em></h1>
                 <p class="du-hero__lead" data-dash-lead><?= htmlspecialchars($duLead) ?></p>
-                <a class="btn du-hero__cta" href="<?= htmlspecialchars($dash['action']['href']) ?>" data-dash-primary><?= htmlspecialchars($dash['action']['label']) ?></a>
+                <a class="du-btn" href="<?= htmlspecialchars($dash['action']['href']) ?>" data-dash-primary><?= htmlspecialchars($dash['action']['label']) ?></a>
             </div>
             <?php if ($duStats !== []): ?>
                 <dl class="du-hero__stats">

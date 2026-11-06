@@ -89,7 +89,7 @@ function duExerciseThumb(?string $imageFile): void
                             <label>Tạ (kg)
                                 <input type="number" name="weight" min="0" max="500" step="0.5" value="<?= $lastWeight !== null ? htmlspecialchars((string)$lastWeight) : '' ?>">
                             </label>
-                            <button type="submit" class="btn du-log__save">Lưu</button>
+                            <button type="submit" class="du-log__save">Lưu</button>
                             <p class="du-log__msg" role="status" data-log-msg></p>
                         </form>
                     <?php endif; ?>
