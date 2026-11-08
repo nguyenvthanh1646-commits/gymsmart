@@ -5,11 +5,12 @@
  * Luồng chạy:
  *   1. Đọc hồ sơ (tuổi, chiều cao, cân nặng, giới tính, mức vận động, mục tiêu) từ bảng users
  *   2. POST "đổi mục tiêu"  → cập nhật users.goal → chuyển lại trang (tính lại toàn bộ)
- *      POST "kiểu ăn"       → lưu lựa chọn (cân bằng, giàu protein, ít tinh bột, tùy chỉnh %) vào SESSION
+ *      POST kiểu ăn, số bữa, loại trừ thực phẩm, nhịp và ngày tập → lưu vào bảng nutrition_preferences và SESSION
+ *      (chưa import bảng thì chỉ giữ trong SESSION, xem includes/nutrition-db.php)
  *   3. Tính BMR → TDEE → calo mục tiêu + macro (hàm trong includes/tdee.php, việc của C)
  *      rồi áp kiểu ăn (includes/meal-plan.php) và chia macro cho từng bữa
  *   4. Lưu kết quả của hôm nay vào nutrition_targets (mỗi ngày 1 dòng)
- *   5. Vẽ trang: vòng tròn macro, lịch ăn, bảng so sánh các mục tiêu
+ *   5. Vẽ trang: vòng tròn macro, tiến độ cân nặng, lịch ăn hôm nay hoặc cả tuần, danh sách đi chợ, bảng so sánh các mục tiêu
  */
 
 require_once __DIR__ . '/includes/auth.php';
@@ -17,6 +18,7 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/includes/tdee.php';
 require_once __DIR__ . '/includes/meal-plan.php';
+require_once __DIR__ . '/includes/nutrition-db.php';
 
 requireLogin();
 
@@ -44,19 +46,25 @@ $experienceLabels = [
 // Nhãn cho khối "Thông số của bạn" ở cột trái
 $genderLabels = ['MALE' => 'Nam', 'FEMALE' => 'Nữ', 'OTHER' => 'Khác'];
 $levelLabels  = ['BEGINNER' => 'Mới tập', 'INTERMEDIATE' => 'Trung bình', 'ADVANCED' => 'Nâng cao'];
+$paceLabels   = ['gentle' => 'Chậm', 'standard' => 'Vừa', 'fast' => 'Nhanh'];
+$weekdayNames = [1 => 'Thứ Hai', 2 => 'Thứ Ba', 3 => 'Thứ Tư', 4 => 'Thứ Năm', 5 => 'Thứ Sáu', 6 => 'Thứ Bảy', 7 => 'Chủ nhật'];
 
 // ===== 1. Đọc hồ sơ =====
 $stmt = $pdo->prepare(
-    'SELECT age, height_cm, weight_kg, gender, activity_level, experience_level, goal FROM users WHERE id = ?'
+    'SELECT age, height_cm, weight_kg, gender, activity_level, experience_level, goal, CURDATE() AS today FROM users WHERE id = ?'
 );
 $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Lựa chọn kiểu ăn đang dùng (lưu trong session, mặc định: theo mục tiêu)
-$prefs = $_SESSION['nutri'] ?? ['diet' => 'goal', 'p' => 25, 'c' => 45, 'f' => 30];
-if (!isset($styles[$prefs['diet'] ?? ''])) {
-    $prefs = ['diet' => 'goal', 'p' => 25, 'c' => 45, 'f' => 30];
-}
+// Lựa chọn đang dùng: ưu tiên bảng nutrition_preferences, chưa có thì lấy trong session, cuối cùng là mặc định
+$prefs = normalizeNutritionPrefs(loadNutritionPrefs($pdo, $userId) ?? ($_SESSION['nutri'] ?? []));
+
+/** Đổi vài lựa chọn rồi lưu vào session và DB (DB lỗi hoặc chưa import bảng thì vẫn còn session). */
+$savePrefs = function (array $changes) use (&$prefs, $pdo, $userId): void {
+    $prefs = normalizeNutritionPrefs($changes + $prefs);
+    $_SESSION['nutri'] = $prefs;
+    saveNutritionPrefs($pdo, $userId, $prefs);
+};
 
 $dietError = '';
 $formPct = ['p' => (int)$prefs['p'], 'c' => (int)$prefs['c'], 'f' => (int)$prefs['f']]; // giá trị hiện trong ô tùy chỉnh
@@ -98,11 +106,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($dietError === '') {
-            $_SESSION['nutri'] = ['diet' => $formDiet] + $formPct;
+            $savePrefs(['diet' => $formDiet] + $formPct);
             header('Location: /nutrition.php#macro');
             exit;
         }
         // Có lỗi: không chuyển trang, hiện lại form kèm thông báo (giữ nguyên số vừa nhập)
+    }
+
+    if ($action === 'rhythm') {
+        $changes = ['cycle' => isset($_POST['cycle'])];
+        // Mục tiêu duy trì không có ô chọn nhịp: giữ nguyên nhịp đã lưu
+        if (isset($_POST['pace']) && in_array($_POST['pace'], array_keys($paceLabels), true)) {
+            $changes['pace'] = $_POST['pace'];
+        }
+        $savePrefs($changes);
+        header('Location: /nutrition.php#macro');
+        exit;
+    }
+
+    // Hai form của khu lịch ăn giữ nguyên chế độ xem đang mở (hôm nay hay cả tuần)
+    $backToMeals = '/nutrition.php' . (($_POST['view'] ?? '') === 'week' ? '?view=week' : '') . '#lich-an';
+
+    if ($action === 'meals') {
+        $newMeals = filter_var($_POST['meals'] ?? '', FILTER_VALIDATE_INT);
+        if (in_array($newMeals, [3, 4, 5], true)) {
+            $savePrefs(['meals' => $newMeals]);
+        }
+        header('Location: ' . $backToMeals);
+        exit;
+    }
+
+    if ($action === 'foods') {
+        $savePrefs(['exclusions' => normalizeExclusions($_POST['exclusions'] ?? [])]);
+        header('Location: ' . $backToMeals);
+        exit;
     }
 }
 
@@ -141,12 +178,12 @@ if (empty($missing)) {
         $weight  = (float)$user['weight_kg'];
         $bmr     = calculateBMR($weight, (float)$user['height_cm'], (int)$user['age'], $user['gender']);
         $tdee    = calculateTDEE($bmr, $user['activity_level']);
-        $targets = calculateTargets($tdee, $weight, $user['goal'], $user['experience_level']);
+        $targets = calculateTargets($tdee, $weight, $user['goal'], $user['experience_level'], $prefs['pace']);
         $macros  = $applyDiet($targets);
 
         // Bảng so sánh 3 mục tiêu (cùng kiểu ăn đang chọn)
         foreach ($goalLabels as $g => $label) {
-            $comparison[$g] = $applyDiet(calculateTargets($tdee, $weight, $g, $user['experience_level']));
+            $comparison[$g] = $applyDiet(calculateTargets($tdee, $weight, $g, $user['experience_level'], $prefs['pace']));
         }
     } catch (InvalidArgumentException $e) {
         // Dữ liệu hồ sơ sai (ví dụ tuổi = 0): báo lỗi thân thiện, không để trang sập
@@ -182,20 +219,57 @@ if ($macros !== null) {
 $notes = []; // lưu ý sức khỏe (không chặn, chỉ nhắc)
 $shares = ['protein' => 0, 'carbs' => 0, 'fat' => 0];
 $plan = ['meals' => [], 'total' => [], 'target' => []];
-$meals = 4;   // mặc định 4 bữa: sáng, trưa, phụ, tối
+$meals = $prefs['meals'];
 $variant = 0;
+$picks = [];
+$view = ($_GET['view'] ?? '') === 'week' ? 'week' : 'day';
+$week = $shopping = $trainingDays = $paceRows = [];
+$cycleOptions = $progressInfo = null;
+$dayKind = [];                                   // [thứ => 'train' | 'rest'] khi bật ăn theo ngày tập
+$todayN = 1;
 
 if ($macros !== null) {
     $shares = macroShares($macros['protein_g'], $macros['carbs_g'], $macros['fat_g']);
 
-    // Số bữa và phương án món lấy từ URL (chỉ để xem, không đổi dữ liệu nên không cần CSRF)
-    $mealsIn = filter_var($_GET['meals'] ?? 4, FILTER_VALIDATE_INT);
-    $meals = in_array($mealsIn, [3, 4, 5], true) ? $mealsIn : 4;
+    // Phương án món và các lần đổi món lấy từ URL (chỉ để xem, không đổi dữ liệu nên không cần CSRF)
     $variantIn = filter_var($_GET['v'] ?? 0, FILTER_VALIDATE_INT);
     $variant = ($variantIn !== false && $variantIn >= 0 && $variantIn < 100) ? $variantIn : 0;
-    $plan = buildMealPlan($macros, $meals, $variant);
+    $picks = parseMealPicks($_GET['p'] ?? '', $meals);
+
+    // "Hôm nay" lấy từ MySQL để khớp với lịch tập và nhật ký trên trang chủ
+    $todayN = (int)(new DateTimeImmutable($user['today']))->format('N');
+
+    // Mỗi nhịp mục tiêu tương ứng bao nhiêu calo và dự kiến thay đổi bao nhiêu kg/tuần
+    foreach ($paceLabels as $key => $label) {
+        $kcal = calculateTargets($tdee, $weight, $user['goal'], $user['experience_level'], $key)['target_kcal'];
+        $paceRows[$key] = ['label' => $label, 'kcal' => $kcal, 'weekly' => expectedWeeklyChange($kcal, $tdee)];
+    }
+
+    // Ngày tập và ngày nghỉ: số ngày tập lấy từ lịch tập đang dùng, tổng calo cả tuần không đổi
+    $trainingDays = loadTrainingWeekdays($pdo, $userId);
+    $cycleOptions = splitTrainingRestDays($macros, count($trainingDays));
+    $dayTargets = array_fill(1, 7, $macros);
+    if ($prefs['cycle'] && $cycleOptions !== null) {
+        for ($d = 1; $d <= 7; $d++) {
+            $dayKind[$d] = in_array($d, $trainingDays, true) ? 'train' : 'rest';
+            $dayTargets[$d] = $cycleOptions[$dayKind[$d]];
+        }
+    }
+
+    // Lịch hôm nay chính là ngày hôm nay trong lịch tuần, nên hai chế độ xem luôn cùng món
+    $week = buildWeekPlan($dayTargets, $meals, $variant, $prefs['exclusions'], [$todayN => $picks]);
+    $plan = $week[$todayN];
+    $shopping = buildShoppingList($week);
 
     $minKcal = $user['gender'] === 'MALE' ? 1500 : 1200;
+    if ($dayKind && $cycleOptions['rest']['target_kcal'] < $minKcal) {
+        $notes[] = 'Ngày nghỉ đang dưới ' . $minKcal . ' kcal. Bạn nên tắt ăn theo ngày tập hoặc chọn nhịp chậm hơn.';
+    }
+
+    // So cân nặng thực tế với kế hoạch; không gợi ý ăn thấp hơn BMR hay mức tối thiểu
+    $progressInfo = analyzeWeightProgress(
+        loadRecentWeights($pdo, $userId), $macros['target_kcal'], $tdee, max($bmr, $minKcal), $user['today']
+    );
     if ($macros['target_kcal'] < $bmr) {
         $notes[] = 'Calo mục tiêu đang thấp hơn BMR của bạn. Ăn thấp hơn mức cơ thể cần khi nghỉ khó duy trì lâu và dễ mất cơ. Hãy cân nhắc mục tiêu nhẹ hơn hoặc tăng mức vận động.';
     } elseif ($macros['target_kcal'] < $minKcal) {
@@ -217,6 +291,31 @@ if ($macros !== null) {
 function nf($n, int $d = 0): string
 {
     return number_format((float)$n, $d, ',', '.');
+}
+
+/** Số có dấu kiểu Việt Nam: +0,25 hoặc −0,5 */
+function signedNf(float $n, int $d = 0): string
+{
+    if (round($n, $d) == 0) {
+        return nf(0, $d);
+    }
+    return ($n > 0 ? '+' : '−') . nf(abs($n), $d);
+}
+
+/** Khối lượng cho danh sách đi chợ: từ 1000 g đổi sang kg. */
+function shoppingAmount(int $grams): string
+{
+    return $grams >= 1000 ? nf($grams / 1000, 1) . ' kg' : nf($grams) . ' g';
+}
+
+/** Tổng cả ngày có khớp mục tiêu không: mỗi macro lệch tối đa 1 g, calo lệch tối đa 1% (phần còn lại chỉ do làm tròn). */
+function dayMatchesTarget(array $plan): bool
+{
+    $ok = abs($plan['total']['kcal'] - $plan['target']['kcal']) <= $plan['target']['kcal'] * 0.01;
+    foreach (['p', 'c', 'f'] as $k) {
+        $ok = $ok && abs($plan['total'][$k] - $plan['target'][$k]) <= 1;
+    }
+    return $ok;
 }
 
 /** Một đoạn của vòng tròn (SVG): độ dài và vị trí bắt đầu, đơn vị là % chu vi */
@@ -360,6 +459,43 @@ include __DIR__ . '/includes/header.php';
 
                 <button type="submit" class="btn btn--block">Áp dụng kiểu ăn</button>
             </form>
+
+            <form class="card nt-rhythm" method="post" action="/nutrition.php">
+                <?= csrfField() ?>
+                <input type="hidden" name="action" value="rhythm">
+                <h2 class="card__head">Nhịp và ngày tập</h2>
+                <?php if ($user['goal'] === 'MAINTAIN'): ?>
+                    <p class="card__sub">Mục tiêu duy trì luôn ăn bằng TDEE nên không cần chọn nhịp.</p>
+                <?php else: ?>
+                    <p class="card__sub">Nhịp càng nhanh thì càng khó theo lâu dài. Con số kg/tuần chỉ là ước tính.</p>
+                    <div class="nt-styles">
+                        <?php foreach ($paceRows as $key => $row): ?>
+                            <label class="nt-style">
+                                <input type="radio" name="pace" value="<?= htmlspecialchars($key) ?>" <?= $prefs['pace'] === $key ? 'checked' : '' ?>>
+                                <span class="nt-style__box">
+                                    <b><?= htmlspecialchars($row['label']) ?></b>
+                                    <small><?= nf($row['kcal']) ?> kcal/ngày, dự kiến <?= htmlspecialchars(signedNf($row['weekly'], 2)) ?> kg/tuần</small>
+                                </span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($cycleOptions !== null): ?>
+                    <label class="nt-toggle">
+                        <input type="checkbox" name="cycle" value="1" <?= $prefs['cycle'] ? 'checked' : '' ?>>
+                        <span><b>Ăn nhiều hơn vào ngày tập</b>
+                            <small>Lịch tập của bạn có <?= count($trainingDays) ?> ngày/tuần. Ngày tập <?= nf($cycleOptions['train']['target_kcal']) ?> kcal, ngày nghỉ <?= nf($cycleOptions['rest']['target_kcal']) ?> kcal. Tổng calo cả tuần không đổi, phần chênh nằm ở tinh bột.</small>
+                        </span>
+                    </label>
+                <?php elseif (!$trainingDays): ?>
+                    <p class="nt-hint nt-hint--flush">Muốn ăn khác nhau giữa ngày tập và ngày nghỉ, bạn cần có lịch tập trước. <a href="/workout-plan.php">Tạo lịch tập</a></p>
+                <?php else: ?>
+                    <p class="nt-hint nt-hint--flush">Chưa chia được calo theo ngày tập, vì lịch của bạn tập cả 7 ngày hoặc kiểu ăn hiện tại không có tinh bột để chia.</p>
+                <?php endif; ?>
+
+                <button type="submit" class="btn btn--block">Áp dụng</button>
+            </form>
         </div>
 
         <!-- ===== Cột kết quả ===== -->
@@ -381,7 +517,7 @@ include __DIR__ . '/includes/header.php';
                     <p class="nt-kpi__label">Calo nên ăn mỗi ngày</p>
                     <p class="nt-kpi__num"><?= nf($macros['target_kcal']) ?> <small>kcal/ngày</small></p>
                     <p class="nt-kpi__sub"><b><?= $stepDelta == 0 ? '± 0' : (($stepDelta > 0 ? '+' : '−') . nf(abs($stepDelta))) /* audit:ok số do nf() định dạng */ ?> kcal</b>
-                        so với TDEE (<?= htmlspecialchars($goalLabels[$user['goal']] ?? '') ?>). Macro và lịch ăn được chia từ con số này.</p>
+                        so với TDEE (<?= htmlspecialchars($goalLabels[$user['goal']] ?? '') ?><?= $user['goal'] !== 'MAINTAIN' ? ', nhịp ' . htmlspecialchars(mb_strtolower($paceLabels[$prefs['pace']])) : '' ?>). Macro và lịch ăn được chia từ con số này.</p>
                 </article>
             </div>
 
@@ -427,25 +563,100 @@ include __DIR__ . '/includes/header.php';
         </div>
     </section>
 
+    <!-- ===== Tiến độ cân nặng thực tế so với kế hoạch ===== -->
+    <section class="card nt-track" aria-labelledby="nt-track-title">
+        <div class="nt-card-top">
+            <h2 class="card__head" id="nt-track-title">Tiến độ thực tế</h2>
+            <a class="nt-link" href="/progress.php">Ghi cân nặng</a>
+        </div>
+        <?php if ($progressInfo['status'] === 'need_more'): ?>
+            <p class="nt-track__msg">Bạn đã có <b><?= (int)$progressInfo['count'] ?></b> lần cân trong <b><?= (int)$progressInfo['span_days'] ?></b> ngày gần nhất.
+                Cần ít nhất <?= (int)$progressInfo['need_count'] ?> lần cân, trải trên <?= (int)$progressInfo['need_days'] ?> ngày, để so với kế hoạch cho đáng tin.</p>
+        <?php elseif ($progressInfo['status'] === 'stale'): ?>
+            <p class="nt-track__msg">Lần cân gần nhất đã quá 14 ngày. Hãy cân lại để xem tiến độ hiện tại.</p>
+        <?php else:
+            $trackMsg = [
+                'on_track'   => 'Tiến độ đang đúng kế hoạch, bạn chưa cần đổi lượng calo.',
+                'above_plan' => 'Cân nặng đang cao hơn kế hoạch.',
+                'below_plan' => 'Cân nặng đang thấp hơn kế hoạch.',
+            ][$progressInfo['status']];
+            $adjust = $progressInfo['adjust_kcal'];
+        ?>
+            <div class="nt-track__grid">
+                <div><span>Thực tế</span><b><?= htmlspecialchars(signedNf($progressInfo['actual_per_week'], 2)) ?></b><small>kg/tuần</small></div>
+                <div><span>Kế hoạch</span><b><?= htmlspecialchars(signedNf($progressInfo['planned_per_week'], 2)) ?></b><small>kg/tuần</small></div>
+                <div><span>TDEE ước tính</span><b><?= nf($progressInfo['estimated_tdee']) ?></b><small>kcal/ngày</small></div>
+                <div class="<?= $adjust !== 0 ? 'is-action' : '' ?>"><span>Gợi ý calo</span><b><?= nf($progressInfo['suggested_kcal']) ?></b><small><?= $adjust === 0 ? 'giữ nguyên' : htmlspecialchars(signedNf($adjust)) . ' kcal/ngày' ?></small></div>
+            </div>
+            <p class="nt-track__msg"><?= htmlspecialchars($trackMsg) ?>
+                <?php if ($adjust !== 0): ?>Thử ăn theo mức gợi ý trong 2 tuần rồi xem lại.<?php endif; ?>
+                <?php if ($progressInfo['limited']): ?>Mức gợi ý đã dừng ở ngưỡng thấp nhất nên ăn, không giảm thêm.<?php endif; ?></p>
+        <?php endif; ?>
+        <p class="nt-hint">So sánh các lần cân trong 28 ngày gần nhất. Kết quả chỉ đúng khi bạn ăn gần với calo mục tiêu, và trang không tự đổi calo của bạn.</p>
+    </section>
+
     <!-- ===== Lịch ăn gợi ý ===== -->
+    <?php
+    // Đường dẫn của khu lịch ăn, giữ lại những gì đang xem
+    $mealUrl = function (array $query) use ($variant, $picks, $view): string {
+        $query += ['v' => $variant, 'p' => implode(',', $picks), 'view' => $view];
+        $query = array_filter($query, fn($value) => !in_array($value, [0, 'day', ''], true) && !preg_match('/^0(,0)*$/', (string)$value));
+        return '/nutrition.php' . ($query ? '?' . http_build_query($query) : '') . '#lich-an';
+    };
+    $dayKindLabels = ['train' => 'Ngày tập', 'rest' => 'Ngày nghỉ'];
+    ?>
     <section class="nt-meals" id="lich-an">
         <div class="nt-meals__head">
             <div>
-                <h2>Gợi ý lịch ăn trong ngày</h2>
+                <h2>Gợi ý lịch ăn</h2>
                 <p class="pg-sub">Macro được chia theo bữa, kèm món và khối lượng (cân sau khi nấu chín) để bạn dễ làm theo.</p>
             </div>
             <div class="nt-meals__ctrl">
-                <div class="chips" role="group" aria-label="Số bữa mỗi ngày">
-                    <?php foreach ([3, 4, 5] as $m): ?>
-                        <a class="chip<?= $meals === $m ? ' is-active' : '' ?>" href="/nutrition.php?meals=<?= $m ?>&amp;v=<?= (int)$variant ?>#lich-an"><?= $m ?> bữa</a>
-                    <?php endforeach; ?>
+                <div class="chips" role="group" aria-label="Chế độ xem">
+                    <a class="chip<?= $view === 'day' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($mealUrl(['view' => 'day'])) ?>" <?= $view === 'day' ? 'aria-current="true"' : '' ?>>Hôm nay</a>
+                    <a class="chip<?= $view === 'week' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($mealUrl(['view' => 'week'])) ?>" <?= $view === 'week' ? 'aria-current="true"' : '' ?>>Cả tuần</a>
                 </div>
-                <a class="btn btn--ghost" href="/nutrition.php?meals=<?= (int)$meals ?>&amp;v=<?= (int)$variant + 1 ?>#lich-an">Gợi ý món khác</a>
+                <form class="chips" method="post" action="/nutrition.php" aria-label="Số bữa mỗi ngày">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="meals">
+                    <input type="hidden" name="view" value="<?= htmlspecialchars($view) ?>">
+                    <?php foreach ([3, 4, 5] as $m): ?>
+                        <button type="submit" name="meals" value="<?= $m ?>" class="chip<?= $meals === $m ? ' is-active' : '' ?>" aria-pressed="<?= $meals === $m ? 'true' : 'false' ?>"><?= $m ?> bữa</button>
+                    <?php endforeach; ?>
+                </form>
+                <a class="btn btn--ghost" href="<?= htmlspecialchars($mealUrl(['v' => $variant + 1 < 100 ? $variant + 1 : 0, 'p' => ''])) ?>">Gợi ý món khác</a>
             </div>
         </div>
 
+        <!-- Loại trừ thực phẩm -->
+        <form class="nt-excl" method="post" action="/nutrition.php">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="foods">
+            <input type="hidden" name="view" value="<?= htmlspecialchars($view) ?>">
+            <fieldset>
+                <legend>Thực phẩm không ăn</legend>
+                <div class="nt-excl__list">
+                    <?php foreach (foodExclusions() as $code => $exclusion): ?>
+                        <label class="nt-excl__item" <?= $exclusion['hint'] !== '' ? 'title="' . htmlspecialchars($exclusion['hint']) . '"' : '' ?>>
+                            <input type="checkbox" name="exclusions[]" value="<?= htmlspecialchars($code) ?>" <?= in_array($code, $prefs['exclusions'], true) ? 'checked' : '' ?>>
+                            <span><?= htmlspecialchars($exclusion['label']) ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+            </fieldset>
+            <button type="submit" class="btn btn--ghost">Lưu lựa chọn</button>
+        </form>
+
+        <?php if ($view === 'day'): ?>
+        <?php if ($dayKind): ?>
+            <p class="nt-daytype">Hôm nay là <b><?= htmlspecialchars(mb_strtolower($dayKindLabels[$dayKind[$todayN]])) ?></b>: <?= nf($dayTargets[$todayN]['target_kcal']) ?> kcal.</p>
+        <?php endif; ?>
         <div class="nt-meal-grid" data-n="<?= (int)$meals ?>">
-            <?php foreach ($plan['meals'] as $meal): $s = $meal['suggestion']; ?>
+            <?php foreach ($plan['meals'] as $slotIndex => $meal):
+                $s = $meal['suggestion'];
+                $nextPicks = $picks;
+                $nextPicks[$slotIndex] = ($picks[$slotIndex] + 1) % 100;
+            ?>
                 <article class="card nt-meal">
                     <header>
                         <span class="nt-meal__time"><?= htmlspecialchars($meal['slot']['time']) ?></span>
@@ -470,6 +681,9 @@ include __DIR__ . '/includes/header.php';
                         <span class="nt-pill nt-c">C <?= nf($s['c']) ?> g</span>
                         <span class="nt-pill nt-f">F <?= nf($s['f']) ?> g</span>
                     </footer>
+                    <?php if ($s['can_swap']): ?>
+                        <a class="btn btn--ghost nt-swap" data-slot="<?= (int)$slotIndex ?>" href="<?= htmlspecialchars($mealUrl(['p' => implode(',', $nextPicks)])) ?>" aria-label="Đổi món <?= htmlspecialchars(mb_strtolower($meal['slot']['name'])) ?>">Đổi món</a>
+                    <?php endif; ?>
                 </article>
             <?php endforeach; ?>
         </div>
@@ -482,10 +696,7 @@ include __DIR__ . '/includes/header.php';
         $dayRows = [
             'kcal' => ['Calo', 'kcal'], 'p' => ['Protein', 'g'], 'c' => ['Tinh bột', 'g'], 'f' => ['Chất béo', 'g'],
         ];
-        $dayOk = abs($total['kcal'] - $goalRow['kcal']) <= $goalRow['kcal'] * 0.01;
-        foreach (['p', 'c', 'f'] as $k) {
-            $dayOk = $dayOk && abs($total[$k] - $goalRow[$k]) <= 1;
-        }
+        $dayOk = dayMatchesTarget($plan);
         ?>
         <section class="card nt-day" aria-labelledby="nt-day-title">
             <div class="nt-card-top">
@@ -515,8 +726,55 @@ include __DIR__ . '/includes/header.php';
                     </tbody>
                 </table>
             </div>
-            <p class="nt-sum">Bữa trước lệch do làm tròn khối lượng thì bữa sau tự bù; bữa tối được tính chính xác tới 1 g để tổng ngày khớp mục tiêu.</p>
+            <p class="nt-sum">Đổi món hoặc làm tròn khối lượng ở bữa trước thì bữa sau tự bù; bữa cuối được tính chính xác tới 1 g để tổng ngày khớp mục tiêu.
+                <?php if (!$dayOk && $prefs['exclusions']): ?>Ngày này chưa khớp vì lựa chọn thực phẩm đang hạn chế nguồn đạm ít béo.<?php endif; ?></p>
         </section>
+
+        <?php else: ?>
+        <!-- Lịch cả tuần -->
+        <div class="nt-week">
+            <?php foreach ($week as $weekday => $dayPlan): ?>
+                <article class="card nt-wday<?= $weekday === $todayN ? ' is-today' : '' ?>">
+                    <header class="nt-wday__head">
+                        <h3><?= htmlspecialchars($weekdayNames[$weekday]) ?></h3>
+                        <?php if ($weekday === $todayN): ?><span class="tag">Hôm nay</span><?php endif; ?>
+                        <?php if ($dayKind): ?><span class="tag"><?= htmlspecialchars($dayKindLabels[$dayKind[$weekday]]) ?></span><?php endif; ?>
+                        <p class="nt-wday__kcal"><?= nf($dayPlan['total']['kcal']) ?> <small>kcal</small></p>
+                    </header>
+                    <?php foreach ($dayPlan['meals'] as $meal): ?>
+                        <div class="nt-wmeal">
+                            <p class="nt-wmeal__slot"><?= htmlspecialchars($meal['slot']['name']) ?></p>
+                            <p class="nt-wmeal__dish"><?= htmlspecialchars($meal['suggestion']['dish']) ?></p>
+                            <p class="nt-wmeal__foods"><?= htmlspecialchars(implode(', ', array_map(fn($item) => $item['name'] . ' ' . nf($item['grams']) . ' g', $meal['suggestion']['items']))) ?></p>
+                        </div>
+                    <?php endforeach; ?>
+                    <p class="nt-wday__macro">P <?= nf($dayPlan['total']['p']) ?> g · C <?= nf($dayPlan['total']['c']) ?> g · F <?= nf($dayPlan['total']['f']) ?> g</p>
+                </article>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Danh sách đi chợ -->
+        <section class="card nt-shop" aria-labelledby="nt-shop-title">
+            <h3 class="card__head" id="nt-shop-title">Danh sách đi chợ cho 7 ngày</h3>
+            <p class="card__sub">Cộng dồn từ lịch ăn ở trên. Khối lượng là sau khi nấu chín (yến mạch tính khô), nên khi mua đồ sống số gram sẽ khác.</p>
+            <div class="nt-shop__groups">
+                <?php foreach (array_unique(array_column($shopping, 'group')) as $group): ?>
+                    <div>
+                        <h4><?= htmlspecialchars($group) ?></h4>
+                        <ul class="nt-foods">
+                            <?php foreach ($shopping as $row): if ($row['group'] !== $group) { continue; } ?>
+                                <li>
+                                    <span><?= htmlspecialchars($row['name']) ?></span>
+                                    <b><?= htmlspecialchars(shoppingAmount($row['grams'])) ?></b>
+                                    <?php if ($row['hint'] !== ''): ?><small><?= htmlspecialchars($row['hint']) ?></small><?php endif; ?>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
+        <?php endif; ?>
 
         <?php $tips = goalTips($user['goal']); if ($tips): ?>
             <ul class="nt-tips">

@@ -13,7 +13,7 @@
 
 .nt-card-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 14px; }
 .nt-card-top .card__head { margin: 0; }
-.nt-link { font-size: .88rem; font-weight: 600; color: var(--gs-accent); text-decoration: none; }
+.nt-link { display: inline-flex; align-items: center; min-height: 44px; font-size: .88rem; font-weight: 600; color: #c2410c; text-decoration: none; }
 .nt-link:hover { text-decoration: underline; }
 
 /* ===== Thông số của bạn ===== */
@@ -118,7 +118,7 @@
 .nt-meals { margin-bottom: 36px; scroll-margin-top: 90px; }
 .nt-meals__head { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; }
 .nt-meals__head h2 { margin: 0; font-size: 1.4rem; }
-.nt-meals__ctrl { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.nt-meals__ctrl { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
 .nt-meals__ctrl .chips { margin: 0; padding: 0; overflow: visible; }
 .nt-meals__ctrl .btn { min-height: 44px; padding: 0 16px; font-size: .92rem; }
 
@@ -168,6 +168,65 @@
 .nt-empty { max-width: 560px; margin: 20px auto; text-align: center; }
 .nt-empty .btn { margin-top: 6px; }
 
+/* ===== Nhịp và ngày tập ===== */
+.nt-toggle { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-bottom: 14px; border: 1.5px solid var(--ui-line); border-radius: 12px; cursor: pointer; }
+.nt-toggle input { width: 20px; height: 20px; margin: 2px 0 0; flex: none; accent-color: var(--color-accent); }
+.nt-toggle b { display: block; font-size: .98rem; }
+.nt-toggle small { display: block; margin-top: 2px; color: var(--color-text-muted); font-size: .85rem; line-height: 1.45; }
+.nt-hint--flush { margin: 0 0 14px; }
+
+/* ===== Tiến độ thực tế ===== */
+.nt-track { margin-bottom: 36px; }
+.nt-track__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+.nt-track__grid div { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 14px; border-radius: 14px; background: #f6f8fc; }
+.nt-track__grid span { font-size: .8rem; font-weight: 700; color: #344054; }
+.nt-track__grid b { font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; color: var(--gs-ink); font-variant-numeric: tabular-nums; }
+.nt-track__grid small { font-size: .8rem; color: var(--color-text-muted); }
+.nt-track__grid .is-action { background: var(--ui-accent-soft); }
+.nt-track__msg { margin: 0; line-height: 1.6; }
+.nt-track .nt-hint { margin-top: 10px; }
+
+/* ===== Loại trừ thực phẩm ===== */
+.nt-excl { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; padding: 14px 18px; border: 1px solid var(--ui-line); border-radius: 14px; background: #fff; }
+.nt-excl fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.nt-excl legend { padding: 0; margin-bottom: 8px; font-size: .88rem; font-weight: 700; color: #344054; }
+.nt-excl__list { display: flex; flex-wrap: wrap; gap: 8px; }
+.nt-excl__item { position: relative; cursor: pointer; }
+.nt-excl__item input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.nt-excl__item span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border: 1.5px solid var(--ui-line); border-radius: 999px; font-size: .9rem; color: var(--color-text); background: #fff; }
+.nt-excl__item:hover span { border-color: #ffb08a; }
+.nt-excl__item input:checked + span { border-color: var(--gs-ink); background: var(--gs-ink); color: #fff; font-weight: 600; }
+.nt-excl__item input:focus-visible + span { outline: 3px solid rgba(255, 90, 31, .45); outline-offset: 2px; }
+.nt-excl .btn { min-height: 44px; }
+
+/* Nút số bữa: viết "button.chip" để style chung của <button> trong dự án không đè lên */
+.nt button.chip { padding: 0 14px; min-height: 44px; background: #fff; background-image: none; color: var(--color-text); border: 1px solid var(--ui-line); box-shadow: none; transform: none; filter: none; font-weight: 500; cursor: pointer; }
+.nt button.chip:hover { border-color: var(--color-accent); color: var(--color-accent); background: #fff; transform: none; filter: none; box-shadow: none; }
+.nt button.chip.is-active, .nt button.chip.is-active:hover { background: var(--gs-ink); border-color: var(--gs-ink); color: #fff; font-weight: 600; }
+.nt-meals__ctrl a.chip { display: inline-flex; align-items: center; min-height: 44px; }
+
+.nt-daytype { margin: 0 0 12px; }
+.nt-swap { align-self: flex-start; min-height: 44px; padding: 0 16px; font-size: .9rem; }
+
+/* ===== Lịch cả tuần ===== */
+.nt-week { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.nt-wday { display: flex; flex-direction: column; gap: 12px; padding: 18px; }
+.nt-wday.is-today { border-color: var(--gs-accent); box-shadow: 0 0 0 3px rgba(255, 90, 31, .12); }
+.nt-wday__head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding-bottom: 10px; border-bottom: 1px solid #f0f2f7; }
+.nt-wday__head h3 { margin: 0; font-size: 1.05rem; }
+.nt-wday__kcal { margin: 0 0 0 auto; font-size: 1.15rem; font-weight: 800; color: var(--gs-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nt-wday__kcal small { font-size: .78rem; font-weight: 600; color: var(--color-text-muted); }
+.nt-wmeal p { margin: 0; }
+.nt-wmeal__slot { font-size: .78rem; font-weight: 700; color: var(--color-text-muted); }
+.nt-wmeal__dish { font-weight: 700; line-height: 1.35; color: var(--gs-ink); }
+.nt-wmeal__foods { font-size: .84rem; line-height: 1.45; color: #475467; }
+.nt-wday__macro { margin: auto 0 0; padding-top: 10px; border-top: 1px solid #f0f2f7; font-size: .84rem; font-weight: 600; color: #475467; }
+
+/* ===== Danh sách đi chợ ===== */
+.nt-shop { margin-top: 16px; }
+.nt-shop__groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 28px; align-items: start; }
+.nt-shop h4 { margin: 4px 0 2px; font-size: .92rem; color: var(--gs-ink); }
+
 /* ===== Màn hình nhỏ ===== */
 @media (max-width: 1100px) {
     .nt-macro-body { grid-template-columns: 1fr; justify-items: center; }
@@ -182,6 +241,9 @@
 }
 @media (max-width: 700px) {
     .nt-meal-grid, .nt-meal-grid[data-n="4"] { grid-template-columns: 1fr; }
+    .nt-track__grid { grid-template-columns: 1fr 1fr; }
+    .nt-shop__groups { grid-template-columns: 1fr; }
+    .nt-week { grid-template-columns: 1fr; }
     .nt-custom__grid { gap: 8px; }
 }
 @media (max-width: 560px) {

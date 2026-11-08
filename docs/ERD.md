@@ -18,6 +18,7 @@ erDiagram
     USERS ||--o{ WORKOUT_LOGS : "ghi nhận"
     USERS ||--o{ BODY_METRICS : "theo dõi"
     USERS ||--o{ NUTRITION_TARGETS : "sở hữu"
+    USERS ||--o| NUTRITION_PREFERENCES : "lưu lựa chọn"
     USERS ||--o{ CHATBOT_SESSIONS : "trò chuyện (chưa dùng)"
     USERS ||--o{ PASSWORD_RESETS : "yêu cầu đặt lại"
 
@@ -108,6 +109,20 @@ erDiagram
         decimal waist_cm
         decimal arm_cm
         datetime created_at
+    }
+
+    NUTRITION_PREFERENCES {
+        int user_id PK,FK
+        varchar diet_style
+        tinyint custom_protein_pct
+        tinyint custom_carbs_pct
+        tinyint custom_fat_pct
+        tinyint meals_per_day
+        varchar excluded_foods
+        varchar weight_pace
+        tinyint cycle_calories
+        datetime created_at
+        datetime updated_at
     }
 
     NUTRITION_TARGETS {
@@ -247,6 +262,9 @@ Lưu theo mốc thời gian (không update đè), để vẽ biểu đồ tiến
 
 ### `nutrition_targets`
 Lưu kết quả tính TDEE/macro theo từng lần tính (không phải 1-1 cố định với user, vì chỉ số cơ thể/mục tiêu có thể thay đổi → giữ lịch sử).
+
+### `nutrition_preferences`
+Lựa chọn trên trang Dinh dưỡng, mỗi người tối đa 1 dòng (`user_id` là khóa chính): kiểu ăn, tỉ lệ % tùy chỉnh, số bữa, thực phẩm loại trừ (`excluded_foods`, các mã cách nhau bởi dấu phẩy), nhịp mục tiêu, bật/tắt calo theo ngày tập. Chưa import bảng thì trang giữ lựa chọn trong session.
 
 ### `chatbot_sessions`, `chatbot_messages`
 **Chưa dùng.** Lịch sử hội thoại hiện lưu ở trình duyệt (`js/chatbot.js`) và gửi kèm mỗi lần hỏi. Giữ bảng cho bước "lưu lịch sử trên server" sau này.

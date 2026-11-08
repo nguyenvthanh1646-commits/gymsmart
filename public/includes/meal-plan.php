@@ -2,10 +2,11 @@
 /**
  * includes/meal-plan.php — phần mở rộng cho trang dinh dưỡng (nutrition.php).
  *
- * File này chỉ chứa hàm (không có HTML), KHÔNG sửa tdee.php:
- *   - tdee.php          : BMR, TDEE, calo mục tiêu và macro mặc định theo mục tiêu (việc của C)
+ * File này chỉ chứa hàm (không có HTML, không đụng DB):
+ *   - tdee.php          : BMR, TDEE, calo mục tiêu, nhịp mục tiêu, ngày tập/nghỉ, tiến độ cân nặng (việc của C)
  *   - meal-plan.php     : kiểu ăn (cân bằng, giàu protein, ít tinh bột, tùy chỉnh), macro theo %,
- *                         chia macro theo bữa và gợi ý món ăn kèm khối lượng
+ *                         chia macro theo bữa, gợi ý món kèm khối lượng, loại trừ thực phẩm,
+ *                         lịch 7 ngày và danh sách đi chợ
  *
  * Quy đổi năng lượng dùng chung: protein 4 kcal/g, carb 4 kcal/g, chất béo 9 kcal/g.
  * Các con số món ăn là ƯỚC LƯỢNG theo bảng thành phần thực phẩm phổ biến, chỉ để tham khảo.
@@ -150,6 +151,7 @@ function foodCatalog(): array
         'tom'     => ['name' => 'Tôm luộc',                'p' => 24,  'c' => 0.2, 'f' => 0.3],
         'trung'   => ['name' => 'Trứng gà',                'p' => 13,  'c' => 1,  'f' => 10, 'unit' => ['quả', 55], 'max' => 165], // tối đa 3 quả mỗi bữa
         'dauhu'   => ['name' => 'Đậu hũ trắng',            'p' => 8,   'c' => 2,  'f' => 5],
+        'micang'  => ['name' => 'Mì căn (seitan)',         'p' => 24,  'c' => 5,  'f' => 1.5], // đạm chay ít béo, giúp người ăn thuần chay đủ đạm
         'suachua' => ['name' => 'Sữa chua Hy Lạp không đường', 'p' => 10, 'c' => 4, 'f' => 0.4],
         // Nguồn tinh bột
         'com'     => ['name' => 'Cơm trắng',               'p' => 2.7, 'c' => 28, 'f' => 0.3],
@@ -179,26 +181,100 @@ function mealOptions(): array
             ['name' => 'Bún gà',                           'foods' => ['ucga', 'bun']],
             ['name' => 'Bánh mì trứng, sữa chua',          'foods' => ['trung', 'banhmi', 'suachua']],
             ['name' => 'Yến mạch trộn sữa chua',           'foods' => ['suachua', 'yenmach']],
+            ['name' => 'Bún đậu hũ',                       'foods' => ['dauhu', 'bun']],
+            ['name' => 'Bánh mì kẹp mì căn',               'foods' => ['micang', 'banhmi']],
+            ['name' => 'Bún mì căn',                       'foods' => ['micang', 'bun']],
         ],
         'lunch' => [
             ['name' => 'Cơm ức gà',                        'foods' => ['ucga', 'com']],
             ['name' => 'Cơm gạo lứt, bò nạc',              'foods' => ['bo', 'comlut']],
             ['name' => 'Cơm cá basa hấp',                  'foods' => ['cabasa', 'com']],
             ['name' => 'Thịt heo nạc, khoai tây luộc',     'foods' => ['heo', 'khoaitay']],
+            ['name' => 'Cơm đậu hũ sốt cà',                'foods' => ['dauhu', 'com']],
+            ['name' => 'Cơm gạo lứt, mì căn kho',          'foods' => ['micang', 'comlut']],
+            ['name' => 'Cơm mì căn rim',                   'foods' => ['micang', 'com']],
         ],
         'dinner' => [
             ['name' => 'Cá hồi nướng, khoai lang',         'foods' => ['cahoi', 'khoailang']],
             ['name' => 'Cơm tôm luộc',                     'foods' => ['tom', 'com']],
             ['name' => 'Cá basa hấp, khoai tây',           'foods' => ['cabasa', 'khoaitay']],
             ['name' => 'Thịt heo nạc, khoai lang',         'foods' => ['heo', 'khoailang']],
+            ['name' => 'Ức gà áp chảo, cơm gạo lứt',       'foods' => ['ucga', 'comlut']],
+            ['name' => 'Mì căn xào, khoai lang',           'foods' => ['micang', 'khoailang']],
+            ['name' => 'Mì căn kho, cơm trắng',            'foods' => ['micang', 'com']],
+            ['name' => 'Đậu hũ, cơm gạo lứt',              'foods' => ['dauhu', 'comlut']],
         ],
         'snack' => [
             ['name' => 'Sữa chua chuối',                   'foods' => ['suachua', 'chuoi']],
             ['name' => 'Trứng luộc, khoai lang, sữa chua', 'foods' => ['trung', 'khoailang', 'suachua']],
             ['name' => 'Sữa chua yến mạch',                'foods' => ['suachua', 'yenmach']],
             ['name' => 'Trứng luộc, chuối, sữa chua',      'foods' => ['trung', 'chuoi', 'suachua']],
+            ['name' => 'Đậu hũ, chuối',                    'foods' => ['dauhu', 'chuoi']],
+            ['name' => 'Đậu hũ, khoai lang',               'foods' => ['dauhu', 'khoailang']],
+            ['name' => 'Mì căn áp chảo, chuối',            'foods' => ['micang', 'chuoi']],
+            ['name' => 'Mì căn áp chảo, khoai lang',       'foods' => ['micang', 'khoailang']],
         ],
     ];
+}
+
+/**
+ * Các loại thực phẩm người dùng có thể loại khỏi lịch ăn.
+ * "Ăn chay" ở đây bỏ thịt, cá, hải sản; muốn thuần chay thì chọn thêm "Không trứng" và "Không sữa".
+ */
+function foodExclusions(): array
+{
+    $seafood = ['cabasa', 'cahoi', 'tom'];
+    return [
+        'vegetarian' => ['label' => 'Ăn chay',       'hint' => 'Bỏ thịt, cá, hải sản', 'foods' => array_merge(['ucga', 'bo', 'heo'], $seafood)],
+        'seafood'    => ['label' => 'Không hải sản', 'hint' => 'Bỏ cá và tôm',         'foods' => $seafood],
+        'beef'       => ['label' => 'Không thịt bò', 'hint' => '',                     'foods' => ['bo']],
+        'pork'       => ['label' => 'Không thịt heo', 'hint' => '',                    'foods' => ['heo']],
+        'egg'        => ['label' => 'Không trứng',   'hint' => '',                     'foods' => ['trung']],
+        'dairy'      => ['label' => 'Không sữa',     'hint' => 'Bỏ sữa chua',          'foods' => ['suachua']],
+    ];
+}
+
+/**
+ * Làm sạch danh sách loại trừ: nhận mảng từ form hoặc chuỗi "egg,dairy" từ DB, chỉ giữ mã hợp lệ, theo thứ tự cố định.
+ * Phần tử không phải chuỗi (ví dụ form gửi lên mảng lồng nhau) bị bỏ qua.
+ */
+function normalizeExclusions($raw): array
+{
+    if (is_string($raw)) {
+        $raw = explode(',', $raw);
+    }
+    if (!is_array($raw)) {
+        return [];
+    }
+    $picked = array_filter($raw, 'is_string');
+    return array_values(array_intersect(array_keys(foodExclusions()), $picked));
+}
+
+/** Các phương án món của một loại bữa sau khi bỏ món chứa thực phẩm bị loại trừ. */
+function allowedMealOptions(string $kind, array $exclusions): array
+{
+    $banned = [];
+    foreach (normalizeExclusions($exclusions) as $code) {
+        $banned = array_merge($banned, foodExclusions()[$code]['foods']);
+    }
+    return array_values(array_filter(
+        mealOptions()[$kind],
+        fn(array $option): bool => !array_intersect($option['foods'], $banned)
+    ));
+}
+
+/**
+ * Đọc lựa chọn "đổi món" từ URL, dạng "0,2,1,0": mỗi số là số lần đã bấm đổi ở bữa tương ứng.
+ * Sai định dạng hoặc sai số bữa thì coi như chưa đổi bữa nào.
+ */
+function parseMealPicks($raw, int $meals): array
+{
+    $none = array_fill(0, $meals, 0);
+    if (!is_string($raw) || !preg_match('/^\d{1,2}(,\d{1,2})*$/', $raw)) {
+        return $none;
+    }
+    $picks = array_map('intval', explode(',', $raw));
+    return count($picks) === $meals ? $picks : $none;
 }
 
 /** Làm tròn gram về bội số của 5 cho dễ cân đo (tối thiểu 5 g nếu > 0). */
@@ -227,12 +303,16 @@ function roundPortion(float $grams): int
  * @param array $target  ['p' => g, 'c' => g, 'f' => g] mục tiêu của bữa
  * @param int   $variant số thứ tự phương án (đổi món)
  * @param bool  $exact   true = bữa cuối, cân cho khớp phần còn lại của ngày
- * @return array ['dish', 'items' => [[name, grams, hint]], 'raw' => ['p','c','f','kcal'] chưa làm tròn, 'option_count']
+ * @param array $exclusions mã thực phẩm loại trừ (xem foodExclusions)
+ * @return array ['dish', 'option' (tên phương án, dùng để so trùng), 'items' => [[key, name, grams, hint]], 'raw' => ['p','c','f','kcal'] chưa làm tròn, 'option_count']
  */
-function suggestMeal(array $slot, array $target, int $variant, bool $exact = false): array
+function suggestMeal(array $slot, array $target, int $variant, bool $exact = false, array $exclusions = []): array
 {
     $foods = foodCatalog();
-    $options = mealOptions()[$slot['kind']];
+    foreach ($foods as $key => $food) {
+        $foods[$key]['key'] = $key;       // để danh sách đi chợ cộng dồn theo từng thực phẩm
+    }
+    $options = allowedMealOptions($slot['kind'], $exclusions);
     $count = count($options);
     $option = $options[(($variant % $count) + $count) % $count];
     $choice = $option['foods'];
@@ -303,7 +383,7 @@ function suggestMeal(array $slot, array $target, int $variant, bool $exact = fal
                 $hint = '≈ ' . str_replace('.', ',', (string)round($grams / $food['unit'][1], 1)) . ' ' . $food['unit'][0];
             }
         }
-        $items[] = ['name' => $food['name'], 'grams' => (int)$grams, 'hint' => $hint];
+        $items[] = ['key' => $food['key'], 'name' => $food['name'], 'grams' => (int)$grams, 'hint' => $hint];
         $totals['p'] += $grams * $food['p'] / 100;
         $totals['c'] += $grams * $food['c'] / 100;
         $totals['f'] += $grams * $food['f'] / 100;
@@ -346,6 +426,7 @@ function suggestMeal(array $slot, array $target, int $variant, bool $exact = fal
 
     return [
         'dish'         => $dish,
+        'option'       => $option['name'],
         'items'        => $items,
         'raw'          => $totals + ['kcal' => $totals['p'] * 4 + $totals['c'] * 4 + $totals['f'] * 9],
         'option_count' => $count,
@@ -380,11 +461,15 @@ function roundToSum(array $values): array
  *      của bữa đó trong số các bữa còn lại. Bữa trước lệch do làm tròn thì bữa sau tự bù.
  *   2. Bữa cuối (bữa tối) nhận toàn bộ phần còn lại và được tính chính xác tới 1 g (xem suggestMeal).
  *   3. Số liệu từng bữa làm tròn bằng roundToSum() nên cộng lại đúng bằng dòng tổng.
+ * Nhờ cách này, đổi món ở một bữa thì các bữa sau tự cân lại và tổng ngày vẫn khớp.
  *
  * @param array $targets ['target_kcal','protein_g','carbs_g','fat_g'] của cả ngày
+ * @param array $exclusions mã thực phẩm loại trừ
+ * @param array $picks  [số thứ tự bữa => số lần bấm đổi món]
+ * @param array $avoid  [số thứ tự bữa => tên phương án của hôm trước], để hai ngày liền nhau không trùng món
  * @return array ['meals' => [slot, target, suggestion + p,c,f,kcal đã làm tròn], 'total' => [...], 'target' => [...]]
  */
-function buildMealPlan(array $targets, int $meals, int $variant): array
+function buildMealPlan(array $targets, int $meals, int $variant, array $exclusions = [], array $picks = [], array $avoid = []): array
 {
     $slots = mealSlots($meals);
     $want = ['p' => $targets['protein_g'], 'c' => $targets['carbs_g'], 'f' => $targets['fat_g']];
@@ -392,6 +477,7 @@ function buildMealPlan(array $targets, int $meals, int $variant): array
     $shareLeft = array_sum(array_column($slots, 'share'));
     $plan = [];
     $snackCount = 0;
+    $usedToday = [];
     foreach ($slots as $i => $slot) {
         $ratio = $slot['share'] / $shareLeft;
         $target = [];
@@ -405,19 +491,30 @@ function buildMealPlan(array $targets, int $meals, int $variant): array
             $snackCount++;
         }
         $isLast = $i === count($slots) - 1;
-        $suggestion = suggestMeal($slot, $target, $variant + $offset, $isLast);
-        if ($isLast) {
-            // Món tối đang chọn béo hơn phần chất béo còn lại (ví dụ cá hồi) thì thử lần lượt các món khác,
-            // lấy món đầu tiên vừa; không món nào vừa thì lấy món dư ít nhất.
-            $best = $suggestion;
-            for ($try = 1; $try < $suggestion['option_count'] && $best['raw']['f'] > $target['f'] + 0.5; $try++) {
-                $other = suggestMeal($slot, $target, $variant + $offset + $try, true);
-                if ($other['raw']['f'] < $best['raw']['f']) {
-                    $best = $other;
-                }
-            }
-            $suggestion = $best;
+        $pick = (int)($picks[$i] ?? 0);
+        $position = $variant + $offset + $pick;
+
+        // Các phương án được phép dùng ở bữa này: bỏ món trùng hôm trước và món đã có trong ngày
+        // (giữ lại số thứ tự gốc để truyền cho suggestMeal). Hết lựa chọn thì đành chấp nhận trùng.
+        $names = array_column(allowedMealOptions($slot['kind'], $exclusions), 'name');
+        $blocked = array_merge($usedToday, isset($avoid[$i]) ? [$avoid[$i]] : []);
+        $usable = array_keys(array_diff($names, $blocked)) ?: array_keys($names);
+
+        // Chỉ chọn trong các món không làm dư chất béo của bữa (ví dụ cá hồi, đậu hũ khi béo còn ít), vì chất béo đã dư thì
+        // bữa sau không bù lại được. Bữa cuối tính chính xác tới 1 g nên ngưỡng chặt hơn các bữa đã làm tròn 5 g.
+        // Không món nào vừa thì mặc định lấy món dư ít nhất, người dùng bấm đổi món sẽ chuyển sang món kế tiếp.
+        $candidates = array_map(fn(int $index) => suggestMeal($slot, $target, $index, $isLast, $exclusions), $usable);
+        $fatLimit = $target['f'] + ($isLast ? 0.5 : 2);
+        $fit = array_values(array_filter($candidates, fn(array $c) => $c['raw']['f'] <= $fatLimit));
+        if ($fit) {
+            $suggestion = $fit[$position % count($fit)];
+            $suggestion['can_swap'] = count($fit) > 1;
+        } else {
+            usort($candidates, fn(array $a, array $b) => $a['raw']['f'] <=> $b['raw']['f']);
+            $suggestion = $candidates[$pick % count($candidates)];
+            $suggestion['can_swap'] = count($candidates) > 1;
         }
+        $usedToday[] = $suggestion['option'];
         foreach ($done as $k => $_) {
             $done[$k] += $suggestion['raw'][$k];
         }
@@ -445,6 +542,65 @@ function buildMealPlan(array $targets, int $meals, int $variant): array
             'kcal' => (int)round($targets['target_kcal']),
         ],
     ];
+}
+
+/**
+ * Lịch ăn 7 ngày, ngày 1 là Thứ Hai (cùng cách đánh số day_of_week của lịch tập).
+ * Mỗi ngày truyền tên món của hôm trước vào buildMealPlan nên cùng một bữa không lặp món hai ngày liền nhau.
+ *
+ * @param array $dayTargets [1..7 => macro của ngày đó] (ngày tập và ngày nghỉ có thể khác nhau)
+ * @param array $picksByDay [thứ trong tuần => picks] khi người dùng đổi món ở một ngày
+ * @return array [1..7 => kết quả của buildMealPlan]
+ */
+function buildWeekPlan(array $dayTargets, int $meals, int $variant, array $exclusions = [], array $picksByDay = []): array
+{
+    $week = [];
+    $previous = [];
+    for ($day = 1; $day <= 7; $day++) {
+        $plan = buildMealPlan($dayTargets[$day], $meals, $variant + $day, $exclusions, $picksByDay[$day] ?? [], $previous);
+        $previous = array_map(fn(array $meal) => $meal['suggestion']['option'], $plan['meals']);
+        $week[$day] = $plan;
+    }
+    return $week;
+}
+
+/**
+ * Danh sách đi chợ: cộng dồn khối lượng từng thực phẩm trong cả tuần, xếp theo nhóm.
+ * Khối lượng lấy nguyên từ lịch ăn nên là khối lượng sau khi nấu chín (yến mạch tính khô).
+ *
+ * @return array [['key','name','grams','group','hint']] theo thứ tự của foodCatalog()
+ */
+function buildShoppingList(array $week): array
+{
+    $grams = [];
+    foreach ($week as $plan) {
+        foreach ($plan['meals'] as $meal) {
+            foreach ($meal['suggestion']['items'] as $item) {
+                $grams[$item['key']] = ($grams[$item['key']] ?? 0) + $item['grams'];
+            }
+        }
+    }
+
+    $carbFoods = ['com', 'comlut', 'khoailang', 'khoaitay', 'bun', 'banhmi', 'yenmach', 'chuoi'];
+    $fatFoods = ['dau', 'dauphong'];
+    $list = [];
+    foreach (foodCatalog() as $key => $food) {
+        if (!isset($grams[$key])) {
+            continue;
+        }
+        $hint = '';
+        if (isset($food['unit']) && $food['unit'][0] === 'quả') {   // trứng, chuối: mua theo quả, làm tròn lên
+            $hint = '≈ ' . (int)ceil($grams[$key] / $food['unit'][1]) . ' quả';
+        }
+        $list[] = [
+            'key'   => $key,
+            'name'  => $food['name'],
+            'grams' => $grams[$key],
+            'group' => in_array($key, $fatFoods, true) ? 'Chất béo' : (in_array($key, $carbFoods, true) ? 'Tinh bột và trái cây' : 'Nguồn đạm'),
+            'hint'  => $hint,
+        ];
+    }
+    return $list;
 }
 
 /** Vài lời khuyên ngắn theo mục tiêu (hiện dưới lịch ăn). */
