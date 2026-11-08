@@ -28,7 +28,7 @@ $progress = $dash['progress'];
         <?php if ($trend === null): ?>
             <p class="du-note">Đo ngày <?= htmlspecialchars($dateOf($latest['recorded_date'])) ?>. Cần thêm ít nhất 1 lần đo để thấy xu hướng.</p>
         <?php else:
-            $profileGoal = $row['goal'] ?? '';
+            $profileGoal = $dash['goal'] ?? '';
             $sparkPoints = dashSparklinePoints($progress['metrics'], 240, 64);
         ?>
             <?php if ($trend['matches'] !== null): ?>
