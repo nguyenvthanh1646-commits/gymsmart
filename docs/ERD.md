@@ -2,7 +2,7 @@
 
 Tài liệu thiết kế database, dùng làm tài liệu tham chiếu khi tạo/sửa bảng. Cập nhật file này mỗi khi thêm/sửa bảng (theo quy định trong `CLAUDE.md`).
 
-Phạm vi: 2 role (`USER`, `ADMIN`), không có role Coach, không có chat giữa user với user. Nội dung học tập gồm ảnh + video hướng dẫn trong bảng `exercises` và **bài viết kiến thức** (bài dạng file trong `public/content/articles/` + bài admin soạn trong bảng `articles`).
+Phạm vi: 3 role (`USER`, `ADMIN`, `COACH`). `COACH` (huấn luyện viên, HLV) chỉ có được khi ADMIN duyệt đơn đăng ký HLV. Không có chat tự do giữa user với user: tin nhắn chỉ có giữa một HLV và học viên đang tập với HLV đó (bảng `coach_messages`). Nội dung học tập gồm ảnh + video hướng dẫn trong bảng `exercises` và **bài viết kiến thức** (bài dạng file trong `public/content/articles/` + bài admin soạn trong bảng `articles`).
 
 Database dùng MySQL/MariaDB, quản trị qua phpMyAdmin. File tạo bảng thật là `/sql/schema.sql` (đã gộp mọi file bổ sung, chạy được trên database trống). Khi sửa cấu trúc bảng thì cập nhật cả file đó và file này.
 
@@ -30,12 +30,23 @@ erDiagram
 
     CHATBOT_SESSIONS ||--o{ CHATBOT_MESSAGES : "chứa"
 
+    USERS ||--o{ COACH_APPLICATIONS : "nộp đơn HLV"
+    USERS ||--o| COACH_PROFILES : "hồ sơ HLV"
+    USERS ||--o{ COACH_CLIENTS : "là HLV (coach_id)"
+    USERS ||--o{ COACH_CLIENTS : "là học viên (client_id)"
+    COACH_CLIENTS ||--o{ COACH_FEEDBACK : "nhận xét"
+    COACH_CLIENTS ||--o{ COACH_MESSAGES : "tin nhắn"
+    COACH_CLIENTS ||--o{ COACH_CHANGE_REQUESTS : "xin tự sửa"
+    WORKOUT_LOGS |o--o{ COACH_FEEDBACK : "nhận xét riêng 1 bài"
+    USERS |o--o{ WORKOUT_PLANS : "giao lịch (assigned_by)"
+    USERS |o--o{ NUTRITION_TARGETS : "đặt mục tiêu (assigned_by)"
+
     USERS {
         int id PK
         varchar full_name
         varchar email UK
         varchar password_hash
-        enum role "USER, ADMIN"
+        enum role "USER, ADMIN, COACH"
         int age
         float height_cm
         float weight_kg
@@ -70,6 +81,7 @@ erDiagram
         enum split_type "8 kiểu, xem bảng dưới"
         int days_per_week
         enum status "ACTIVE, COMPLETED, ARCHIVED"
+        int assigned_by FK "HLV giao, NULL = tự tạo"
         datetime created_at
         datetime updated_at
     }
@@ -134,6 +146,7 @@ erDiagram
         float carbs_g
         float fat_g
         date calculated_date
+        int assigned_by FK "HLV đặt, NULL = tự tính"
         datetime created_at
     }
 
@@ -207,6 +220,85 @@ erDiagram
         date view_date PK
         int views
     }
+
+    COACH_APPLICATIONS {
+        int id PK
+        int user_id FK
+        varchar headline
+        varchar specialties "mã cách nhau bởi dấu phẩy"
+        tinyint experience_years
+        varchar certifications
+        varchar bio
+        varchar approach
+        tinyint max_clients
+        varchar availability
+        enum status "PENDING, APPROVED, REJECTED"
+        varchar admin_note
+        int reviewed_by FK
+        datetime reviewed_at
+        datetime created_at
+        int open_user_id UK "sinh tự động, chỉ có khi PENDING"
+    }
+
+    COACH_PROFILES {
+        int user_id PK,FK
+        varchar headline
+        varchar specialties
+        tinyint experience_years
+        varchar certifications
+        varchar bio
+        varchar approach
+        tinyint max_clients
+        varchar availability
+        tinyint accepting "1 = đang nhận học viên"
+        datetime created_at
+        datetime updated_at
+    }
+
+    COACH_CLIENTS {
+        int id PK
+        int coach_id FK
+        int client_id FK
+        enum status "PENDING, ACTIVE, ENDED, REJECTED"
+        varchar request_note
+        datetime created_at
+        datetime accepted_at
+        datetime ended_at
+        int ended_by "không FK"
+        int open_client_id UK "sinh tự động, có khi PENDING/ACTIVE"
+    }
+
+    COACH_FEEDBACK {
+        int id PK
+        int coach_client_id FK
+        date log_date "NULL = nhận xét chung"
+        int workout_log_id FK "NULL"
+        varchar content "tối đa 1000"
+        datetime read_at
+        datetime created_at
+    }
+
+    COACH_MESSAGES {
+        int id PK
+        int coach_client_id FK
+        int sender_id FK
+        varchar content "tối đa 1000"
+        datetime read_at
+        datetime created_at
+    }
+
+    COACH_CHANGE_REQUESTS {
+        int id PK
+        int coach_client_id FK
+        enum area "PLAN, NUTRITION"
+        varchar reason
+        enum status "PENDING, APPROVED, REJECTED, CANCELLED"
+        varchar coach_reply
+        datetime unlock_until
+        datetime created_at
+        datetime resolved_at
+        varchar open_key UK "sinh tự động, có khi PENDING"
+    }
 ```
 
 `LOGIN_ATTEMPTS`, `ADMIN_AUDIT_LOG`, `ARTICLES`, `ARTICLE_VIEWS` cố ý **không có khóa ngoại** (xem lý do ở từng bảng).
@@ -224,7 +316,7 @@ Lưu thông tin tài khoản và chỉ số cơ thể cơ bản (dùng chung đ�
 | full_name | varchar | tối đa 100 ký tự (PHP kiểm tra ở đăng ký và hồ sơ) |
 | email | varchar, unique | dùng để đăng nhập |
 | password_hash | varchar | `password_hash()` của PHP (bcrypt, bắt đầu bằng `$2y$`) |
-| role | enum | `USER`, `ADMIN`. Trang admin đọc lại cột này từ DB mỗi lần mở, không chỉ tin session |
+| role | enum | `USER`, `ADMIN`, `COACH`. Trang admin/HLV đọc lại cột này từ DB mỗi lần mở, không chỉ tin session. `COACH` chỉ có khi ADMIN duyệt đơn; ADMIN thu hồi thì về `USER` |
 | age, height_cm, weight_kg, gender | | dùng tính TDEE |
 | activity_level | enum | hệ số hoạt động (ít vận động → vận động nhiều) |
 | experience_level | enum | trình độ tập luyện (`BEGINNER`, `INTERMEDIATE`, `ADVANCED`), dùng cho gợi ý lịch tập và protein g/kg; cùng bộ giá trị với `exercises.difficulty` |
@@ -247,6 +339,8 @@ Thư viện bài tập kèm ảnh và video hướng dẫn, do `ADMIN` quản l�
 ### `workout_plans`
 Mỗi user có thể có nhiều lịch tập theo thời gian, nhưng chỉ 1 lịch đang `ACTIVE` tại một thời điểm (ràng buộc xử lý ở PHP, `includes/workout-plan-db.php`).
 
+`assigned_by` (thêm bởi `sql/coach_features.sql`): id HLV đã giao/sửa lịch này, NULL = người dùng tự tạo. Khóa ngoại tới `users`, xóa HLV thì về NULL (lịch vẫn còn).
+
 `split_type` có 8 giá trị: `FULL_BODY`, `UPPER_LOWER`, `ANTERIOR_POSTERIOR`, `PPL`, `PPL_UL`, `UL_FULL_BODY`, `AP_FULL_BODY`, `BRO_SPLIT`. Database tạo trước khi có `sql/split_types.sql` chỉ có 4 giá trị đầu cũ, phải chạy file đó.
 
 ### `workout_plan_exercises`
@@ -262,6 +356,8 @@ Lưu theo mốc thời gian (không update đè), để vẽ biểu đồ tiến
 
 ### `nutrition_targets`
 Lưu kết quả tính TDEE/macro theo từng lần tính (không phải 1-1 cố định với user, vì chỉ số cơ thể/mục tiêu có thể thay đổi → giữ lịch sử).
+
+`assigned_by` (thêm bởi `sql/coach_features.sql`): id HLV đặt mục tiêu này bằng tay, NULL = trang Dinh dưỡng tự tính. Mỗi ngày tối đa 1 dòng tự tính và 1 dòng do HLV đặt.
 
 ### `nutrition_preferences`
 Lựa chọn trên trang Dinh dưỡng, mỗi người tối đa 1 dòng (`user_id` là khóa chính): kiểu ăn, tỉ lệ % tùy chỉnh, số bữa, thực phẩm loại trừ (`excluded_foods`, các mã cách nhau bởi dấu phẩy), nhịp mục tiêu, bật/tắt calo theo ngày tập. Chưa import bảng thì trang giữ lựa chọn trong session.
@@ -289,9 +385,39 @@ Người dùng đã đọc bài nền tảng nào (khóa chính `user_id` + `slu
 
 ---
 
+## Phân hệ HLV (`sql/coach_features.sql`, đã gộp vào `schema.sql`)
+
+Code: quy tắc thuần ở `includes/coach-rules.php`, truy vấn ở `includes/coach-db.php`, phân quyền ở `includes/coach.php`; test `test-coach.php`.
+
+**Kỹ thuật "cột sinh tự động + UNIQUE"** (dùng ở 3 bảng): MySQL/MariaDB không có "UNIQUE có điều kiện" (chỉ duy nhất khi status = PENDING). Cách làm: thêm một cột tự tính bằng `IF(điều kiện, giá trị, NULL)` rồi đặt UNIQUE lên cột đó. UNIQUE bỏ qua NULL, nên chỉ các dòng thỏa điều kiện bị cấm trùng. Nhờ vậy, kể cả hai yêu cầu đến cùng lúc, database vẫn chặn được, không chỉ dựa vào PHP kiểm tra trước.
+
+### `coach_applications`
+Đơn đăng ký làm HLV (trang `coach-apply.php`). Chỉ `USER` không đang có HLV mới nộp được. ADMIN duyệt (`admin/coach-applications.php`): trong 1 transaction đổi `users.role` thành `COACH`, tạo/cập nhật `coach_profiles` từ đơn. Từ chối phải ghi `admin_note` (người nộp thấy được). `open_user_id` + UNIQUE: mỗi người tối đa 1 đơn đang chờ. `specialties` là các mã trong `COACH_SPECIALTIES` (whitelist ở PHP).
+
+### `coach_profiles`
+Hồ sơ công khai của HLV, 1-1 với `users`. HLV tự sửa và bật/tắt `accepting` (`coach/profile.php`). Bị thu hồi quyền thì hồ sơ vẫn giữ (`accepting = 0`), được duyệt lại thì ghi đè bằng đơn mới.
+
+### `coach_clients`
+Quan hệ HLV - học viên. Trạng thái: `PENDING` (học viên gửi yêu cầu) → `ACTIVE` (HLV duyệt) → `ENDED` (học viên ngừng, HLV kết thúc hoặc ADMIN thu hồi HLV); `PENDING` → `REJECTED` (HLV từ chối) hoặc `ENDED` (học viên tự hủy). Máy trạng thái ở `coachNextStatus()`.
+- `open_client_id` + UNIQUE: **mỗi học viên chỉ có 1 HLV** (đang chờ hoặc đang tập).
+- HLV chỉ xem được dữ liệu học viên khi có dòng `ACTIVE` với mình **và** `users.role` của HLV vẫn là `COACH` (`coachActiveRelationId()`).
+- Số học viên ACTIVE không vượt `coach_profiles.max_clients` (kiểm tra trong transaction, có khóa dòng).
+- Xóa HLV hoặc học viên thì xóa theo quan hệ, nhận xét, tin nhắn (CASCADE).
+
+### `coach_feedback`
+Nhận xét của HLV. `log_date` có giá trị = nhận xét buổi tập ngày đó (phải là ngày học viên có ghi log); cả `log_date` và `workout_log_id` NULL = nhận xét chung. `workout_log_id` để dành cho nhận xét từng bài (xóa log thì về NULL). `read_at` để hiện thông báo "nhận xét mới" cho học viên.
+
+### `coach_messages`
+Tin nhắn trong một quan hệ (không có chat tự do). Tối đa 1000 ký tự, mỗi người cách nhau tối thiểu 2 giây và tối đa 60 tin/giờ (kiểm tra ở PHP). Chỉ gửi được khi quan hệ `ACTIVE`.
+
+### `coach_change_requests`
+Khi đang có HLV, học viên **không tự sửa** lịch tập và dinh dưỡng. Muốn sửa thì gửi yêu cầu (`area` = `PLAN` hoặc `NUTRITION`, kèm lý do). HLV duyệt thì `unlock_until` = 24 giờ sau, trong thời gian đó học viên được tự sửa phần ấy. `open_key` + UNIQUE: mỗi phần chỉ 1 yêu cầu đang chờ. Quan hệ kết thúc thì yêu cầu đang chờ chuyển `CANCELLED`.
+
+---
+
 ## Ghi chú khi triển khai
 
-- **Không có bảng Coach/CoachAssignment** và **không có bảng Message/Conversation giữa user-user**: đã loại khỏi phạm vi (xem `CLAUDE.md`)
+- **Không có chat tự do giữa user với user**: tin nhắn chỉ có trong `coach_messages`, gắn với một quan hệ HLV - học viên đang `ACTIVE`
 - **Chatbot RAG đơn giản**: không cần bảng mới, chỉ query bảng `exercises` (tên, nhóm cơ, mô tả, `instructions`, `common_mistakes`) theo từ khóa rồi dẫn tới trang chi tiết bài tập
 - Khi thêm bảng mới: tạo `sql/<tên>.sql` dùng `IF NOT EXISTS`, gộp vào `schema.sql`, **cập nhật sơ đồ mermaid và bảng mô tả phía trên**
 - Tất cả bảng nên có `created_at`; bảng có thể chỉnh sửa (users, exercises, workout_plans, articles) có thêm `updated_at`
