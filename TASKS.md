@@ -62,7 +62,7 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
 - [x] A-33 Hồ sơ học viên, giao lịch, đặt macro (`a-33-coach-panel`): `coach/client.php` (chỉ đọc, biểu đồ qua `api/body-metrics.php?client_id=`), `client-plan.php` (tạo từ thuật toán gợi ý rồi chỉnh), `client-nutrition.php` (kcal = 4P + 4C + 9F, giới hạn ở máy chủ); khóa tự sửa lịch tập và dinh dưỡng khi có HLV, xin sửa thì HLV duyệt mở 24 giờ
 - [x] A-35 Nhận xét và nhắn tin (`a-35-coach-feedback-chat`): nhận xét từng buổi / nhận xét chung, `api/coach-messages.php` + `api/coach-message-send.php`, `coach/messages.php`, tab Tin nhắn ở `my-coach.php`, thông báo trên trang chủ (`includes/dash-coach.php`)
 - [ ] A-36 (Tùy chọn, làm sau cùng) Trợ lý chatbot cho HLV: chế độ `coach` trong `api/chatbot.php`, chỉ đưa dữ liệu học viên đã qua `canCoachAccessClient()` vào prompt
-- [ ] A-37 Chụp ảnh `docs/screens/coach-*.png` và chạy kịch bản thử trên MySQL (xem `SECURITY_CHECKLIST.md` mục "Phân hệ HLV")
+- [x] A-37 Chụp ảnh `docs/screens/coach-*.png` (34 ảnh, 1440px và 390px) và chạy kịch bản thử trên MySQL (111 bước, xem `SECURITY_CHECKLIST.md` mục "Phân hệ HLV")
 
 ---
 
