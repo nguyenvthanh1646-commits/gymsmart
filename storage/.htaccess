@@ -1,0 +1,3 @@
+# Thư mục storage/ nằm ngoài public/ nên bình thường không mở được bằng URL.
+# Phòng khi máy chủ lỡ đặt document root là gốc repo: chặn mọi truy cập trực tiếp.
+Require all denied

@@ -98,6 +98,9 @@ include __DIR__ . '/../includes/admin-nav.php';
                 </dl>
                 <h2 style="margin-top:20px">Chứng chỉ</h2>
                 <p class="adm-sub" style="white-space:pre-line"><?= $app['certifications'] !== '' ? htmlspecialchars($app['certifications']) : 'Không ghi chứng chỉ.' ?></p>
+                <?php if (coachCertNameOk($app['certificate_file'] ?? null)): ?>
+                    <p><a class="adm-btn adm-btn-ghost adm-btn-sm" href="/admin/certificate.php?id=<?= (int)$app['id'] ?>" target="_blank" rel="noopener">Xem file chứng chỉ đính kèm (<?= htmlspecialchars(strtoupper(pathinfo($app['certificate_file'], PATHINFO_EXTENSION))) ?>)</a></p>
+                <?php endif; ?>
                 <h2 style="margin-top:20px">Giới thiệu</h2>
                 <p style="white-space:pre-line;margin:0"><?= htmlspecialchars($app['bio']) ?></p>
                 <h2 style="margin-top:20px">Phương pháp huấn luyện</h2>
