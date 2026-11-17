@@ -13,6 +13,8 @@
  * Hai trợ lý KHÁC NHAU, chọn ở phía server (không tin client):
  *   - user : huấn luyện viên AI — hỏi đáp tập luyện/dinh dưỡng, biết bài tập trong thư viện, (tùy chọn) hồ sơ cá nhân
  *   - admin: trợ lý vận hành — số liệu hệ thống, bài tập thiếu nội dung, hướng dẫn trang quản trị, soạn nháp bài tập
+ *   - coach: trợ lý HLV (khu /coach/) — gợi ý điều chỉnh lịch/dinh dưỡng cho học viên. Body có thêm "client_id" (tùy chọn):
+ *            phải là học viên ACTIVE của HLV (kiểm tra trong DB), dữ liệu đưa vào prompt xem includes/coach-ai.php
  */
 
 // Không để lỗi PHP in HTML vào JSON (khung chat sẽ không đọc được). Lỗi vẫn ghi vào log của Apache.
@@ -86,7 +88,16 @@ if (mb_strlen($message) > 500) {
 }
 
 // Chế độ và nhiệm vụ: danh sách cho phép (whitelist)
-$mode = ($body['mode'] ?? 'user') === 'admin' ? 'admin' : 'user';
+$modeIn = $body['mode'] ?? 'user';
+$mode = in_array($modeIn, ['admin', 'coach'], true) ? $modeIn : 'user';
+$coachClientId = null;
+if ($mode === 'coach' && isset($body['client_id'])) {
+    $cid = filter_var($body['client_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+    if ($cid === false) {
+        jsonOut(400, ['error' => 'Học viên không hợp lệ.']);
+    }
+    $coachClientId = $cid;
+}
 $task = ($body['task'] ?? 'chat') === 'exercise_draft' ? 'exercise_draft' : 'chat';
 if (($mode === 'admin' || $task === 'exercise_draft') && !$isAdmin) {
     jsonOut(403, ['error' => 'Chức năng này chỉ dành cho quản trị viên.']);
@@ -173,6 +184,16 @@ if ($mode === 'admin') {
     }
     if ($dbRole !== 'ADMIN') {
         jsonOut(403, ['error' => 'Chức năng này chỉ dành cho quản trị viên.']);
+    }
+}
+// Chế độ HLV: vai trò COACH đọc lại trong DB; học viên (nếu có) phải đang ACTIVE với HLV này
+if ($mode === 'coach') {
+    require_once __DIR__ . '/../includes/coach-ai.php';
+    if (!$pdo || coachUserRole($pdo, $userId) !== 'COACH') {
+        jsonOut(403, ['error' => 'Chức năng này chỉ dành cho huấn luyện viên.']);
+    }
+    if ($coachClientId !== null && coachActiveRelationId($pdo, $userId, $coachClientId) === null) {
+        jsonOut(403, ['error' => 'Bạn không còn quyền xem học viên này.']);
     }
 }
 
@@ -333,7 +354,7 @@ function adminSnapshot(?PDO $pdo, array $labels): string
     if ($tdeeUsers !== null) {
         $out .= "- Số người đã dùng tính TDEE/Macro: $tdeeUsers\n";
     }
-    $plans = dbOne($pdo, 'SELECT COUNT(*) FROM workout_plans');
+    $plans = dbOne($pdo, "SELECT COUNT(*) FROM workout_plans WHERE status <> 'DRAFT'");   // bản nháp của HLV chưa tính là lịch
     if ($plans !== null) {
         $out .= "- Số lịch tập đã tạo: $plans\n";
     }
@@ -476,7 +497,7 @@ if ($task === 'exercise_draft') {
 } else {
     $system = $mode === 'admin'
         ? adminSystemPrompt($pdo, $labels)
-        : userSystemPrompt($pdo, $userId, $message, $personalize, $labels, $links);
+        : ($mode === 'coach' ? coachSystemPrompt($pdo, $userId, $coachClientId, $labels) : userSystemPrompt($pdo, $userId, $message, $personalize, $labels, $links));
     $res = aiGenerate($system, $turns, ['maxTokens' => 1500]);
 }
 

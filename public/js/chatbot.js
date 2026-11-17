@@ -32,7 +32,7 @@
     var tabsEl = $('gc-tabs'), persBox = $('gc-pers');
 
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var KEY = 'gc:' + cfg.mode + ':' + cfg.uid;          // khóa lưu lịch sử
+    var KEY = 'gc:' + cfg.mode + ':' + cfg.uid + (cfg.clientId ? ':' + cfg.clientId : '');   // khóa lưu lịch sử (HLV: riêng từng học viên)
     var DRAFT_KEY = 'gc:draft:' + cfg.uid;               // bản nháp bài tập chờ điền vào form
     var NUDGE_KEY = 'gc:nudged';
 
@@ -370,6 +370,7 @@
         input.value = ''; autosize(); setBusy(true); showTyping();
 
         var payload = { message: text, mode: cfg.mode, task: task, history: hist, personalize: !!(persBox && persBox.checked) };
+        if (cfg.clientId) { payload.client_id = cfg.clientId; }   // chế độ HLV: máy chủ kiểm tra lại quyền xem học viên này
         var ctrl = new AbortController();
         var current = { ctrl: ctrl, reason: '' };
         request = current;

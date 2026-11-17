@@ -6,6 +6,8 @@
  *
  * - Chỉ hiện khi đã đăng nhập (api/chatbot.php cũng yêu cầu đăng nhập).
  * - Trong khu /admin/ → "Trợ lý quản trị" (số liệu hệ thống, nội dung còn thiếu, soạn nháp bài tập).
+ *   Trong khu /coach/ (vai trò COACH) → "Trợ lý HLV"; ở trang về một học viên (?id=) thì gửi kèm client_id,
+ *   máy chủ kiểm tra lại quyền trước khi đưa dữ liệu học viên vào prompt (includes/coach-ai.php).
  *   Ở các trang còn lại → "GymSmart AI" (huấn luyện viên ảo cho người tập).
  * - Phần chữ nằm trong mảng $cfg bên dưới, muốn đổi câu chào/gợi ý thì sửa ở đây.
  * - Giao diện: css/chatbot.css. Hành vi: js/chatbot.js. Logo vẽ SVG sẵn trong file này (không cần ảnh).
@@ -20,6 +22,9 @@ define('GS_CHATBOT_WIDGET', true);
 require_once __DIR__ . '/csrf.php';
 
 $gcAdmin = (($_SESSION['role'] ?? '') === 'ADMIN') && strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') === 0;
+$gcCoach = (($_SESSION['role'] ?? '') === 'COACH') && strpos($_SERVER['SCRIPT_NAME'] ?? '', '/coach/') === 0;
+// Trang về một học viên (/coach/client*.php?id=, /coach/messages.php?id=): chỉ là gợi ý, máy chủ vẫn kiểm tra quan hệ ACTIVE
+$gcClient = $gcCoach ? filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) : false;
 
 // Lấy TÊN (từ cuối trong họ tên Việt Nam) để chào
 $gcParts = preg_split('/\s+/u', trim((string)($_SESSION['full_name'] ?? '')), -1, PREG_SPLIT_NO_EMPTY);
@@ -46,6 +51,29 @@ if ($gcAdmin) {
         'draftChips' => ['Hít đất kim cương', 'Romanian deadlift', 'Chạy interval 30 giây'],
         'footer'   => 'Chỉ thấy số liệu tổng hợp, không tự sửa dữ liệu.',
         'personalize' => false,
+    ];
+} elseif ($gcCoach) {
+    $cfg = [
+        'mode'     => 'coach',
+        'title'    => 'Trợ lý HLV',
+        'subtitle' => $gcClient ? 'Đang xem 1 học viên' : 'Tổng quan học viên',
+        'nudge'    => $gcClient ? 'Cần gợi ý chỉnh lịch cho học viên này?' : 'Hỏi về các học viên của bạn',
+        'welcome'  => 'Chào ' . ($gcName ?: 'bạn') . '! Mình là trợ lý cho HLV. ' . ($gcClient
+            ? 'Mình đã đọc hồ sơ, lịch, nhật ký 14 ngày và số đo của học viên đang mở để gợi ý cách điều chỉnh. Mình không thấy email và không tự sửa dữ liệu.'
+            : 'Mình xem được tóm tắt các học viên đang tập với bạn. Mở hồ sơ một học viên để mình gợi ý chi tiết hơn.'),
+        'chips'    => $gcClient ? [
+            ['icon' => '📈', 'text' => 'Học viên này tiến bộ thế nào 2 tuần qua?'],
+            ['icon' => '🛠️', 'text' => 'Nên chỉnh lịch tập ra sao?'],
+            ['icon' => '🍽️', 'text' => 'Mục tiêu calo và macro có hợp lý không?'],
+            ['icon' => '✍️', 'text' => 'Soạn giúp lời nhận xét cho buổi gần nhất'],
+        ] : [
+            ['icon' => '🚩', 'text' => 'Học viên nào cần chú ý tuần này?'],
+            ['icon' => '📋', 'text' => 'Gợi ý cách nhắc học viên tập đều hơn'],
+        ],
+        'tabs'     => [['id' => 'chat', 'label' => 'Hỏi đáp', 'placeholder' => 'Hỏi về học viên, lịch tập...']],
+        'footer'   => 'Chỉ gợi ý, HLV tự quyết định. Không thay thế tư vấn y tế.',
+        'personalize' => false,
+        'clientId' => $gcClient ?: null,
     ];
 } else {
     $cfg = [
@@ -122,7 +150,7 @@ $cfg['uid']      = (int)($_SESSION['user_id'] ?? 0);   // để mỗi tài kho�
                 <?php endif; ?>
             </div>
             <div class="gc-head__txt">
-                <strong><?= htmlspecialchars($cfg['title']) ?><?php if ($gcAdmin): ?> <em class="gc-tag">ADMIN</em><?php endif; ?></strong>
+                <strong><?= htmlspecialchars($cfg['title']) ?><?php if ($gcAdmin): ?> <em class="gc-tag">ADMIN</em><?php elseif ($gcCoach): ?> <em class="gc-tag">HLV</em><?php endif; ?></strong>
                 <span class="gc-status" id="gc-status"><i class="gc-status__dot"></i><span id="gc-status-text"><?= htmlspecialchars($cfg['subtitle']) ?></span></span>
             </div>
             <button class="gc-ibtn" id="gc-reset" type="button" title="Cuộc trò chuyện mới" aria-label="Bắt đầu cuộc trò chuyện mới">
