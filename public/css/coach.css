@@ -182,3 +182,6 @@
     .ch-chat { height: calc(100vh - 170px); min-height: 380px; border-radius: var(--r); }
 }
 @media (prefers-reduced-motion: reduce) { .ch-skel { animation: none; } }
+
+/* ---------- Thanh điều hướng khu HLV: dùng adm-nav của khu quản trị, chỉ có 4 mục ---------- */
+@media (max-width: 900px) { .ch-nav .adm-nav-links { grid-template-columns: repeat(4, 1fr); } }
