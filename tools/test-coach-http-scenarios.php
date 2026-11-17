@@ -127,7 +127,8 @@ check('Học viên vẫn ghi log tập được', $user->code === 200 && ($user-
 check('Dinh dưỡng dùng mục tiêu HLV (1.820 kcal)', $user->get('/nutrition.php')->has('1.820') && $user->has('Mục tiêu do HLV [Thử] Huấn Luyện Hai giao'));
 check('Học viên đổi mục tiêu ở Dinh dưỡng bị chặn', $user->postFollow('/nutrition.php', ['csrf_token' => $user->csrf(), 'action' => 'goal', 'goal' => 'MAINTAIN'])->has('đang do HLV quản lý') && q('SELECT goal FROM users WHERE id = ?', [$u3]) === 'LOSE_FAT');
 
-$today = date('Y-m-d');
+// Ngày của buổi vừa ghi lấy từ DB: log ghi bằng CURDATE() của MySQL, có thể lệch ngày với date() của PHP nếu 2 bên khác múi giờ
+$today = (string)q('SELECT MAX(log_date) FROM workout_logs WHERE user_id = ?', [$u3]);
 $coach->get("/coach/client.php?id=$u3");
 check('HLV nhận xét buổi tập hôm nay', $coach->postFollow("/coach/client.php?id=$u3", ['csrf_token' => $coach->csrf(), 'action' => 'feedback', 'log_date' => $today, 'content' => 'Tốt lắm <b>giữ lưng thẳng</b>'])->has('Đã gửi nhận xét'));
 check('Nhận xét ngày không tập bị chặn', $coach->postFollow("/coach/client.php?id=$u3", ['csrf_token' => $coach->csrf(), 'action' => 'feedback', 'log_date' => '2020-01-01', 'content' => 'x x'])->has('không có buổi tập nào'));

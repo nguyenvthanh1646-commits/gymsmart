@@ -197,15 +197,15 @@
 
 /* ---------- Khu HLV: sửa lịch học viên (mỗi bài một dòng, 3 form nhỏ) ---------- */
 .cp-day h2 small { font-weight: 500; margin-left: 6px; }
-.cp-row { display: grid; grid-template-columns: minmax(140px, 1fr) auto auto auto; gap: var(--s-2) var(--s-3); align-items: center;
+.cp-row { display: grid; grid-template-columns: minmax(110px, 1fr) auto auto auto; gap: var(--s-2) var(--s-3); align-items: center;
     padding: var(--s-3) 0; border-top: 1px solid var(--line); }
 .cp-row:first-of-type { border-top: 0; }
 .cp-row__name b { display: block; }
 .cp-row__name small { color: var(--text-muted); }
 .cp-form { display: flex; gap: var(--s-2); align-items: center; margin: 0; }
 .cp-form label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-muted); }
-.cp-form .adm-input { width: 64px; height: 44px; min-height: 44px; padding: 0 8px; text-align: center; }
-.cp-form .adm-select { width: 190px; height: 44px; min-height: 44px; }
+.cp-form .adm-input { width: 56px; height: 44px; min-height: 44px; padding: 0 8px; text-align: center; }
+.cp-form .adm-select { width: 150px; height: 44px; min-height: 44px; }
 @media (max-width: 1100px) { .cp-row { grid-template-columns: 1fr; } .cp-form { flex-wrap: wrap; } .cp-form .adm-select { flex: 1; width: auto; min-width: 0; } }
 
 /* ---------- Khu HLV: tổng calo khi đặt macro ---------- */
