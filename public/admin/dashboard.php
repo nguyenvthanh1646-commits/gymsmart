@@ -9,6 +9,8 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 
 requireAdmin();
+require_once __DIR__ . '/../includes/coach-db.php';
+$coachCounts = coachAdminCounts($pdo);   // 0 nếu chưa import sql/coach_features.sql
 
 /** Chạy câu SQL KHÔNG có dữ liệu người dùng (chỉ truyền hằng số viết sẵn trong file này) và trả về một con số */
 function scalar(PDO $pdo, string $sql): int
@@ -85,7 +87,7 @@ include __DIR__ . '/../includes/admin-nav.php';
         <div>
             <span class="adm-hero__chip">Bảng điều khiển</span>
             <h1>Xin chào, <?= htmlspecialchars($_SESSION['full_name'] ?? 'quản trị viên') ?></h1>
-            <p>Hệ thống đang có <?= (int)$totalUsers ?> người dùng và <?= (int)$totalEx ?> bài tập.</p>
+            <p>Hệ thống đang có <?= (int)$totalUsers ?> người dùng, <?= (int)$coachCounts['coaches'] ?> huấn luyện viên (<?= (int)$coachCounts['active_pairs'] ?> cặp đang tập) và <?= (int)$totalEx ?> bài tập.</p>
         </div>
         <div class="adm-hero__cta">
             <a class="adm-btn" href="/admin/exercise-form.php">+ Thêm bài tập</a>
@@ -110,8 +112,9 @@ include __DIR__ . '/../includes/admin-nav.php';
         <div class="adm-stat <?= $noImage > 0 ? 'adm-stat-warn' : '' ?>"><?= $ico($icoImage) ?><div><div class="adm-stat-num"><?= (int)$noImage ?></div><div class="adm-stat-label">Bài chưa có ảnh</div></div></div>
     </div>
 
-    <?php if ($noVideo > 0 || $noImage > 0 || $incomplete > 0): ?>
+    <?php if ($noVideo > 0 || $noImage > 0 || $incomplete > 0 || $coachCounts['pending_apps'] > 0): ?>
         <div class="adm-todo">
+            <?php if ($coachCounts['pending_apps'] > 0): ?><a href="/admin/coach-applications.php"><?= (int)$coachCounts['pending_apps'] ?> đơn HLV chờ duyệt</a><?php endif; ?>
             <?php if ($noVideo > 0): ?><a href="/admin/exercises.php"><?= (int)$noVideo ?> bài cần thêm video</a><?php endif; ?>
             <?php if ($noImage > 0): ?><a href="/admin/exercises.php"><?= (int)$noImage ?> bài cần thêm ảnh</a><?php endif; ?>
             <?php if ($incomplete > 0): ?><a href="/admin/users.php"><?= (int)$incomplete ?> người dùng chưa đủ hồ sơ</a><?php endif; ?>

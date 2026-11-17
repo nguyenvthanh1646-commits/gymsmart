@@ -23,6 +23,16 @@ function auditActions(): array
         'article.publish'    => 'Đăng bài viết',
         'article.unpublish'  => 'Gỡ bài viết về nháp',
         'article.delete'     => 'Xóa bài viết',
+        // Phân hệ HLV: 3 mã đầu do ADMIN làm, các mã sau do chính HLV làm (cột admin_id/admin_name lúc đó là HLV)
+        'coach.approve'        => 'Duyệt đơn HLV',
+        'coach.reject'         => 'Từ chối đơn HLV',
+        'coach.revoke'         => 'Thu hồi vai trò HLV',
+        'coach.accept'         => 'HLV nhận học viên',
+        'coach.decline'        => 'HLV từ chối học viên',
+        'coach.end'            => 'HLV kết thúc học viên',
+        'coach.assign_plan'    => 'HLV giao lịch tập',
+        'coach.set_macros'     => 'HLV đặt mục tiêu dinh dưỡng',
+        'coach.change_request' => 'HLV trả lời yêu cầu sửa',
     ];
 }
 

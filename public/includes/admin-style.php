@@ -125,20 +125,20 @@ body{overflow-x:hidden}
 .adm-nav .adm-nav-site:hover{border-color:#ff8a3d;color:#fff}
 .adm-nav-av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ff8a3d,#ff5a1f);color:#fff;font-weight:700;font-size:.92rem}
 .adm-nav .adm-nav-out{height:auto;padding:8px 4px;font-size:.88rem;color:#aab4cf}
-@media (max-width:1240px){.adm-nav .adm-nav-site{display:none}}   /* menu có 6 mục: ẩn nút "Xem trang người dùng" trên màn hình hẹp để không bị cắt mất chữ Đăng xuất */
+@media (max-width:1240px){.adm-nav .adm-nav-site{display:none}}   /* menu có 7 mục: ẩn nút "Xem trang người dùng" trên màn hình hẹp để không bị cắt mất chữ Đăng xuất */
 .adm-nav-links{display:flex;align-items:center;gap:6px}
-/* Màn hình hẹp: hàng 1 = logo + Đăng xuất, hàng 2 = 6 mục dạng lưới, thấy hết không cần cuộn */
+/* Màn hình hẹp: hàng 1 = logo + Đăng xuất, hàng 2 = 7 mục dạng lưới, thấy hết không cần cuộn */
 @media (max-width:900px){
   .adm-nav{position:static}   /* menu 2 hàng cao hơn: không dính đầu trang để khỏi che nội dung */
   .adm-nav-in{flex-wrap:wrap;height:auto;overflow:visible;white-space:normal;padding:0 16px;gap:0}
   .adm-nav a.adm-nav-brand{height:56px}
-  .adm-nav-links{order:3;width:100%;display:grid;grid-template-columns:repeat(6,1fr);gap:0;border-top:1px solid rgba(255,255,255,.08)}
+  .adm-nav-links{order:3;width:100%;display:grid;grid-template-columns:repeat(7,1fr);gap:0;border-top:1px solid rgba(255,255,255,.08)}
   .adm-nav-links a{height:48px;justify-content:center;padding:0 4px;font-size:.88rem;text-align:center}
   .adm-nav-links a.is-active::after{left:18%;right:18%}
   .adm-nav .adm-nav-out{padding:12px 4px}
 }
 @media (max-width:520px){
-  .adm-nav-links{grid-template-columns:repeat(3,1fr)}
+  .adm-nav-links{grid-template-columns:repeat(4,1fr)}
   .adm-nav-links a{height:44px}
   .adm-nav-av{display:none}
 }
@@ -170,6 +170,10 @@ body{overflow-x:hidden}
 .adm-warn{background:#fef3c7;color:#92400e}
 .adm-b-ADMIN{background:#fee2e2;color:#991b1b}
 .adm-b-USER{background:#f3f4f6;color:#374151}
+.adm-b-COACH{background:#fff1ea;color:#9a3412}
+.adm-b-PENDING{background:#fffaeb;color:#93370d}
+.adm-b-APPROVED{background:#f0fdf4;color:#166534}
+.adm-b-REJECTED{background:#f3f4f6;color:#374151}
 
 /* ===== Dải chào đầu trang Tổng quan ===== */
 .adm-hero{position:relative;overflow:hidden;display:flex;flex-wrap:wrap;gap:20px 24px;align-items:center;justify-content:space-between;

@@ -31,3 +31,8 @@
 @media (max-width:900px){.adm-filters{grid-template-columns:1fr 1fr}.adm-form-grid{grid-template-columns:1fr}}
 @media (max-width:560px){.adm-filters{grid-template-columns:1fr}}
 </style>
+<style>
+/* Bộ lọc dạng viên thuốc (trang đơn HLV): mục đang chọn nền tối, chữ trắng */
+.adm-todo a.is-on{background:var(--ink);border-color:var(--ink);color:#fff}
+.adm-todo a{min-height:44px;display:inline-flex;align-items:center}
+</style>
