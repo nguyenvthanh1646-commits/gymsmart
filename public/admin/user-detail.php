@@ -141,6 +141,36 @@ include __DIR__ . '/../includes/admin-nav.php';
             </dl>
         </div>
     </div>
+
+    <?php if (coachTablesReady($pdo)): $ci = coachAdminUserInfo($pdo, (int)$user['id']); ?>
+    <!-- Phân hệ HLV: chỉ đọc. Thu hồi vai trò HLV dùng nút ở đầu trang. -->
+    <div class="adm-panel adm-card-pad" style="margin-top:16px">
+        <h2>Huấn luyện viên</h2>
+        <?php if ($ci['as_client']): $r = $ci['as_client']; ?>
+            <p style="margin:0 0 8px">Đang <?= $r['status'] === 'ACTIVE' ? 'tập với' : 'chờ duyệt từ' ?> HLV <a class="adm-link" href="/admin/user-detail.php?id=<?= (int)$r['coach_id'] ?>"><b><?= htmlspecialchars($r['coach_name']) ?></b></a>
+                <small class="adm-sub">(<?= $r['status'] === 'ACTIVE' ? 'từ ' . htmlspecialchars(date('d/m/Y', strtotime((string)$r['accepted_at']))) : 'gửi ' . htmlspecialchars(date('d/m/Y', strtotime($r['created_at']))) ?>)</small></p>
+        <?php endif; ?>
+        <?php if ($ci['clients']): ?>
+            <p style="margin:0 0 6px">Là HLV của <?= count(array_filter($ci['clients'], fn($c) => $c['status'] === 'ACTIVE')) ?> học viên, <?= count(array_filter($ci['clients'], fn($c) => $c['status'] === 'PENDING')) ?> yêu cầu chờ:</p>
+            <ul class="adm-list">
+                <?php foreach ($ci['clients'] as $c): ?>
+                    <li><a class="adm-link" href="/admin/user-detail.php?id=<?= (int)$c['id'] ?>"><?= htmlspecialchars($c['full_name']) ?></a>
+                        <span class="adm-badge <?= $c['status'] === 'ACTIVE' ? 'adm-ok' : 'adm-warn' ?>"><?= $c['status'] === 'ACTIVE' ? 'Đang tập' : 'Chờ duyệt' ?></span></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+        <?php if (!$ci['as_client'] && !$ci['clients']): ?><p class="adm-sub" style="margin:0">Hiện không có quan hệ HLV nào.</p><?php endif; ?>
+        <?php if ($ci['history']): ?>
+            <h3 style="margin:16px 0 6px;font-size:1rem">Đã kết thúc</h3>
+            <ul class="adm-list">
+                <?php foreach ($ci['history'] as $h): $isCoach = (int)$h['coach_id'] === (int)$user['id']; ?>
+                    <li><span><?= $isCoach ? 'Học viên ' . htmlspecialchars($h['client_name']) : 'HLV ' . htmlspecialchars($h['coach_name']) ?></span>
+                        <small><?= $h['status'] === 'REJECTED' ? 'Bị từ chối' : ($h['accepted_at'] ? 'Đã kết thúc' : 'Đã hủy') ?><?= $h['ended_at'] ? ' · ' . htmlspecialchars(date('d/m/Y', strtotime($h['ended_at']))) : '' ?></small></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
 <?php endif; ?>
 </div>
 

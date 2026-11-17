@@ -10,7 +10,8 @@
  * Không có quan hệ ACTIVE → 404 (không phân biệt "không tồn tại" hay "không có quyền", để khỏi lộ thông tin).
  * Đọc xong thì đánh dấu đã đọc các tin của bên kia.
  *
- * Thành công: { "success": true, "data": { "messages": [ { "id", "mine", "content", "at", "label" } ], "unreadMarked": n } }
+ * Thành công: { "success": true, "data": { "messages": [ { "id", "mine", "content", "at", "label" } ], "seenUpTo": id } }
+ *   seenUpTo = id lớn nhất trong các tin CỦA MÌNH mà bên kia đã đọc → khung chat hiện "Đã xem".
  * Lỗi: { "success": false, "error": "..." } với mã 400/401/404/405/500 (theo includes/api.php).
  */
 require_once __DIR__ . '/../includes/auth.php';
@@ -44,4 +45,4 @@ foreach (coachMessages($pdo, $relationId, $after) as $m) {
     ];
 }
 coachMarkMessagesRead($pdo, $relationId, $me);
-apiJson(200, ['success' => true, 'data' => ['messages' => $out]]);
+apiJson(200, ['success' => true, 'data' => ['messages' => $out, 'seenUpTo' => coachSeenUpTo($pdo, $relationId, $me)]]);

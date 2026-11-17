@@ -43,6 +43,18 @@ if ($active) {
         coachMarkFeedbackRead($pdo, $relId);   // đọc xong ở đây; danh sách vẫn tô "mới" cho lần mở này nhờ read_at cũ
     }
 }
+// Lịch sử với HLV cũ: ?history=id chỉ nhận quan hệ ĐÃ KẾT THÚC của chính người đang đăng nhập (coachPastRelationForClient)
+$past = $ready ? coachPastRelations($pdo, $userId) : [];
+$hist = null;
+$histMessages = $histFeedback = [];
+if (isset($_GET['history'])) {
+    $hist = $ready ? coachPastRelationForClient($pdo, $userId, coachParseId($_GET['history'])) : null;
+    if ($hist === null) {
+        showError(404, 'Không tìm thấy', 'Không có lịch sử huấn luyện này trong tài khoản của bạn.', [['/my-coach.php', 'HLV của tôi']]);
+    }
+    $histMessages = coachMessages($pdo, (int)$hist['id'], 0, 200);
+    $histFeedback = coachFeedbackList($pdo, (int)$hist['id'], 100);
+}
 $reqLabels = ['PENDING' => ['Chờ HLV trả lời', 'warn'], 'APPROVED' => ['Được duyệt', 'ok'], 'REJECTED' => ['Không duyệt', 'danger'], 'CANCELLED' => ['Đã hủy', '']];
 
 /** Một dòng trạng thái khóa (lịch tập / dinh dưỡng). */
@@ -73,7 +85,33 @@ include __DIR__ . '/includes/header.php';
         <div class="alert alert--<?= $flash[0] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($flash[1]) ?></div>
     <?php endif; ?>
 
-    <?php if (!$ready || $rel === null): ?>
+    <?php if ($hist !== null): ?>
+        <a class="btn btn--ghost" href="/my-coach.php" style="margin-bottom:var(--s-4)">&larr; HLV của tôi</a>
+        <div class="ch-layout">
+            <section class="ch-chat" aria-label="Tin nhắn cũ với <?= htmlspecialchars($hist['coach_name']) ?>">
+                <header class="ch-chat__head"><?= coachAvatar($hist['coach_avatar'], $hist['coach_name'], 40) ?>
+                    <div><b><?= htmlspecialchars($hist['coach_name']) ?></b><span>Đã kết thúc <?= htmlspecialchars(date('d/m/Y', strtotime((string)$hist['ended_at']))) ?></span></div></header>
+                <div class="ch-chat__log" tabindex="0" role="log" aria-label="Tin nhắn cũ">
+                    <?php if (!$histMessages): ?><p class="ch-day">Không có tin nhắn nào.</p><?php endif; ?>
+                    <?php foreach ($histMessages as $m): ?>
+                        <div class="ch-msg<?= (int)$m['sender_id'] === $userId ? ' is-me' : '' ?>"><?= htmlspecialchars($m['content']) ?><time><?= htmlspecialchars(date('H:i d/m/Y', strtotime($m['created_at']))) ?></time></div>
+                    <?php endforeach; ?>
+                </div>
+                <p class="ch-chat__closed">Quan hệ huấn luyện đã kết thúc nên không gửi tin được nữa.</p>
+            </section>
+            <aside class="ch-side">
+                <section class="card"><h2 class="card__head">Nhận xét</h2>
+                    <?php if (!$histFeedback): ?><p class="ch-muted" style="margin:0">Không có nhận xét nào.</p><?php endif; ?>
+                    <ul class="ch-feed">
+                        <?php foreach ($histFeedback as $f): ?>
+                            <li><div class="ch-feed__meta"><b><?= $f['log_date'] ? 'Buổi ' . htmlspecialchars(date('d/m/Y', strtotime($f['log_date']))) : 'Nhận xét chung' ?></b></div><p><?= htmlspecialchars($f['content']) ?></p></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </section>
+            </aside>
+        </div>
+
+    <?php elseif (!$ready || $rel === null): ?>
         <div class="ch-empty">
             <div class="ch-empty__ico" aria-hidden="true">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.7-5.5 7-5.5s6.2 1.9 7 5.5"/></svg>
@@ -82,6 +120,18 @@ include __DIR__ . '/includes/header.php';
             <p>Chọn một HLV phù hợp với mục tiêu để được giao lịch tập và theo dõi sát hơn. Bạn vẫn tự dùng mọi tính năng khi không có HLV.</p>
             <a class="btn" href="/coaches.php">Xem danh sách HLV</a>
         </div>
+        <?php if ($past): ?>
+            <section class="card" style="margin-top:var(--s-5)" aria-labelledby="h-past">
+                <h2 class="card__head" id="h-past">HLV trước đây</h2>
+                <p class="card__sub">Xem lại nhận xét và tin nhắn cũ (chỉ đọc). HLV cũ không còn xem được dữ liệu của bạn.</p>
+                <ul class="ch-feed">
+                    <?php foreach ($past as $p): ?>
+                        <li><div class="ch-feed__meta"><b><?= htmlspecialchars($p['coach_name']) ?></b><span><?= htmlspecialchars(date('d/m/Y', strtotime((string)$p['accepted_at']))) ?> – <?= htmlspecialchars(date('d/m/Y', strtotime((string)$p['ended_at']))) ?></span></div>
+                            <a href="/my-coach.php?history=<?= (int)$p['id'] ?>"><?= (int)$p['feedback_count'] ?> nhận xét · <?= (int)$p['message_count'] ?> tin nhắn</a></li>
+                    <?php endforeach; ?>
+                </ul>
+            </section>
+        <?php endif; ?>
 
     <?php elseif (!$active): ?>
         <section class="card ch-status">
@@ -90,6 +140,9 @@ include __DIR__ . '/includes/header.php';
                 <span class="ch-badge ch-badge--warn">Chờ HLV duyệt</span>
                 <h2 style="margin-top:8px">Đang chờ <?= htmlspecialchars($rel['coach_name']) ?> duyệt</h2>
                 <p>Bạn gửi yêu cầu <?= htmlspecialchars(mb_strtolower(coachTimeAgo($rel['created_at']))) ?>. Khi được duyệt, trang này hiện lịch tập, nhận xét và tin nhắn.</p>
+                <?php if ($stale = coachPendingStaleDays($rel['created_at'], coachNow())): ?>
+                            <div class="alert alert--note" role="note"><div>HLV chưa trả lời sau <?= (int)$stale ?> ngày. Bạn có thể hủy yêu cầu để chọn HLV khác, hoặc chờ thêm.</div></div>
+                        <?php endif; ?>
                 <?php if ($rel['request_note'] !== ''): ?><div class="ch-quote"><?= htmlspecialchars($rel['request_note']) ?></div><?php endif; ?>
                 <form method="post" action="/my-coach.php" class="form-actions" data-confirm="Hủy yêu cầu gửi tới HLV này?">
                     <?= csrfField() ?>
@@ -214,6 +267,7 @@ include __DIR__ . '/includes/header.php';
                                 <?php if ($f['read_at'] === null): ?><span class="ch-badge ch-badge--accent">Mới</span><?php endif; ?>
                                 <b><?= $f['log_date'] ? 'Buổi tập ' . htmlspecialchars(coachDateLabel($f['log_date'])) : 'Nhận xét chung' ?></b>
                                 <span><?= htmlspecialchars(coachTimeAgo($f['created_at'])) ?></span>
+                                <?php if (!empty($f['updated_at'])): ?><span>(HLV đã sửa)</span><?php endif; ?>
                             </div>
                             <p><?= htmlspecialchars($f['content']) ?></p>
                         </li>
