@@ -191,8 +191,9 @@
 .cc-day:first-of-type { border-top: 0; padding-top: 0; }
 .cc-day .adm-list li { padding: 8px 0; }
 .cc-day .ch-quote { margin-top: var(--s-2); }
-#cc-chart .ch-skel { display: block; }
-#cc-chart.is-ready .ch-skel, #cc-chart.is-ready #cc-chart-msg { display: none; }
+.cc-chart .ch-skel { display: block; }
+.cc-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.cc-charts .adm-chart { height: 220px; }
 
 /* ---------- Khu HLV: sửa lịch học viên (mỗi bài một dòng, 3 form nhỏ) ---------- */
 .cp-day h2 small { font-weight: 500; margin-left: 6px; }
@@ -242,3 +243,10 @@
 /* Cột xếp thẻ bằng grid gap: bỏ margin-top của ".card + .card" (ui.css) để khoảng cách không bị gấp đôi */
 .ch-stack { display: grid; gap: var(--s-5); min-width: 0; }
 .ch-stack > .card + .card, .ch-side > .card + .card { margin-top: 0; }
+
+/* "Đã xem" dưới tin nhắn của mình */
+.ch-seen { align-self: flex-end; margin: -4px 4px 0; font-size: 12px; color: var(--text-muted); }
+
+/* Thanh bản nháp lịch tập (Giao / Bỏ) */
+.cp-draftbar { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; justify-content: space-between; border-color: var(--warn); background: color-mix(in srgb, var(--warn) 8%, var(--surface)); }
+.cp-draftbar .adm-actions { width: auto; }
