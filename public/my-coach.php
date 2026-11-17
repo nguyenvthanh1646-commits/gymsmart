@@ -3,7 +3,7 @@
  * my-coach.php — "HLV của tôi" phía học viên.
  *   ?tab=overview (mặc định): HLV hiện tại, trạng thái khóa lịch tập/dinh dưỡng, yêu cầu xin sửa, ngừng tập
  *   ?tab=feedback: nhận xét của HLV (mở tab thì đánh dấu đã đọc)
- *   ?tab=messages: nhắn tin (gói a-35)
+ *   ?tab=messages: nhắn tin với HLV (js/coach-chat.js ↔ api/coach-messages.php, api/coach-message-send.php)
  * Mọi dữ liệu lấy theo $_SESSION['user_id']; quan hệ lấy bằng coachOpenRelationForClient(), không nhận id từ URL.
  */
 require_once __DIR__ . '/includes/auth.php';
@@ -18,7 +18,7 @@ coachHandleClientAction($pdo, '/my-coach.php');
 $flash  = coachTakeFlash();
 $rel    = $ready ? coachOpenRelationForClient($pdo, $userId) : null;
 $active = $rel !== null && $rel['status'] === 'ACTIVE';
-$tabs   = ['overview' => 'Tổng quan', 'feedback' => 'Nhận xét'];
+$tabs   = ['overview' => 'Tổng quan', 'feedback' => 'Nhận xét', 'messages' => 'Tin nhắn'];
 $tab    = isset($tabs[$_GET['tab'] ?? '']) ? $_GET['tab'] : 'overview';
 
 $coach = $notice = null;
@@ -220,8 +220,14 @@ include __DIR__ . '/includes/header.php';
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
+
+        <?php elseif ($tab === 'messages'): ?>
+            <?= coachChatBox((int)$rel['coach_id'], $rel['coach_name'], $coach['avatar'] ?? null,
+                'Huấn luyện viên' . (!empty($coach['availability']) ? ' · ' . $coach['availability'] : '')) ?>
+            <p class="ch-muted ch-small">Tin nhắn chỉ dùng để trao đổi về tập luyện. Vấn đề sức khỏe cấp tính, hãy liên hệ cơ sở y tế.</p>
         <?php endif; ?>
     <?php endif; ?>
 </div>
 <script src="/js/coach.js"></script>
+<?php if ($active && $tab === 'messages'): ?><script src="/js/coach-chat.js"></script><?php endif; ?>
 <?php include __DIR__ . '/includes/footer.php'; ?>

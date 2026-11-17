@@ -18,6 +18,11 @@ class CoachException extends RuntimeException
 {
 }
 
+/** Gửi tin quá nhanh / quá nhiều (API trả mã 429). */
+class CoachRateLimitException extends CoachException
+{
+}
+
 function coachNow(): string
 {
     return date('Y-m-d H:i:s');
@@ -823,7 +828,7 @@ function coachSendMessage(PDO $pdo, int $relationId, int $senderId, string $cont
     $r = $stmt->fetch(PDO::FETCH_ASSOC);
     $since = $r['last_at'] ? $now - strtotime($r['last_at']) : null;
     if ($e = coachMessageRateError($since, (int)$r['last_hour'])) {
-        throw new CoachException($e);
+        throw new CoachRateLimitException($e);
     }
     $at = date('Y-m-d H:i:s', $now);
     $pdo->prepare('INSERT INTO coach_messages (coach_client_id, sender_id, content, created_at) VALUES (?, ?, ?, ?)')
