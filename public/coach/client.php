@@ -18,6 +18,22 @@ requireCoach();
 $self = '/coach/client.php?id=' . $clientId;
 coachHandleCoachAction($pdo, ($_POST['action'] ?? '') === 'end' ? '/coach/clients.php' : $self);
 
+// Nhận xét: log_date rỗng = nhận xét chung; có ngày thì phải là ngày học viên có ghi log (coachAddFeedback kiểm tra)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'feedback') {
+    if (!verifyCsrf()) {
+        showCsrfError();
+    }
+    $logDate = (string)($_POST['log_date'] ?? '');
+    try {
+        coachAddFeedback($pdo, $relationId, $clientId, $logDate === '' ? null : $logDate, coachCleanText($_POST['content'] ?? ''));
+        coachFlash('ok', 'Đã gửi nhận xét. Học viên sẽ thấy thông báo trên trang chủ.');
+    } catch (CoachException $e) {
+        coachFlash('error', $e->getMessage());
+    }
+    header('Location: ' . $self . ($logDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $logDate) ? '#log-' . $logDate : '#h-logs'));
+    exit;
+}
+
 $coachId  = (int)$_SESSION['user_id'];
 $today    = date('Y-m-d');
 $flash    = coachTakeFlash();
@@ -123,11 +139,24 @@ include __DIR__ . '/../includes/coach-nav.php';
 
             <section class="adm-panel adm-card-pad" aria-labelledby="h-logs">
                 <h2 id="h-logs">Nhật ký 30 ngày</h2>
+                <details class="cc-fb">
+                    <summary>Viết nhận xét chung</summary>
+                    <form method="post" action="<?= htmlspecialchars($self) ?>">
+                        <?= csrfField() ?><input type="hidden" name="action" value="feedback"><input type="hidden" name="log_date" value="">
+                        <label class="ch-sr" for="fb-general">Nhận xét chung</label>
+                        <textarea class="adm-textarea" id="fb-general" name="content" maxlength="<?= COACH_FEEDBACK_MAX ?>" required placeholder="Nhận xét về tiến độ tuần này, điều cần chú ý…"></textarea>
+                        <span class="ch-count" data-count="fb-general"></span>
+                        <button type="submit" class="adm-btn adm-btn-sm" data-busy-text="Đang gửi…">Gửi nhận xét</button>
+                    </form>
+                </details>
+                <?php foreach ($feedbackByDate['general'] ?? [] as $f): ?>
+                    <div class="ch-quote"><b>Nhận xét chung · <?= htmlspecialchars(coachTimeAgo($f['created_at'])) ?>:</b> <?= htmlspecialchars($f['content']) ?><?= $f['read_at'] ? ' <small class="adm-sub">(đã xem)</small>' : '' ?></div>
+                <?php endforeach; ?>
                 <?php if (!$logs): ?>
                     <p class="adm-sub">Học viên chưa ghi buổi tập nào trong 30 ngày qua. Nhắn tin hỏi thăm để giữ nhịp tập.</p>
                 <?php else: ?>
                     <?php foreach ($logs as $date => $rows): ?>
-                        <article class="cc-day">
+                        <article class="cc-day" id="log-<?= htmlspecialchars($date) ?>">
                             <header class="ch-feed__meta"><b><?= htmlspecialchars(coachDateLabel($date)) ?></b><span><?= count($rows) ?> bài</span></header>
                             <ul class="adm-list">
                                 <?php foreach ($rows as $r): ?>
@@ -136,8 +165,18 @@ include __DIR__ . '/../includes/coach-nav.php';
                                 <?php endforeach; ?>
                             </ul>
                             <?php foreach ($feedbackByDate[$date] ?? [] as $f): ?>
-                                <div class="ch-quote"><b>Nhận xét của bạn:</b> <?= htmlspecialchars($f['content']) ?></div>
+                                <div class="ch-quote"><b>Nhận xét của bạn:</b> <?= htmlspecialchars($f['content']) ?><?= $f['read_at'] ? ' <small class="adm-sub">(đã xem)</small>' : '' ?></div>
                             <?php endforeach; ?>
+                            <details class="cc-fb">
+                                <summary>Nhận xét buổi này</summary>
+                                <form method="post" action="<?= htmlspecialchars($self) ?>">
+                                    <?= csrfField() ?><input type="hidden" name="action" value="feedback"><input type="hidden" name="log_date" value="<?= htmlspecialchars($date) ?>">
+                                    <label class="ch-sr" for="fb-<?= htmlspecialchars($date) ?>">Nhận xét buổi <?= htmlspecialchars(coachDateLabel($date)) ?></label>
+                                    <textarea class="adm-textarea" id="fb-<?= htmlspecialchars($date) ?>" name="content" maxlength="<?= COACH_FEEDBACK_MAX ?>" required placeholder="Kỹ thuật, mức tạ, điều cần sửa ở buổi sau…"></textarea>
+                                    <span class="ch-count" data-count="fb-<?= htmlspecialchars($date) ?>"></span>
+                                    <button type="submit" class="adm-btn adm-btn-sm" data-busy-text="Đang gửi…">Gửi nhận xét</button>
+                                </form>
+                            </details>
                         </article>
                     <?php endforeach; ?>
                 <?php endif; ?>
