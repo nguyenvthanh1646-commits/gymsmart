@@ -15,6 +15,8 @@ $coachId = (int)$_SESSION['user_id'];
 $flash   = coachTakeFlash();
 $clients = coachActiveClients($pdo, $coachId);
 $since7  = date('Y-m-d', strtotime('-6 days'));
+// Tuần này đã tập bao nhiêu buổi so với lịch (tính tới hôm nay, coachWeekCompliance trong coach-rules.php)
+$compliance = coachComplianceFor($pdo, array_column($clients, 'client_id'), date('Y-m-d'));
 
 $pageTitle = 'Học viên';
 $pageCss = ['/css/coach.css'];
@@ -49,7 +51,7 @@ include __DIR__ . '/../includes/coach-nav.php';
         <?php else: ?>
         <div class="adm-count">Đang có <?= count($clients) ?> học viên</div>
         <table class="adm-table">
-            <thead><tr><th>Học viên</th><th>Mục tiêu</th><th>Tập gần nhất</th><th>Tin mới</th><th>Tập cùng từ</th><th></th></tr></thead>
+            <thead><tr><th>Học viên</th><th>Mục tiêu</th><th>Tập gần nhất</th><th>Tuần này</th><th>Tin mới</th><th>Tập cùng từ</th><th></th></tr></thead>
             <tbody>
             <?php foreach ($clients as $c): $idle = $c['last_log'] === null || $c['last_log'] < $since7; ?>
                 <tr>
@@ -66,6 +68,12 @@ include __DIR__ . '/../includes/coach-nav.php';
                     <td data-label="Tập gần nhất">
                         <?= $c['last_log'] ? htmlspecialchars(coachDateLabel($c['last_log'], false)) : 'Chưa có' ?>
                         <?php if ($idle): ?> <span class="ch-badge ch-badge--warn">Chưa tập 7 ngày</span><?php endif; ?>
+                    </td>
+                    <td data-label="Tuần này">
+                        <?php $cp = $compliance[(int)$c['client_id']] ?? null; ?>
+                        <?php if ($cp === null || $cp['planned_week'] === 0): ?>Chưa có lịch
+                        <?php else: ?><b class="adm-mono"><?= (int)$cp['done'] ?>/<?= (int)$cp['planned_so_far'] ?></b> buổi<?php if ($cp['percent'] !== null): ?> <span class="ch-badge <?= $cp['percent'] >= 100 ? 'ch-badge--ok' : ($cp['percent'] >= 50 ? 'ch-badge--warn' : 'ch-badge--danger') /* audit:ok tên class viết sẵn */ ?>"><?= (int)$cp['percent'] ?>%</span><?php endif; ?>
+                        <br><small class="adm-sub">lịch <?= (int)$cp['planned_week'] ?> buổi/tuần</small><?php endif; ?>
                     </td>
                     <td data-label="Tin mới"><?= (int)$c['unread'] > 0 ? '<span class="ch-badge ch-badge--info">' . (int)$c['unread'] . ' tin</span>' : '—' ?></td>
                     <td data-label="Tập cùng từ"><?= htmlspecialchars(coachDateLabel((string)$c['accepted_at'], false)) ?></td>

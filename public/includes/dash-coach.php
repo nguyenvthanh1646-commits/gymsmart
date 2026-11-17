@@ -27,7 +27,8 @@ if ($dcRel['status'] === 'ACTIVE' && !$dcParts) {
 ?>
 <p class="du-notice du-notice--coach" role="status">
     <?php if ($dcRel['status'] === 'PENDING'): ?>
-        <b>Đang chờ HLV <?= htmlspecialchars($dcRel['coach_name']) ?> duyệt.</b> <a href="/my-coach.php">Xem yêu cầu</a>
+        <b>Đang chờ HLV <?= htmlspecialchars($dcRel['coach_name']) ?> duyệt<?php if ($dcStale = coachPendingStaleDays($dcRel['created_at'], coachNow())): ?> đã <?= (int)$dcStale ?> ngày<?php endif; ?>.</b>
+        <a href="/my-coach.php"><?= !empty($dcStale) ? 'Hủy và chọn HLV khác' : 'Xem yêu cầu' ?></a>
     <?php else: ?>
         <b>HLV <?= htmlspecialchars($dcRel['coach_name']) ?>:</b> <?= implode(' · ', $dcParts) /* audit:ok các phần tử ghép từ số nguyên (int) và chữ viết sẵn */ ?>
     <?php endif; ?>

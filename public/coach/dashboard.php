@@ -21,7 +21,10 @@ $pending = coachPendingRequests($pdo, $coachId);
 $clients = coachActiveClients($pdo, $coachId);
 $seats   = $profile ? coachSeatsLeft((int)$profile['max_clients'], (int)$profile['active_clients']) : 0;
 $since7  = date('Y-m-d', strtotime($today . ' -6 days'));
-$attention = array_values(array_filter($clients, fn($c) => $c['last_log'] === null || $c['last_log'] < $since7 || (int)$c['unread'] > 0 || (int)$c['change_requests'] > 0));
+$compliance = coachComplianceFor($pdo, array_column($clients, 'client_id'), $today);
+// Cần chú ý: chưa tập 7 ngày, tập thiếu so với lịch tuần này (dưới 100%), có tin chưa đọc hoặc xin sửa
+$behind = fn($c) => ($compliance[(int)$c['client_id']]['percent'] ?? 100) < 100;
+$attention = array_values(array_filter($clients, fn($c) => $c['last_log'] === null || $c['last_log'] < $since7 || $behind($c) || (int)$c['unread'] > 0 || (int)$c['change_requests'] > 0));
 
 $pageTitle = 'Khu huấn luyện viên';
 $pageCss = ['/css/coach.css'];
@@ -77,6 +80,7 @@ $ico = function (string $inner): string {
                                         <?= $p['goal'] ? ' · ' . htmlspecialchars(COACH_GOAL_LABELS[$p['goal']] ?? $p['goal']) : '' ?>
                                         <?= $p['experience_level'] ? ' · ' . htmlspecialchars(COACH_LEVEL_LABELS[$p['experience_level']] ?? '') : '' ?>
                                         · gửi <?= htmlspecialchars(mb_strtolower(coachTimeAgo($p['created_at']))) ?>
+                                        <?php if ($stale = coachPendingStaleDays($p['created_at'], coachNow())): ?><span class="ch-badge ch-badge--danger">Đã chờ <?= (int)$stale ?> ngày</span><?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -103,7 +107,7 @@ $ico = function (string $inner): string {
             <?php if (!$clients): ?>
                 <p class="adm-sub">Bạn chưa có học viên nào. Duyệt yêu cầu bên trái để bắt đầu.</p>
             <?php elseif (!$attention): ?>
-                <p class="adm-sub">Mọi học viên đều tập đều trong 7 ngày qua và không có tin chưa đọc. Tốt lắm!</p>
+                <p class="adm-sub">Mọi học viên đều tập đủ buổi theo lịch tuần này và không có tin chưa đọc. Tốt lắm!</p>
             <?php else: ?>
                 <ul class="adm-list">
                     <?php foreach ($attention as $c): ?>
@@ -114,6 +118,7 @@ $ico = function (string $inner): string {
                                 </small></span>
                             <span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
                                 <?php if ($c['last_log'] === null || $c['last_log'] < $since7): ?><span class="ch-badge ch-badge--warn">Chưa tập 7 ngày</span><?php endif; ?>
+                                <?php if ($behind($c)): $cp = $compliance[(int)$c['client_id']]; ?><span class="ch-badge ch-badge--danger">Tuần này <?= (int)$cp['done'] ?>/<?= (int)$cp['planned_so_far'] ?> buổi</span><?php endif; ?>
                                 <?php if ((int)$c['unread'] > 0): ?><span class="ch-badge ch-badge--info"><?= (int)$c['unread'] ?> tin mới</span><?php endif; ?>
                                 <?php if ((int)$c['change_requests'] > 0): ?><span class="ch-badge ch-badge--accent">Xin sửa</span><?php endif; ?>
                             </span>

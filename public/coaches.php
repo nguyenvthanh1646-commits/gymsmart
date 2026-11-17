@@ -61,6 +61,9 @@ include __DIR__ . '/includes/header.php';
                         <span class="ch-badge ch-badge--warn">Chờ HLV duyệt</span>
                         <h2 style="margin-top:8px">Bạn đã gửi yêu cầu tới <?= htmlspecialchars($openRel['coach_name']) ?></h2>
                         <p>Gửi lúc <?= htmlspecialchars(coachTimeAgo($openRel['created_at'])) ?>. Trong lúc chờ, bạn không gửi yêu cầu tới HLV khác được.</p>
+                        <?php if ($stale = coachPendingStaleDays($openRel['created_at'], coachNow())): ?>
+                            <div class="alert alert--note" role="note"><div>HLV chưa trả lời sau <?= (int)$stale ?> ngày. Bạn có thể hủy yêu cầu để chọn HLV khác, hoặc chờ thêm.</div></div>
+                        <?php endif; ?>
                         <form method="post" action="/coaches.php" data-confirm="Hủy yêu cầu gửi tới HLV này?">
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="cancel">

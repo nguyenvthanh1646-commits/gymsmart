@@ -233,3 +233,41 @@ function coachMessageRateError(?int $secondsSinceLast, int $sentLastHour): ?stri
     }
     return null;
 }
+
+// ---------------------------------------------------------------------
+// Mở rộng (a-36): tỉ lệ tập đúng lịch, yêu cầu chờ quá lâu
+// ---------------------------------------------------------------------
+const COACH_PENDING_STALE_DAYS = 7;   // yêu cầu chờ HLV quá số ngày này thì nhắc học viên có thể chọn HLV khác
+
+/**
+ * Học viên tập đều tới đâu trong TUẦN HIỆN TẠI (thứ Hai → Chủ nhật chứa $today).
+ *   $planWeekdays: các thứ có buổi tập trong lịch ACTIVE (1 = thứ Hai ... 7 = Chủ nhật)
+ *   $loggedDates : các ngày có ghi log (Y-m-d), trùng hay ngoài tuần đều được, hàm tự lọc
+ * Trả về:
+ *   planned_week   số buổi trong lịch cả tuần
+ *   planned_so_far số buổi lẽ ra đã tập tính tới hôm nay (kể cả hôm nay)
+ *   done           số NGÀY trong tuần (tới hôm nay) có ghi log, kể cả ngày ngoài lịch (tập bù vẫn tính)
+ *   percent        done / planned_so_far (tối đa 100), null nếu chưa tới buổi nào
+ */
+function coachWeekCompliance(array $planWeekdays, array $loggedDates, string $today): array
+{
+    $todayN = (int)date('N', strtotime($today));
+    $monday = date('Y-m-d', strtotime($today . ' -' . ($todayN - 1) . ' days'));
+    $days = array_values(array_unique(array_map('intval', $planWeekdays)));
+    $days = array_values(array_filter($days, fn($d) => $d >= 1 && $d <= 7));
+    $plannedSoFar = count(array_filter($days, fn($d) => $d <= $todayN));
+    $done = count(array_unique(array_filter($loggedDates, fn($d) => is_string($d) && $d >= $monday && $d <= $today)));
+    return [
+        'planned_week'   => count($days),
+        'planned_so_far' => $plannedSoFar,
+        'done'           => $done,
+        'percent'        => $plannedSoFar > 0 ? (int)min(100, round($done / $plannedSoFar * 100)) : null,
+    ];
+}
+
+/** Yêu cầu gửi lúc $createdAt đã chờ quá COACH_PENDING_STALE_DAYS ngày tính tới $now chưa. Trả về số ngày đã chờ, hoặc 0 nếu chưa quá. */
+function coachPendingStaleDays(string $createdAt, string $now): int
+{
+    $days = (int)floor((strtotime($now) - strtotime($createdAt)) / 86400);
+    return $days >= COACH_PENDING_STALE_DAYS ? $days : 0;
+}

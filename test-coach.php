@@ -79,6 +79,19 @@ check('Nhịp gửi tin: 60 tin/giờ bị chặn', coachMessageRateError(100, 6
 check('Nhịp gửi tin: bình thường được gửi', coachMessageRateError(null, 0) === null && coachMessageRateError(30, 10) === null);
 check('Nhãn chuyên môn bỏ mã lạ', coachSpecialtyLabels('FAT_LOSS,XYZ') === ['Giảm mỡ']);
 
+// Tỉ lệ tập đúng lịch tuần này. 2026-11-18 là thứ Tư (N = 3), tuần bắt đầu thứ Hai 2026-11-16.
+$w = coachWeekCompliance([1, 3, 5], ['2026-11-16', '2026-11-18'], '2026-11-18');
+check('Tỉ lệ tập: lịch T2-T4-T6, tới thứ Tư đã tập 2/2 = 100%', $w['planned_week'] === 3 && $w['planned_so_far'] === 2 && $w['done'] === 2 && $w['percent'] === 100);
+$w = coachWeekCompliance([1, 3, 5], ['2026-11-13', '2026-11-16'], '2026-11-18');
+check('Tỉ lệ tập: log tuần trước không tính, 1/2 = 50%', $w['done'] === 1 && $w['percent'] === 50);
+$w = coachWeekCompliance([1, 3, 5], ['2026-11-17', '2026-11-17', '2026-11-18', '2026-11-20'], '2026-11-18');
+check('Tỉ lệ tập: tập bù ngày ngoài lịch vẫn tính, trùng ngày tính 1, ngày tương lai không tính', $w['done'] === 2);
+check('Tỉ lệ tập: chưa tới buổi nào thì percent = null', coachWeekCompliance([5, 6], [], '2026-11-18')['percent'] === null);
+check('Tỉ lệ tập: không vượt 100%', coachWeekCompliance([1], ['2026-11-16', '2026-11-17', '2026-11-18'], '2026-11-18')['percent'] === 100);
+check('Tỉ lệ tập: thứ trong lịch sai (0, 9) bị bỏ', coachWeekCompliance([0, 9, 1], [], '2026-11-18')['planned_week'] === 1);
+check('Chờ 6 ngày: chưa nhắc', coachPendingStaleDays('2026-11-12 10:00:00', '2026-11-18 09:00:00') === 0);
+check('Chờ 7 ngày: nhắc, trả về 7', coachPendingStaleDays('2026-11-11 08:00:00', '2026-11-18 09:00:00') === 7);
+
 // ===================== PHẦN 2: LỚP DB TRÊN SQLITE =====================
 if (!extension_loaded('pdo_sqlite')) {
     echo "[BỎ QUA] Không có pdo_sqlite nên không chạy phần DB\n";
