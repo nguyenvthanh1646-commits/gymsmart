@@ -40,13 +40,22 @@ foreach ($it as $file) {
 
     // ----- 1. Trang chưa chặn người chưa đăng nhập -----
     if (!$inInc && !in_array($base, $publicPages, true)
-        && !preg_match('/requireLogin\s*\(|requireAdmin\s*\(/', $code)) {
-        add($findings, 'CAO', $path, 1, 'Không thấy requireLogin()/requireAdmin(): người chưa đăng nhập có vào được không?');
+        && !preg_match('/requireLogin\s*\(|requireAdmin\s*\(|requireCoach\s*\(/', $code)) {
+        add($findings, 'CAO', $path, 1, 'Không thấy requireLogin()/requireAdmin()/requireCoach(): người chưa đăng nhập có vào được không?');
     }
 
     // ----- 2. Trang admin phải có requireAdmin -----
     if (strpos($path, '/admin/') !== false && !preg_match('/requireAdmin\s*\(/', $code)) {
         add($findings, 'CAO', $path, 1, 'Nằm trong /admin/ nhưng không có requireAdmin().');
+    }
+
+    // ----- 2b. Trang khu HLV phải có requireCoach (đọc lại vai trò trong DB) -----
+    if (strpos($path, '/coach/') !== false && !preg_match('/requireCoach\s*\(/', $code)) {
+        add($findings, 'CAO', $path, 1, 'Nằm trong /coach/ nhưng không có requireCoach().');
+    }
+    // ----- 2c. Trang HLV xem dữ liệu một học viên phải kiểm tra quan hệ ACTIVE -----
+    if (strpos($path, '/coach/') !== false && preg_match('/\$_GET\[.id.\]/', $code) && !preg_match('/requireCoachClient\s*\(|coachActiveRelationId\s*\(|canCoachAccessClient\s*\(/', $code)) {
+        add($findings, 'CAO', $path, 1, 'Trang HLV đọc ?id= nhưng không thấy requireCoachClient()/canCoachAccessClient(): HLV đổi id có xem được học viên người khác không?');
     }
 
     // ----- 3. Form POST mà không có mã CSRF -----
