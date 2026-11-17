@@ -125,7 +125,7 @@ body{overflow-x:hidden}
 .adm-nav .adm-nav-site:hover{border-color:#ff8a3d;color:#fff}
 .adm-nav-av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ff8a3d,#ff5a1f);color:#fff;font-weight:700;font-size:.92rem}
 .adm-nav .adm-nav-out{height:auto;padding:8px 4px;font-size:.88rem;color:#aab4cf}
-@media (max-width:1240px){.adm-nav .adm-nav-site{display:none}}   /* menu có 7 mục: ẩn nút "Xem trang người dùng" trên màn hình hẹp để không bị cắt mất chữ Đăng xuất */
+@media (max-width:1480px){.adm-nav:not(.ch-nav) .adm-nav-site{display:none}}   /* menu có 7 mục: ẩn nút "Xem trang người dùng" trên màn hình hẹp để không bị cắt mất chữ Đăng xuất */
 .adm-nav-links{display:flex;align-items:center;gap:6px}
 /* Màn hình hẹp: hàng 1 = logo + Đăng xuất, hàng 2 = 7 mục dạng lưới, thấy hết không cần cuộn */
 @media (max-width:900px){
@@ -220,4 +220,16 @@ body{overflow-x:hidden}
 .adm-split .adm-form-section:last-of-type{border-bottom:0}
 .adm-split .adm-preview{max-width:100%;width:100%}
 @media (max-width:900px){.adm-split{grid-template-columns:1fr}.adm-side{position:static}}
+</style>
+<style>
+/* style.css tô cam mọi button[type=submit] không có class .btn (độ ưu tiên 0,2,1), nên nút submit dạng ghost/danger trong
+   khu admin và khu HLV bị thành nút cam đặc. Khai báo lại với độ ưu tiên cao hơn (0,3,1) để giữ đúng kiểu nút. */
+.adm-wrap button[type="submit"].adm-btn{box-shadow:none;border-radius:10px;font-size:inherit;padding:0 18px;transform:none}
+.adm-wrap button[type="submit"].adm-btn-sm{padding:0 14px;font-size:.92rem}
+.adm-wrap button[type="submit"].adm-btn-ghost{background:#fff;color:#111;border:1px solid var(--adm-line)}
+.adm-wrap button[type="submit"].adm-btn-ghost:hover{background:#f3f4f6}
+.adm-wrap button[type="submit"].adm-btn-danger{background:#fff;color:var(--adm-danger);border:1px solid #fecaca}
+.adm-wrap button[type="submit"].adm-btn-danger:hover{background:#fef2f2}
+.adm-wrap button[type="submit"].adm-btn-solid-danger,.adm-dialog button[type="submit"].adm-btn-solid-danger{background:var(--adm-danger);box-shadow:none}
+.adm-wrap button[type="submit"]:disabled{opacity:.55;cursor:not-allowed}
 </style>

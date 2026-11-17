@@ -156,6 +156,41 @@ function coachTakeFlash(): ?array
     return is_array($f) ? $f : null;
 }
 
+/**
+ * HTML khung chat (dùng ở my-coach.php?tab=messages và coach/messages.php). Hành vi nằm ở js/coach-chat.js.
+ * $withId = id người bên kia; máy chủ (api/coach-messages.php) vẫn tự kiểm tra quan hệ ACTIVE, đây chỉ là "nói chuyện với ai".
+ * Tin nhắn ban đầu do JS tải về; trong lúc chờ hiện khung xương.
+ */
+function coachChatBox(int $withId, string $name, ?string $avatar, string $subtitle): string
+{
+    ob_start(); ?>
+    <section class="ch-chat" id="ch-chat" data-with="<?= $withId ?>" data-csrf="<?= htmlspecialchars(csrfToken()) ?>" aria-label="Nhắn tin với <?= htmlspecialchars($name) ?>">
+        <header class="ch-chat__head">
+            <?= coachAvatar($avatar, $name, 40) ?>
+            <div><b><?= htmlspecialchars($name) ?></b><span><?= htmlspecialchars($subtitle) ?></span></div>
+        </header>
+        <div class="ch-chat__log" id="ch-log" role="log" aria-live="polite" aria-label="Tin nhắn" tabindex="0">
+            <span class="ch-skel ch-skel--msg" aria-hidden="true"></span>
+            <span class="ch-skel ch-skel--msg" aria-hidden="true"></span>
+            <span class="ch-skel ch-skel--msg" aria-hidden="true"></span>
+        </div>
+        <form class="ch-chat__form" id="ch-form" autocomplete="off">
+            <label for="ch-input" class="ch-sr">Nội dung tin nhắn</label>
+            <textarea id="ch-input" rows="1" maxlength="<?= COACH_MESSAGE_MAX ?>" placeholder="Nhập tin nhắn…" aria-describedby="ch-status"></textarea>
+            <button type="submit" class="btn">Gửi</button>
+        </form>
+        <div class="ch-chat__foot"><span id="ch-status" role="status"></span><span id="ch-counter" aria-hidden="true">0/<?= COACH_MESSAGE_MAX ?></span></div>
+    </section>
+    <?php
+    return (string)ob_get_clean();
+}
+
+/** Số kiểu Việt Nam: 2.230 hoặc 72,5 (dùng khi in số ra HTML; kết quả chỉ có chữ số, dấu chấm, dấu phẩy nên an toàn). */
+function coachNum($n, int $decimals = 0): string
+{
+    return number_format((float)$n, $decimals, ',', '.');
+}
+
 /** Chữ cái đầu của TÊN (từ cuối trong họ tên Việt Nam) để vẽ avatar tròn khi chưa có ảnh. */
 function coachInitial(string $fullName): string
 {

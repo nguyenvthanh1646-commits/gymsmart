@@ -296,3 +296,7 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
     .du *, .du-btn { transition: none !important; }
     .du-btn:hover { transform: none; }
 }
+
+/* Thông báo từ HLV (includes/dash-coach.php): cùng kiểu du-notice, liên kết cam nhạt đủ tương phản trên nền tối */
+.du-notice--coach a { color: var(--accent-2); font-weight: 600; }
+.du-notice--coach a:hover { color: #fff; }

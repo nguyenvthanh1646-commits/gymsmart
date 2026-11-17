@@ -18,6 +18,11 @@ class CoachException extends RuntimeException
 {
 }
 
+/** Gửi tin quá nhanh / quá nhiều (API trả mã 429). */
+class CoachRateLimitException extends CoachException
+{
+}
+
 function coachNow(): string
 {
     return date('Y-m-d H:i:s');
@@ -294,7 +299,7 @@ function coachRejectApplication(PDO $pdo, int $appId, int $adminId, string $note
 function coachRevoke(PDO $pdo, int $coachId, int $adminId): array
 {
     return coachTx($pdo, function () use ($pdo, $coachId, $adminId) {
-        $stmt = $pdo->prepare('SELECT full_name, role FROM users WHERE id = ?' . coachForUpdate($pdo));
+        $stmt = $pdo->prepare('SELECT full_name, role FROM users WHERE id = ?' . coachForUpdate($pdo));   // audit:ok coachForUpdate() chỉ trả " FOR UPDATE" hoặc rỗng
         $stmt->execute([$coachId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($user === false || $user['role'] !== 'COACH') {
@@ -463,7 +468,7 @@ function coachChangeRelation(PDO $pdo, string $actor, int $actorId, int $relatio
         }
         $now = coachNow();
         if ($action === 'accept') {
-            $p = $pdo->prepare('SELECT max_clients FROM coach_profiles WHERE user_id = ?' . coachForUpdate($pdo));
+            $p = $pdo->prepare('SELECT max_clients FROM coach_profiles WHERE user_id = ?' . coachForUpdate($pdo));   // audit:ok coachForUpdate() chỉ trả " FOR UPDATE" hoặc rỗng
             $p->execute([$rel['coach_id']]);
             $max = (int)$p->fetchColumn();
             $c = $pdo->prepare("SELECT COUNT(*) FROM coach_clients WHERE coach_id = ? AND status = 'ACTIVE'");
@@ -823,7 +828,7 @@ function coachSendMessage(PDO $pdo, int $relationId, int $senderId, string $cont
     $r = $stmt->fetch(PDO::FETCH_ASSOC);
     $since = $r['last_at'] ? $now - strtotime($r['last_at']) : null;
     if ($e = coachMessageRateError($since, (int)$r['last_hour'])) {
-        throw new CoachException($e);
+        throw new CoachRateLimitException($e);
     }
     $at = date('Y-m-d H:i:s', $now);
     $pdo->prepare('INSERT INTO coach_messages (coach_client_id, sender_id, content, created_at) VALUES (?, ?, ?, ?)')

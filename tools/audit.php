@@ -90,7 +90,7 @@ foreach ($it as $file) {
         if (preg_match('/<\?=\s*\$/', $line) || preg_match('/\becho\s+\$/', $line)) {
             // Bỏ qua biểu thức chọn giữa hai chữ cố định (điều kiện ? 'A' : 'B') vì không chứa dữ liệu người dùng
             $literalTernary = preg_match('/<\?=[^?]*\?\s*[\'"][^\'"]*[\'"]\s*:\s*[\'"][^\'"]*[\'"]\s*\?>/', $line);
-            if (!$literalTernary && !preg_match('/htmlspecialchars|\(int\)|intval|number_format|count\s*\(|csrfField|json_encode/', $line)) {
+            if (!$literalTernary && !preg_match('/htmlspecialchars|\(int\)|intval|number_format|coachNum\s*\(|count\s*\(|csrfField|json_encode/', $line)) {
                 add($findings, 'TRUNG BÌNH', $path, $n, 'In biến ra HTML không qua htmlspecialchars(): nếu dữ liệu do người dùng nhập thì bị XSS.');
             }
         }

@@ -16,6 +16,9 @@ Mọi file trong `public/api/` lấy `user_id` từ `$_SESSION`, không bao gi�
 | POST | `/api/workout-plan-edit.php` | `{success}` / `{success:false, message}` | `action` = update \| replace \| remove \| add, `row_id`, `sets`, `reps`, `new_exercise_id`, `day_of_week`, `exercise_id`, `csrf_token`. Chỉ sửa lịch ACTIVE của chính user |
 | POST | `/api/log-workout.php` | `{success}` / `{success:false, message}` | `row_id`, `exercise_id`, `sets`, `reps`, `weight`, `csrf_token`. `row_id` phải thuộc lịch của user |
 | POST | `/api/chatbot.php` | `{reply, ...}` / `{error}` | Body JSON `{message, history, mode, task, personalize}`, header `X-CSRF-Token`. Chế độ admin kiểm tra vai trò trong DB |
+| GET | `/api/body-metrics.php?client_id=` | như trên | **Phân hệ HLV:** HLV xem số đo của học viên. Người gọi phải là COACH (đọc DB) và có quan hệ ACTIVE với `client_id`, sai thì 404 |
+| GET | `/api/coach-messages.php?with=&after=` | `{success, data:{messages}}` / `{success:false, error}` | `apiBoot()`. `with` = id người bên kia; máy chủ tự tìm quan hệ ACTIVE (người gọi là HLV hoặc học viên), không có thì 404. Đánh dấu đã đọc |
+| POST | `/api/coach-message-send.php` | `{success, item}` / `{success:false, message}` | `with`, `content` (1-1000 ký tự), `csrf_token`. 400/401/403/404/405/422/429 (gửi < 2 giây hoặc > 60 tin/giờ)/500 |
 | GET | `/api/export-workout-plan.php` | file CSV | Lịch ACTIVE của user, có chống CSV injection. Trang (không phải JSON), dùng `requireLogin()` |
 | GET | `/api/logout.php` | chuyển hướng `/login.php` | Hủy session |
 
@@ -248,6 +251,25 @@ Không có module bài viết riêng. Ảnh, video và hướng dẫn nằm ngay
 ```
 
 > Backend xử lý: lấy `nutrition_targets` gần nhất + `workout_plans` active của user, nhét vào system prompt/context trước khi gọi Anthropic API (phục vụ Mức 2 — cá nhân hóa). Ở Mức 3, backend còn query bảng `exercises` (mô tả, nhóm cơ, hướng dẫn) theo từ khóa trong câu hỏi để đưa vào context và dẫn tới trang bài tập.
+
+---
+
+## 9. Phân hệ Huấn luyện viên (HLV) — triển khai thật
+
+Phần lớn thao tác là **form POST thẳng vào trang** (có CSRF, Post/Redirect/Get), chỉ nhắn tin và biểu đồ dùng JSON. `user_id` của người thao tác luôn lấy từ session; id trong URL/form chỉ là "muốn tác động ai", máy chủ kiểm tra quan hệ trước khi làm.
+
+| Trang | Ai | Thao tác (POST `action=`) |
+|---|---|---|
+| `/coach-apply.php` | USER | `submit` (mẫu đơn: headline, specialties[], experience_years, max_clients, certifications, bio, approach, availability, agree_truth, agree_rules), `withdraw` |
+| `/coaches.php`, `/my-coach.php` | USER | `request` (coach_id, note), `cancel` (relation_id), `end` (relation_id), `change` (area = PLAN \| NUTRITION, reason) |
+| `/admin/coach-applications.php` | ADMIN | `approve` / `reject` (id, note; từ chối bắt buộc có note) |
+| `/admin/coaches.php`, `/admin/user-detail.php` | ADMIN | `revoke_coach` (id) |
+| `/coach/dashboard.php`, `/coach/clients.php`, `/coach/client.php?id=` | COACH | `accept` / `reject` / `end` (relation_id), `resolve_change` (request_id, decision = approve \| reject, reply), `feedback` (log_date hoặc rỗng, content ≤ 1000) |
+| `/coach/client-plan.php?id=` | COACH | `generate` (days_per_week, level, split_type), `adopt`, `update` (row_id, sets, reps), `replace` (row_id, new_exercise_id), `remove` (row_id), `add` (day_of_week, exercise_id, sets, reps) |
+| `/coach/client-nutrition.php?id=` | COACH | protein_g, carbs_g, fat_g (máy chủ tính kcal = 4P + 4C + 9F; 1200-5000 kcal; protein 0,8-3,3 g/kg; chất béo ≥ 0,5 g/kg) |
+| `/coach/profile.php` | COACH | hồ sơ HLV + `accepting` |
+
+Khi đang có HLV, `POST /api/workout-plan-generate.php` và `/api/workout-plan-edit.php` của học viên trả **403** `{success:false, message:"Lịch tập đang do HLV ... quản lý..."}` (trừ khi HLV đã duyệt yêu cầu sửa còn hạn).
 
 ---
 

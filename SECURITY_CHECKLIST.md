@@ -266,3 +266,36 @@ Giới hạn đã biết: nếu bật "Dùng hồ sơ của tôi", mục tiêu/t
 | Gửi `full_name[]=x` (mảng) | Coi như trống, báo lỗi, không lỗi PHP |
 | Xem HTML trang sau khi lỗi | Không có mật khẩu đã nhập trong HTML |
 | Đăng ký xong, xem bảng users | `password_hash` bắt đầu bằng `$2y$`, có đủ age, height, weight, gender, activity, experience, goal |
+
+## Bổ sung: Phân hệ Huấn luyện viên (A-30 → A-35)
+
+Nguyên tắc: HLV chỉ thấy học viên **đang ACTIVE** với mình, quyết định bằng câu SQL `coachActiveRelationId()` (quan hệ ACTIVE **và** vai trò HLV trong DB vẫn là COACH), không tin id trên URL. Mọi trang `/coach/` gọi `requireCoach()` (đọc lại vai trò trong DB); trang về một học viên gọi thêm `requireCoachClient()`. `tools/audit.php` báo lỗi nếu trang trong `/coach/` thiếu `requireCoach()`, hoặc đọc `?id=` mà không kiểm tra quan hệ.
+
+Dữ liệu thử: `php tools/seed-coach-demo.php` (mật khẩu chung `Test@12345`; coach1 có user1, coach2 có yêu cầu chờ của user2, user3 chưa có HLV).
+
+### Phân quyền theo URL
+| URL | Khách | USER | COACH | ADMIN |
+|---|---|---|---|---|
+| `/coaches.php`, `/my-coach.php`, `/coach-apply.php` | Về đăng nhập | Xem được | Xem được (không gửi yêu cầu, không nộp đơn) | Xem được (không gửi yêu cầu) |
+| `/coach/dashboard.php` (và mọi trang `/coach/`) | Về đăng nhập | **403** | Xem được | **403** |
+| `/coach/client.php?id=` học viên của HLV khác, học viên đã kết thúc, `id=abc`, `id=0` | — | 403 | **404** | 403 |
+| `/admin/*` | Về đăng nhập | 403 | **403** | Xem được |
+| `/api/body-metrics.php?client_id=` không phải học viên ACTIVE | 401 | 404 | 404 | 404 |
+| `/api/coach-messages.php?with=` người không có quan hệ ACTIVE | 401 | 404 | 404 | 404 |
+
+### Kịch bản phải đúng
+| Cách thử | Kết quả mong đợi |
+|---|---|
+| USER gửi yêu cầu tới HLV thứ hai khi đang chờ / đang tập với HLV thứ nhất (kể cả gửi bằng curl) | Bị từ chối "Mỗi học viên chỉ đăng ký 1 HLV"; 2 yêu cầu gửi cùng lúc thì DB chặn bằng UNIQUE `open_client_id` |
+| Sửa `relation_id` trong form Hủy / Ngừng tập thành quan hệ của người khác | "Không tìm thấy yêu cầu này", không đổi gì |
+| HLV sửa `relation_id` khi Duyệt thành yêu cầu gửi cho HLV khác | Bị từ chối |
+| Học viên ngừng tập rồi HLV tải lại `/coach/client.php?id=` | 404 ngay lập tức; API biểu đồ và tin nhắn cũng 404 |
+| ADMIN thu hồi HLV đang có học viên | Quan hệ ACTIVE → ENDED, PENDING → REJECTED, vai trò về USER; session HLV cũ mở `/coach/` thì 403 ở lần tải sau |
+| ADMIN đổi COACH thẳng sang ADMIN, hoặc gửi `role=COACH` ở form đổi vai trò | Bị từ chối (COACH chỉ có qua duyệt đơn; muốn lên ADMIN phải thu hồi HLV trước) |
+| Học viên đang có HLV gọi thẳng `POST /api/workout-plan-edit.php` hoặc `workout-plan-generate.php` | 403 "Lịch tập đang do HLV ... quản lý" |
+| Học viên đang có HLV gửi `action=goal` / `diet` / `rhythm` tới `nutrition.php` | Bị chặn, mục tiêu không đổi; số bữa và thực phẩm loại trừ vẫn đổi được |
+| HLV đặt macro protein 4 g/kg, chất béo 10 g, tổng 900 kcal (gửi bằng curl) | Máy chủ từ chối từng mục, không lưu |
+| Tin nhắn 1001 ký tự / rỗng / gửi 2 tin trong 1 giây | 422 / 422 / 429 |
+| Nhập `<script>alert(1)</script>` vào tin nhắn, nhận xét, lời nhắn, mẫu đơn HLV, lý do từ chối | Hiện nguyên chữ ở mọi nơi (tin nhắn gán bằng `textContent`) |
+| Xem HTML trang HLV, trang danh sách HLV | Không có email học viên / email HLV (chỉ ADMIN thấy email ở trang duyệt đơn) |
+| Gửi bất kỳ form HLV nào không kèm `csrf_token` | 403 "Phiên làm việc đã hết hạn" |

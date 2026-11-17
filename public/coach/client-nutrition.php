@@ -70,7 +70,6 @@ $val = $input ?? ($current
     ? ['protein_g' => (int)$current['protein_g'], 'carbs_g' => (int)$current['carbs_g'], 'fat_g' => (int)$current['fat_g']]
     : ($auto ? ['protein_g' => (int)round($auto['protein_g']), 'carbs_g' => (int)round($auto['carbs_g']), 'fat_g' => (int)round($auto['fat_g'])]
              : ['protein_g' => '', 'carbs_g' => '', 'fat_g' => '']));
-$nf = fn($n, int $d = 0) => number_format((float)$n, $d, ',', '.');
 
 $pageTitle = 'Đặt mục tiêu dinh dưỡng';
 $pageCss = ['/css/coach.css'];
@@ -80,7 +79,7 @@ $coachNavActive = 'clients';
 include __DIR__ . '/../includes/coach-nav.php';
 ?>
 <div class="adm-wrap">
-    <a class="adm-back" href="/coach/client.php?id=<?= $clientId ?>">&larr; Hồ sơ <?= htmlspecialchars($client['full_name']) ?></a>
+    <a class="adm-back" href="/coach/client.php?id=<?= (int)$clientId ?>">&larr; Hồ sơ <?= htmlspecialchars($client['full_name']) ?></a>
     <div class="adm-head">
         <div>
             <h1>Dinh dưỡng của <?= htmlspecialchars($client['full_name']) ?></h1>
@@ -139,10 +138,10 @@ include __DIR__ . '/../includes/coach-nav.php';
                     <p class="adm-sub">Hồ sơ học viên chưa đủ thông tin để tính TDEE. Nhắn tin nhờ học viên cập nhật hồ sơ.</p>
                 <?php else: ?>
                     <dl class="adm-kv">
-                        <div><dt>Cân nặng</dt><dd><?= $nf($weight, 1) ?> kg</dd></div>
-                        <div><dt>BMR</dt><dd><?= $nf($bmr) ?> kcal</dd></div>
-                        <div><dt>TDEE</dt><dd id="cn-tdee" data-tdee="<?= (int)round($tdee) ?>"><?= $nf($tdee) ?> kcal</dd></div>
-                        <?php if ($auto): ?><div><dt>Tự tính (<?= htmlspecialchars(mb_strtolower(COACH_GOAL_LABELS[$client['goal']] ?? '')) ?>)</dt><dd><?= $nf($auto['target_kcal']) ?> kcal</dd></div><?php endif; ?>
+                        <div><dt>Cân nặng</dt><dd><?= coachNum($weight, 1) ?> kg</dd></div>
+                        <div><dt>BMR</dt><dd><?= coachNum($bmr) ?> kcal</dd></div>
+                        <div><dt>TDEE</dt><dd id="cn-tdee" data-tdee="<?= (int)round($tdee) ?>"><?= coachNum($tdee) ?> kcal</dd></div>
+                        <?php if ($auto): ?><div><dt>Tự tính (<?= htmlspecialchars(mb_strtolower(COACH_GOAL_LABELS[$client['goal']] ?? '')) ?>)</dt><dd><?= coachNum($auto['target_kcal']) ?> kcal</dd></div><?php endif; ?>
                     </dl>
                 <?php endif; ?>
             </section>
@@ -153,7 +152,7 @@ include __DIR__ . '/../includes/coach-nav.php';
                 <?php else: ?>
                     <ul class="adm-list">
                         <?php foreach ($history as $h): ?>
-                            <li><span><b><?= $nf($h['target_kcal']) ?> kcal</b><br><small>P <?= $nf($h['protein_g']) ?> · C <?= $nf($h['carbs_g']) ?> · F <?= $nf($h['fat_g']) ?></small></span>
+                            <li><span><b><?= coachNum($h['target_kcal']) ?> kcal</b><br><small>P <?= coachNum($h['protein_g']) ?> · C <?= coachNum($h['carbs_g']) ?> · F <?= coachNum($h['fat_g']) ?></small></span>
                                 <small style="text-align:right"><?= htmlspecialchars(date('d/m/Y', strtotime($h['calculated_date']))) ?><br><?= (int)$h['assigned_by'] === $coachId ? 'Bạn đặt' : ($h['assigned_by'] ? 'HLV khác' : 'Tự tính') ?></small></li>
                         <?php endforeach; ?>
                     </ul>

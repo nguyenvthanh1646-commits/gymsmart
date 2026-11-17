@@ -101,6 +101,8 @@ if ($dash['progress']['status'] === 'ok') {
             </p>
         <?php endif; ?>
 
+        <?php include __DIR__ . '/dash-coach.php'; // thông báo tin nhắn/nhận xét mới từ HLV (không có HLV thì không in gì) ?>
+
         <?php include __DIR__ . '/dash-week.php'; ?>
 
         <div class="du-grid">

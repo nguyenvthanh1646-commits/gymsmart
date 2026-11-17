@@ -301,7 +301,7 @@ include __DIR__ . '/includes/header.php';
                 <p class="card__sub">Thường mất 1–3 ngày làm việc.</p>
                 <ol class="ch-steps">
                     <li class="<?= in_array($state, ['pending', 'coach'], true) ? 'is-done' : 'is-now' ?>"><b>Nộp đơn</b><span>Điền thông tin chuyên môn và cam kết.</span></li>
-                    <li class="<?= $state === 'coach' ? 'is-done' : ($state === 'pending' ? 'is-now' : '') ?>"><b>Quản trị viên xem xét</b><span>Có thể từ chối kèm lý do để bạn bổ sung.</span></li>
+                    <li class="<?= $state === 'coach' ? 'is-done' : ($state === 'pending' ? 'is-now' : '') /* audit:ok chỉ là tên class viết sẵn */ ?>"><b>Quản trị viên xem xét</b><span>Có thể từ chối kèm lý do để bạn bổ sung.</span></li>
                     <li class="<?= $state === 'coach' ? 'is-done' : '' ?>"><b>Kích hoạt khu HLV</b><span>Bạn xuất hiện trong danh sách HLV và bắt đầu nhận học viên.</span></li>
                 </ol>
             </section>

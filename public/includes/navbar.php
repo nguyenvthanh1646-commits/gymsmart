@@ -43,8 +43,10 @@ if ($loggedIn) {
     if (!array_key_exists('avatar', $_SESSION)) {
         $_SESSION['avatar'] = null;
         try {
-            if (!isset($pdo)) { require_once __DIR__ . '/db.php'; }
-            $st = $pdo->prepare('SELECT avatar FROM users WHERE id = ?');
+            // Navbar có thể được vẽ bên trong showError() (phạm vi hàm, không thấy $pdo) nên lấy thêm $pdo toàn cục
+            $navPdo = $pdo ?? ($GLOBALS['pdo'] ?? null);
+            if (!$navPdo instanceof PDO) { require_once __DIR__ . '/db.php'; $navPdo = $pdo ?? ($GLOBALS['pdo'] ?? null); }
+            $st = $navPdo->prepare('SELECT avatar FROM users WHERE id = ?');
             $st->execute([(int)($_SESSION['user_id'] ?? 0)]);
             $_SESSION['avatar'] = $st->fetchColumn() ?: null;
         } catch (Throwable $e) { /* chưa import sql/users_avatar.sql: bỏ qua */ }

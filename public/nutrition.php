@@ -217,7 +217,7 @@ if ($macros !== null && $nutLock['locked'] && $coachTarget !== null) {
 // Đang có HLV quản lý thì không tự lưu. Chỉ cập nhật dòng tự tính (assigned_by IS NULL), không đè lên dòng HLV đặt.
 if ($macros !== null && !$nutLock['locked']) {
     $today = date('Y-m-d');
-    $stmt = $pdo->prepare('SELECT id FROM nutrition_targets WHERE user_id = ? AND calculated_date = ?' . (coachTablesReady($pdo) ? ' AND assigned_by IS NULL' : ''));
+    $stmt = $pdo->prepare('SELECT id FROM nutrition_targets WHERE user_id = ? AND calculated_date = ?' . (coachTablesReady($pdo) ? ' AND assigned_by IS NULL' : '')); // audit:ok chỉ ghép điều kiện viết sẵn
     $stmt->execute([$userId, $today]);
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 

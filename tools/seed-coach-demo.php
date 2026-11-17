@@ -11,7 +11,7 @@
  *   hlv.user1@gymsmart.test   USER   đang tập với HLV 1: lịch do HLV giao, macro do HLV đặt, nhật ký, nhận xét, tin nhắn
  *   hlv.user2@gymsmart.test   USER   đã gửi yêu cầu tới HLV 2, đang chờ
  *   hlv.user3@gymsmart.test   USER   chưa có HLV (dùng để thử gửi yêu cầu, hoặc thử nộp đơn làm HLV)
- * Họ tên đều có chữ "(thử)" và hồ sơ HLV ghi rõ là dữ liệu thử để không ai nhầm là người thật.
+ * Họ tên đều bắt đầu bằng "[Thử]" và hồ sơ HLV ghi rõ là dữ liệu thử để không ai nhầm là người thật.
  */
 if (PHP_SAPI !== 'cli') {
     http_response_code(403);
@@ -39,12 +39,12 @@ $insertUser = $pdo->prepare(
 );
 $hash = password_hash(SEED_PASSWORD, PASSWORD_DEFAULT);
 $people = [
-    ['Quản Trị Thử (thử)',   'ADMIN', null, null, null, null, null, null, null],
-    ['Huấn Luyện Một (thử)', 'USER', 30, 175, 74, 'MALE', 'ACTIVE', 'ADVANCED', 'MAINTAIN'],
-    ['Huấn Luyện Hai (thử)', 'USER', 27, 162, 54, 'FEMALE', 'ACTIVE', 'ADVANCED', 'MAINTAIN'],
-    ['Học Viên An (thử)',    'USER', 23, 170, 72.5, 'MALE', 'MODERATE', 'BEGINNER', 'LOSE_FAT'],
-    ['Học Viên Bình (thử)',  'USER', 25, 158, 50, 'FEMALE', 'LIGHT', 'BEGINNER', 'GAIN_MUSCLE'],
-    ['Học Viên Chi (thử)',   'USER', 31, 165, 63, 'FEMALE', 'MODERATE', 'INTERMEDIATE', 'LOSE_FAT'],
+    ['[Thử] Quản Trị',   'ADMIN', null, null, null, null, null, null, null],
+    ['[Thử] Huấn Luyện Một', 'USER', 30, 175, 74, 'MALE', 'ACTIVE', 'ADVANCED', 'MAINTAIN'],
+    ['[Thử] Huấn Luyện Hai', 'USER', 27, 162, 54, 'FEMALE', 'ACTIVE', 'ADVANCED', 'MAINTAIN'],
+    ['[Thử] Học Viên An',    'USER', 23, 170, 72.5, 'MALE', 'MODERATE', 'BEGINNER', 'LOSE_FAT'],
+    ['[Thử] Học Viên Bình',  'USER', 25, 158, 50, 'FEMALE', 'LIGHT', 'BEGINNER', 'GAIN_MUSCLE'],
+    ['[Thử] Học Viên Chi',   'USER', 31, 165, 63, 'FEMALE', 'MODERATE', 'INTERMEDIATE', 'LOSE_FAT'],
 ];
 $ids = [];
 foreach ($people as $i => $p) {

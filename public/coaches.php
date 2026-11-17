@@ -127,8 +127,8 @@ include __DIR__ . '/includes/header.php';
                             <?php elseif (!$c['can_request']): ?>
                                 <button type="button" class="btn btn--ghost" disabled><?= (int)$c['accepting'] !== 1 ? 'Tạm ngừng nhận học viên' : 'Đã đủ học viên' ?></button>
                             <?php elseif ($canAsk): ?>
-                                <button type="button" class="btn" data-toggle="<?= $formId ?>">Đăng ký tập với HLV này</button>
-                                <form id="<?= $formId ?>" class="ch-req" method="post" action="/coaches.php" hidden>
+                                <button type="button" class="btn" data-toggle="<?= htmlspecialchars($formId) ?>">Đăng ký tập với HLV này</button>
+                                <form id="<?= htmlspecialchars($formId) ?>" class="ch-req" method="post" action="/coaches.php" hidden>
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="request">
                                     <input type="hidden" name="coach_id" value="<?= (int)$c['id'] ?>">

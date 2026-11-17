@@ -99,7 +99,7 @@ $coachNavActive = 'clients';
 include __DIR__ . '/../includes/coach-nav.php';
 ?>
 <div class="adm-wrap">
-    <a class="adm-back" href="/coach/client.php?id=<?= $clientId ?>">&larr; Hồ sơ <?= htmlspecialchars($client['full_name']) ?></a>
+    <a class="adm-back" href="/coach/client.php?id=<?= (int)$clientId ?>">&larr; Hồ sơ <?= htmlspecialchars($client['full_name']) ?></a>
     <div class="adm-head">
         <div>
             <h1>Lịch tập của <?= htmlspecialchars($client['full_name']) ?></h1>
@@ -127,7 +127,7 @@ include __DIR__ . '/../includes/coach-nav.php';
                     <div class="adm-hint-box">Đây là lịch học viên tự tạo. Bấm <b>Tiếp quản</b> để giữ lịch này và chỉnh tiếp, hoặc tạo lịch mới từ gợi ý. Mọi chỉnh sửa của bạn cũng tự động ghi lịch là do bạn giao.</div>
                 <?php endif; ?>
                 <?php for ($d = 1; $d <= 7; $d++): $rows = $plan['days'][$d] ?? []; ?>
-                    <section class="adm-panel adm-card-pad cp-day" id="day-<?= $d ?>" aria-labelledby="h-day-<?= $d ?>">
+                    <section class="adm-panel adm-card-pad cp-day" id="day-<?= (int)$d ?>" aria-labelledby="h-day-<?= (int)$d ?>">
                         <h2 id="h-day-<?= $d ?>"><?= $dayNames[$d] ?> <small class="adm-sub"><?= $rows ? count($rows) . ' bài · ' . array_sum(array_column($rows, 'sets')) . ' set' : 'Nghỉ' ?></small></h2>
                         <?php foreach ($rows as $row): ?>
                             <div class="cp-row">
@@ -166,7 +166,7 @@ include __DIR__ . '/../includes/coach-nav.php';
                     <form method="post" action="<?= htmlspecialchars($self) ?>">
                         <?= csrfField() ?><input type="hidden" name="action" value="add">
                         <div class="adm-field"><label for="add-day">Ngày</label>
-                            <select class="adm-select" id="add-day" name="day_of_week"><?php foreach ($dayNames as $n => $label): ?><option value="<?= $n ?>"><?= $label ?></option><?php endforeach; ?></select></div>
+                            <select class="adm-select" id="add-day" name="day_of_week"><?php foreach ($dayNames as $n => $label): ?><option value="<?= (int)$n ?>"><?= htmlspecialchars($label) ?></option><?php endforeach; ?></select></div>
                         <div class="adm-field"><label for="add-ex">Bài tập</label>
                             <select class="adm-select" id="add-ex" name="exercise_id" required>
                                 <option value="">Chọn bài tập…</option>

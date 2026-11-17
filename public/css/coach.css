@@ -211,3 +211,34 @@
 .cn-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2) var(--s-3); padding: var(--s-4); margin: 0 0 var(--s-3);
     border-radius: var(--r); background: var(--accent-soft); }
 .cn-total b { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* Chữ chỉ dành cho trình đọc màn hình */
+.ch-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- Khu HLV: trang tin nhắn (danh sách bên trái, khung chat bên phải) ---------- */
+.cm { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+.cm-list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+.cm-list a { display: flex; gap: var(--s-3); align-items: center; min-height: 64px; padding: var(--s-3) var(--s-4); color: var(--text); text-decoration: none; border-bottom: 1px solid var(--line); }
+.cm-list li:last-child a { border-bottom: 0; }
+.cm-list a:hover { background: var(--bg); }
+.cm-list a[aria-current="page"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.cm-list b { display: block; }
+.cm-list small { color: var(--text-muted); }
+.cm-list .ch-dot { margin-left: auto; }
+@media (max-width: 900px) {
+    .cm { grid-template-columns: 1fr; }
+    .cm.has-chat .cm-list { display: none; }     /* điện thoại: đang mở 1 cuộc trò chuyện thì ẩn danh sách, có nút quay lại */
+    .cm:not(.has-chat) .cm-chat { display: none; }
+}
+.cm .cm-back { display: none; }   /* .cm .cm-back: thắng .adm-btn{display:inline-flex} của admin-style.php in sau */
+@media (max-width: 900px) { .cm.has-chat .cm-chat .cm-back { display: inline-flex; margin-bottom: var(--s-3); } }
+
+/* ---------- Khu HLV: ô nhận xét gấp gọn dưới mỗi buổi tập ---------- */
+.cc-fb { margin: var(--s-2) 0; }
+.cc-fb summary { display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; font-weight: 600; color: var(--accent-dark); }
+.cc-fb form { display: grid; gap: var(--s-2); }
+.cc-fb .adm-btn { justify-self: start; }
+
+/* Cột xếp thẻ bằng grid gap: bỏ margin-top của ".card + .card" (ui.css) để khoảng cách không bị gấp đôi */
+.ch-stack { display: grid; gap: var(--s-5); min-width: 0; }
+.ch-stack > .card + .card, .ch-side > .card + .card { margin-top: 0; }
