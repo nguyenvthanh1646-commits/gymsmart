@@ -2,6 +2,7 @@
 /**
  * admin/users.php — quản lý người dùng.
  * Xem danh sách, tìm kiếm, lọc theo vai trò, đổi vai trò USER/ADMIN, xóa tài khoản, xuất CSV.
+ * Vai trò COACH không đổi ở đây: cấp qua duyệt đơn (coach-applications.php), thu hồi ở coaches.php.
  * Cố ý KHÔNG hiển thị mật khẩu/hash và không cho admin xem hoặc đặt lại mật khẩu của người khác.
  * Hành động (POST) được xử lý trong includes/admin-users.php.
  */
@@ -52,6 +53,7 @@ include __DIR__ . '/../includes/admin-nav.php';
             <select class="adm-select" id="adm-role" aria-label="Lọc theo vai trò">
                 <option value="">Mọi vai trò</option>
                 <option value="USER">USER</option>
+                <option value="COACH">COACH (HLV)</option>
                 <option value="ADMIN">ADMIN</option>
             </select>
         </div>
@@ -87,18 +89,20 @@ include __DIR__ . '/../includes/admin-nav.php';
                     <td class="adm-cell-actions">
                         <div class="adm-actions">
                             <a class="adm-btn adm-btn-ghost adm-btn-sm" href="/admin/user-detail.php?id=<?= (int)$u['id'] ?>">Chi tiết</a>
-                            <?php if (!$isSelf): ?>
+                            <?php if (!$isSelf && $u['role'] === 'COACH'): ?>
+                                <a class="adm-btn adm-btn-ghost adm-btn-sm" href="/admin/coaches.php">Quản lý HLV</a>
+                            <?php elseif (!$isSelf): ?>
                                 <button type="button" class="adm-btn adm-btn-ghost adm-btn-sm adm-act"
                                         data-action="set_role" data-id="<?= (int)$u['id'] ?>"
                                         data-name="<?= htmlspecialchars($u['full_name']) ?>"
                                         data-role="<?= $u['role'] === 'ADMIN' ? 'USER' : 'ADMIN' ?>">
                                     <?= $u['role'] === 'ADMIN' ? 'Hạ xuống USER' : 'Lên ADMIN' ?>
                                 </button>
-                                <?php if ($u['role'] !== 'ADMIN'): ?>
-                                    <button type="button" class="adm-btn adm-btn-danger adm-btn-sm adm-act"
-                                            data-action="delete" data-id="<?= (int)$u['id'] ?>"
-                                            data-name="<?= htmlspecialchars($u['full_name']) ?>">Xóa</button>
-                                <?php endif; ?>
+                            <?php endif; ?>
+                            <?php if (!$isSelf && $u['role'] !== 'ADMIN'): ?>
+                                <button type="button" class="adm-btn adm-btn-danger adm-btn-sm adm-act"
+                                        data-action="delete" data-id="<?= (int)$u['id'] ?>"
+                                        data-name="<?= htmlspecialchars($u['full_name']) ?>">Xóa</button>
                             <?php endif; ?>
                         </div>
                     </td>
@@ -165,7 +169,7 @@ include __DIR__ . '/../includes/admin-nav.php';
             // textContent (không phải innerHTML): tên người dùng không thể chèn mã HTML vào hộp thoại
             document.getElementById('adm-dialog-title').textContent = del ? 'Xóa tài khoản?' : 'Đổi vai trò?';
             document.getElementById('adm-dialog-text').textContent = del
-                ? 'Xóa "' + btn.dataset.name + '" cùng toàn bộ dữ liệu của họ (lịch tập, số đo...). Không hoàn tác được.'
+                ? 'Xóa "' + btn.dataset.name + '" cùng toàn bộ dữ liệu của họ (lịch tập, số đo, quan hệ với HLV hoặc học viên, tin nhắn...). Không hoàn tác được.'
                 : 'Đổi vai trò của "' + btn.dataset.name + '" thành ' + btn.dataset.role + '.';
             ok.className = 'adm-btn' + (del ? ' adm-btn-solid-danger' : '');
             ok.textContent = del ? 'Xóa' : 'Đổi vai trò';
