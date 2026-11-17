@@ -144,5 +144,14 @@ $act = fetchActivePlan($edit, 1);
 check('fetchActivePlan có row_id', isset(current($act['days'])[0]['row_id']));
 check('fetchExerciseLibrary chỉ trả bài kháng lực', count(fetchExerciseLibrary($edit)) === 37); // 40 bài - 3 cardio
 
+// 9. Phân hệ HLV: HLV giao lịch thì ghi assigned_by (cột thêm bởi sql/coach_features.sql); tự tạo thì không đụng cột này
+$coachDb = makeDb();
+$coachDb->exec('ALTER TABLE workout_plans ADD COLUMN assigned_by INTEGER');
+$pSelf  = createWorkoutPlanForUser($coachDb, 1, 3, 'BEGINNER');
+$pCoach = createWorkoutPlanForUser($coachDb, 1, 4, 'BEGINNER', null, 77);
+check('Tự tạo lịch: assigned_by = NULL', $coachDb->query("SELECT assigned_by FROM workout_plans WHERE id = $pSelf")->fetchColumn() === null);
+check('HLV giao lịch: assigned_by = id HLV', (int)$coachDb->query("SELECT assigned_by FROM workout_plans WHERE id = $pCoach")->fetchColumn() === 77);
+check('HLV giao lịch: lịch cũ của học viên thành ARCHIVED', count1($coachDb, "SELECT COUNT(*) FROM workout_plans WHERE id = $pSelf AND status = 'ARCHIVED'") === 1);
+
 echo PHP_EOL . ($fails === 0 ? 'TẤT CẢ ĐỀU PASS' : "$fails TEST FAIL") . PHP_EOL;
 exit($fails === 0 ? 0 : 1);

@@ -39,11 +39,13 @@ function fetchExercisesGroupedByMuscle(PDO $pdo): array
  *   2. tạo workout_plans mới (ACTIVE)
  *   3. tạo các dòng workout_plan_exercises
  * Lỗi ở bất kỳ bước nào -> rollBack, lịch cũ giữ nguyên ACTIVE.
+ * $assignedBy: id HLV giao lịch (phân hệ HLV, cột workout_plans.assigned_by); null = người dùng tự tạo.
+ * Khi null thì câu INSERT giống hệt bản cũ, nên DB chưa chạy sql/coach_features.sql vẫn dùng được.
  *
  * @return int id của lịch mới
  * @throws RuntimeException nếu lịch không có bài nào (không đụng tới lịch cũ)
  */
-function saveWorkoutPlan(PDO $pdo, int $userId, array $plan): int
+function saveWorkoutPlan(PDO $pdo, int $userId, array $plan, ?int $assignedBy = null): int
 {
     $total = 0;
     foreach ($plan['days'] as $day) {
@@ -60,10 +62,17 @@ function saveWorkoutPlan(PDO $pdo, int $userId, array $plan): int
         $archive = $pdo->prepare("UPDATE workout_plans SET status = 'ARCHIVED' WHERE user_id = ? AND status = 'ACTIVE'");
         $archive->execute([$userId]);
 
-        $insertPlan = $pdo->prepare(
-            "INSERT INTO workout_plans (user_id, name, split_type, days_per_week, status) VALUES (?, ?, ?, ?, 'ACTIVE')"
-        );
-        $insertPlan->execute([$userId, $name, $plan['split_type'], $plan['days_per_week']]);
+        if ($assignedBy === null) {
+            $insertPlan = $pdo->prepare(
+                "INSERT INTO workout_plans (user_id, name, split_type, days_per_week, status) VALUES (?, ?, ?, ?, 'ACTIVE')"
+            );
+            $insertPlan->execute([$userId, $name, $plan['split_type'], $plan['days_per_week']]);
+        } else {
+            $insertPlan = $pdo->prepare(
+                "INSERT INTO workout_plans (user_id, name, split_type, days_per_week, status, assigned_by) VALUES (?, ?, ?, ?, 'ACTIVE', ?)"
+            );
+            $insertPlan->execute([$userId, $name, $plan['split_type'], $plan['days_per_week'], $assignedBy]);
+        }
         $planId = (int)$pdo->lastInsertId();
 
         $insertRow = $pdo->prepare(
@@ -91,9 +100,10 @@ function saveWorkoutPlan(PDO $pdo, int $userId, array $plan): int
 
 /**
  * Luồng đầy đủ: lấy goal + bài tập từ DB -> B8 sinh lịch -> lưu.
- * $userId PHẢI lấy từ $_SESSION ở nơi gọi, không nhận từ form/URL.
+ * $userId PHẢI lấy từ $_SESSION ở nơi gọi, không nhận từ form/URL
+ * (riêng HLV giao lịch: $userId là học viên đã qua requireCoachClient(), $assignedBy là HLV).
  */
-function createWorkoutPlanForUser(PDO $pdo, int $userId, int $daysPerWeek, string $level, ?string $splitType = null): int
+function createWorkoutPlanForUser(PDO $pdo, int $userId, int $daysPerWeek, string $level, ?string $splitType = null, ?int $assignedBy = null): int
 {
     $goal = fetchUserGoal($pdo, $userId);
     if ($goal === null) {
@@ -101,7 +111,7 @@ function createWorkoutPlanForUser(PDO $pdo, int $userId, int $daysPerWeek, strin
     }
     $exercises = fetchExercisesGroupedByMuscle($pdo);
     $plan = generateWorkoutPlan($daysPerWeek, $goal, $level, $exercises, $splitType); // ném InvalidArgumentException nếu sai đầu vào
-    return saveWorkoutPlan($pdo, $userId, $plan);
+    return saveWorkoutPlan($pdo, $userId, $plan, $assignedBy);
 }
 
 /**

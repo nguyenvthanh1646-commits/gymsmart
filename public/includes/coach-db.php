@@ -592,6 +592,33 @@ function coachMarkPlanAssigned(PDO $pdo, int $coachId, int $clientId): int
     return $stmt->rowCount();
 }
 
+/** Ai giao lịch ACTIVE của người dùng: ['id','full_name'] của HLV, hoặc null (tự tạo / chưa có lịch / chưa import bảng HLV). */
+function coachPlanAssigner(PDO $pdo, int $userId): ?array
+{
+    if (!coachTablesReady($pdo)) {
+        return null;
+    }
+    $stmt = $pdo->prepare(
+        "SELECT u.id, u.full_name FROM workout_plans wp JOIN users u ON u.id = wp.assigned_by
+         WHERE wp.user_id = ? AND wp.status = 'ACTIVE' ORDER BY wp.id DESC LIMIT 1"
+    );
+    $stmt->execute([$userId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row === false ? null : $row;
+}
+
+/**
+ * Chặn API tự sửa lịch của người dùng khi đang có HLV quản lý. Trả về câu báo lỗi, hoặc null nếu được sửa.
+ * Dùng ở api/workout-plan-generate.php và api/workout-plan-edit.php (kiểm tra ở máy chủ, không chỉ ẩn nút).
+ */
+function coachPlanLockError(PDO $pdo, int $userId): ?string
+{
+    $state = coachSelfEditState($pdo, $userId, 'PLAN');
+    return $state['locked']
+        ? 'Lịch tập đang do HLV ' . $state['coach_name'] . ' quản lý. Hãy gửi yêu cầu sửa tới HLV ở trang HLV của tôi.'
+        : null;
+}
+
 /**
  * HLV đặt mục tiêu dinh dưỡng: thêm dòng nutrition_targets mới (assigned_by = HLV), giữ lịch sử các lần trước.
  * $tdee là TDEE tính từ hồ sơ học viên (tham khảo), $macros đã qua validateCoachMacros().
