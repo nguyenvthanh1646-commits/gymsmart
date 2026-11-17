@@ -50,6 +50,22 @@ Quy ước dùng chung:
 
 ---
 
+## Phân hệ Huấn luyện viên (HLV, vai trò COACH) — đổi phạm vi 11/2026, A làm
+
+Mô tả bảng: `docs/ERD.md` mục "Phân hệ HLV". Chạy thêm `sql/coach_features.sql` (đã gộp vào `schema.sql`). Dữ liệu thử: `php tools/seed-coach-demo.php`. Test: `php test-coach.php`.
+Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` → `a-30` → `a-31` → `a-32` → `a-33` → `a-35`.
+
+- [x] A-30 Cơ sở dữ liệu và phân quyền (`a-30-coach-db`): vai trò COACH, 6 bảng `coach_*`, cột `assigned_by`; `includes/coach-rules.php` (quy tắc thuần), `coach-db.php`, `coach.php` (`requireCoach()`, `canCoachAccessClient()`); `test-coach.php`; `tools/seed-coach-demo.php`; luật quét `/coach/` trong `tools/audit.php`
+- [x] A-31 Đơn đăng ký HLV và quản trị (`a-31-coach-admin`): `coach-apply.php` (mẫu đơn 4 phần, rút đơn, nộp lại sau khi bị từ chối), `admin/coach-applications.php` (duyệt / từ chối có lý do), `admin/coaches.php` (danh sách, thu hồi), chặn COACH → ADMIN trực tiếp, nhật ký `coach.*`, số liệu HLV ở tổng quan và thống kê
+- [x] A-32 Học viên chọn HLV và khu HLV (`a-32-coach-link`): `coaches.php`, `my-coach.php`, mục HLV trên menu; `/coach/dashboard.php` (4 số liệu, duyệt yêu cầu), `clients.php`, `profile.php`, thanh `coach-nav.php`
+  - **Xong khi:** mỗi học viên chỉ có 1 HLV (đang chờ hoặc đang tập), DB cũng chặn bằng UNIQUE; HLV đủ chỗ hoặc tạm ngừng thì không gửi được
+- [x] A-33 Hồ sơ học viên, giao lịch, đặt macro (`a-33-coach-panel`): `coach/client.php` (chỉ đọc, biểu đồ qua `api/body-metrics.php?client_id=`), `client-plan.php` (tạo từ thuật toán gợi ý rồi chỉnh), `client-nutrition.php` (kcal = 4P + 4C + 9F, giới hạn ở máy chủ); khóa tự sửa lịch tập và dinh dưỡng khi có HLV, xin sửa thì HLV duyệt mở 24 giờ
+- [x] A-35 Nhận xét và nhắn tin (`a-35-coach-feedback-chat`): nhận xét từng buổi / nhận xét chung, `api/coach-messages.php` + `api/coach-message-send.php`, `coach/messages.php`, tab Tin nhắn ở `my-coach.php`, thông báo trên trang chủ (`includes/dash-coach.php`)
+- [ ] A-36 (Tùy chọn, làm sau cùng) Trợ lý chatbot cho HLV: chế độ `coach` trong `api/chatbot.php`, chỉ đưa dữ liệu học viên đã qua `canCoachAccessClient()` vào prompt
+- [ ] A-37 Chụp ảnh `docs/screens/coach-*.png` và chạy kịch bản thử trên MySQL (xem `SECURITY_CHECKLIST.md` mục "Phân hệ HLV")
+
+---
+
 ## B — Thư viện bài tập + Lịch tập
 
 - [x] B-1 → B-5 Trang danh sách bài tập: lưới thẻ, lọc nhóm cơ, loại, độ khó, ô tìm kiếm (A làm tạm, B chỉ cần đọc hiểu)
