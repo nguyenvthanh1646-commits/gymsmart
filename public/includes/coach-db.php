@@ -124,9 +124,7 @@ function canCoachAccessClient(PDO $pdo, int $coachId, int $clientId): bool
 function coachLatestApplication(PDO $pdo, int $userId): ?array
 {
     $stmt = $pdo->prepare(
-        'SELECT id, headline, specialties, experience_years, certifications, bio, approach, max_clients, availability,
-                status, admin_note, reviewed_at, created_at
-         FROM coach_applications WHERE user_id = ? ORDER BY id DESC LIMIT 1'
+        'SELECT * FROM coach_applications WHERE user_id = ? ORDER BY id DESC LIMIT 1'
     );
     $stmt->execute([$userId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -170,13 +168,18 @@ function coachSubmitApplication(PDO $pdo, int $userId, array $data): int
             $userId, $data['headline'], $data['specialties'], $data['experience_years'], $data['certifications'],
             $data['bio'], $data['approach'], $data['max_clients'], $data['availability'], coachNow(),
         ]);
+        $newId = (int)$pdo->lastInsertId();
+        // File chứng chỉ (nếu có) ghi sau, vào cột thêm bởi sql/coach_extras.sql
+        if (!empty($data['certificate_file'])) {
+            $pdo->prepare('UPDATE coach_applications SET certificate_file = ? WHERE id = ?')->execute([$data['certificate_file'], $newId]);
+        }
     } catch (PDOException $e) {
         if (coachIsDuplicate($e)) {
             throw new CoachException('Bạn đã có một đơn đang chờ duyệt.');
         }
         throw $e;
     }
-    return (int)$pdo->lastInsertId();
+    return $newId;
 }
 
 /** Người nộp tự rút đơn đang chờ (chuyển thành REJECTED kèm ghi chú). */
@@ -791,7 +794,7 @@ function coachAddFeedback(PDO $pdo, int $relationId, int $clientId, ?string $log
 function coachFeedbackList(PDO $pdo, int $relationId, int $limit = 50): array
 {
     $stmt = $pdo->prepare(
-        'SELECT id, log_date, content, read_at, created_at FROM coach_feedback WHERE coach_client_id = ? ORDER BY id DESC LIMIT ' . max(1, min(200, $limit))
+        'SELECT * FROM coach_feedback WHERE coach_client_id = ? ORDER BY id DESC LIMIT ' . max(1, min(200, $limit))
     );
     $stmt->execute([$relationId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -868,3 +871,7 @@ function coachClientNotice(PDO $pdo, int $clientId): ?array
     }
     return $out;
 }
+
+
+// Phần mở rộng (bản nháp lịch, sửa nhận xét, lịch sử, chứng chỉ...) nằm ở file riêng cho dễ đọc
+require_once __DIR__ . '/coach-extras.php';

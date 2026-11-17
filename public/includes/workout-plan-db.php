@@ -41,11 +41,13 @@ function fetchExercisesGroupedByMuscle(PDO $pdo): array
  * Lỗi ở bất kỳ bước nào -> rollBack, lịch cũ giữ nguyên ACTIVE.
  * $assignedBy: id HLV giao lịch (phân hệ HLV, cột workout_plans.assigned_by); null = người dùng tự tạo.
  * Khi null thì câu INSERT giống hệt bản cũ, nên DB chưa chạy sql/coach_features.sql vẫn dùng được.
+ * $status: 'ACTIVE' (mặc định) hoặc 'DRAFT' = bản nháp HLV soạn (sql/coach_extras.sql): KHÔNG lưu trữ lịch đang dùng,
+ * học viên chưa thấy cho tới khi HLV giao (coachPublishDraft). Bản nháp bắt buộc có $assignedBy.
  *
  * @return int id của lịch mới
  * @throws RuntimeException nếu lịch không có bài nào (không đụng tới lịch cũ)
  */
-function saveWorkoutPlan(PDO $pdo, int $userId, array $plan, ?int $assignedBy = null): int
+function saveWorkoutPlan(PDO $pdo, int $userId, array $plan, ?int $assignedBy = null, string $status = 'ACTIVE'): int
 {
     $total = 0;
     foreach ($plan['days'] as $day) {
@@ -57,10 +59,19 @@ function saveWorkoutPlan(PDO $pdo, int $userId, array $plan, ?int $assignedBy = 
 
     $name = 'Lịch ' . (WORKOUT_SPLIT_LABELS[$plan['split_type']] ?? $plan['split_type']) . ' ' . $plan['days_per_week'] . ' ngày/tuần';
 
+    if ($status !== 'ACTIVE' && ($status !== 'DRAFT' || $assignedBy === null)) {
+        throw new InvalidArgumentException('Trạng thái lịch không hợp lệ.');
+    }
+    if ($status === 'DRAFT') {
+        $name = 'Bản nháp: ' . $name;
+    }
+
     $pdo->beginTransaction();
     try {
-        $archive = $pdo->prepare("UPDATE workout_plans SET status = 'ARCHIVED' WHERE user_id = ? AND status = 'ACTIVE'");
-        $archive->execute([$userId]);
+        if ($status === 'ACTIVE') {   // bản nháp thì giữ nguyên lịch học viên đang tập
+            $archive = $pdo->prepare("UPDATE workout_plans SET status = 'ARCHIVED' WHERE user_id = ? AND status = 'ACTIVE'");
+            $archive->execute([$userId]);
+        }
 
         if ($assignedBy === null) {
             $insertPlan = $pdo->prepare(
@@ -69,9 +80,9 @@ function saveWorkoutPlan(PDO $pdo, int $userId, array $plan, ?int $assignedBy = 
             $insertPlan->execute([$userId, $name, $plan['split_type'], $plan['days_per_week']]);
         } else {
             $insertPlan = $pdo->prepare(
-                "INSERT INTO workout_plans (user_id, name, split_type, days_per_week, status, assigned_by) VALUES (?, ?, ?, ?, 'ACTIVE', ?)"
+                "INSERT INTO workout_plans (user_id, name, split_type, days_per_week, status, assigned_by) VALUES (?, ?, ?, ?, ?, ?)"
             );
-            $insertPlan->execute([$userId, $name, $plan['split_type'], $plan['days_per_week'], $assignedBy]);
+            $insertPlan->execute([$userId, $name, $plan['split_type'], $plan['days_per_week'], $status, $assignedBy]);
         }
         $planId = (int)$pdo->lastInsertId();
 

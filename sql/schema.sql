@@ -1,7 +1,7 @@
 -- schema.sql — tạo TOÀN BỘ bảng cho GymSmart, theo đúng /docs/ERD.md
 -- Đã gộp mọi file bổ sung: body_metrics.sql, users_avatar.sql, password_resets.sql, login_attempts.sql,
 -- admin_features.sql (admin_audit_log, articles, article_views), split_types.sql, nutrition_preferences.sql,
--- coach_features.sql (phân hệ HLV: vai trò COACH, 6 bảng coach_*, cột assigned_by).
+-- coach_features.sql (phân hệ HLV: vai trò COACH, 6 bảng coach_*, cột assigned_by), coach_extras.sql.
 --
 -- Cách dùng trên máy MỚI (database trống):
 --   phpMyAdmin → tab Import → chọn file này → rồi Import sql/seed_exercises_v2.sql → sql/seed_exercise_media.sql
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS workout_plans (
     name VARCHAR(255) NOT NULL,
     split_type ENUM('FULL_BODY', 'UPPER_LOWER', 'ANTERIOR_POSTERIOR', 'PPL', 'PPL_UL', 'UL_FULL_BODY', 'AP_FULL_BODY', 'BRO_SPLIT') NOT NULL,
     days_per_week INT NOT NULL,
-    status ENUM('ACTIVE', 'COMPLETED', 'ARCHIVED') NOT NULL DEFAULT 'ACTIVE',
+    status ENUM('ACTIVE', 'COMPLETED', 'ARCHIVED', 'DRAFT') NOT NULL DEFAULT 'ACTIVE',   -- DRAFT: bản nháp HLV đang soạn, học viên không thấy
     assigned_by INT NULL,                     -- id HLV giao lịch; NULL = người dùng tự tạo
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -256,6 +256,7 @@ CREATE TABLE IF NOT EXISTS coach_applications (
     specialties VARCHAR(255) NOT NULL,              -- các mã chuyên môn cách nhau bởi dấu phẩy (PHP kiểm tra whitelist)
     experience_years TINYINT UNSIGNED NOT NULL,     -- 0-50
     certifications VARCHAR(1000) NOT NULL DEFAULT '', -- mỗi dòng một chứng chỉ: tên - nơi cấp - năm
+    certificate_file VARCHAR(80) NULL,              -- file chứng chỉ trong storage/certificates/ (ngoài public/), chỉ ADMIN xem
     bio VARCHAR(1500) NOT NULL,                     -- giới thiệu bản thân, hiện cho học viên
     approach VARCHAR(1000) NOT NULL,                -- phương pháp huấn luyện
     max_clients TINYINT UNSIGNED NOT NULL DEFAULT 10, -- 1-30
@@ -320,6 +321,7 @@ CREATE TABLE IF NOT EXISTS coach_feedback (
     content VARCHAR(1000) NOT NULL,
     read_at DATETIME NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NULL,                       -- HLV sửa nhận xét
     INDEX idx_fb_rel (coach_client_id, created_at),
     FOREIGN KEY (coach_client_id) REFERENCES coach_clients(id) ON DELETE CASCADE,
     FOREIGN KEY (workout_log_id) REFERENCES workout_logs(id) ON DELETE SET NULL
