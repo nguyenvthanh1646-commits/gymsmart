@@ -15,6 +15,7 @@
  */
 
 require_once __DIR__ . '/coach-db.php';
+require_once __DIR__ . '/csrf.php';
 
 /** Chặn trang nếu không phải HLV. Đọc lại vai trò từ DB nên bị thu hồi quyền là có hiệu lực ngay. */
 function requireCoach(): void
@@ -50,6 +51,96 @@ function requireCoachClient(PDO $pdo, $rawClientId): array
             [['/coach/clients.php', 'Danh sách học viên'], ['/coach/dashboard.php', 'Bảng điều khiển']]);
     }
     return [$clientId, $relationId];
+}
+
+/**
+ * Xử lý POST của HỌC VIÊN trên coaches.php và my-coach.php (dùng chung để khỏi viết 2 lần):
+ *   action=request  coach_id, note   gửi yêu cầu tới HLV
+ *   action=cancel   relation_id      hủy yêu cầu đang chờ
+ *   action=end      relation_id      ngừng tập với HLV hiện tại
+ *   action=change   area, reason     xin HLV cho tự sửa lịch tập/dinh dưỡng
+ * client_id luôn là người đang đăng nhập; relation_id chỉ là "muốn tác động quan hệ nào",
+ * hàm coachChangeRelation() tự kiểm tra quan hệ đó có đúng client_id này không.
+ * Không phải POST thì không làm gì. Làm xong chuyển hướng về $redirect (Post/Redirect/Get).
+ */
+function coachHandleClientAction(PDO $pdo, string $redirect): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !coachTablesReady($pdo)) {
+        return;
+    }
+    if (!verifyCsrf()) {
+        showCsrfError();
+    }
+    $me = (int)$_SESSION['user_id'];
+    $action = $_POST['action'] ?? '';
+    try {
+        switch ($action) {
+            case 'request':
+                coachRequest($pdo, $me, coachParseId($_POST['coach_id'] ?? null), coachCleanText($_POST['note'] ?? ''));
+                coachFlash('ok', 'Đã gửi yêu cầu. HLV sẽ xem hồ sơ của bạn và trả lời sớm.');
+                break;
+            case 'cancel':
+                coachChangeRelation($pdo, 'client', $me, coachParseId($_POST['relation_id'] ?? null), 'cancel');
+                coachFlash('ok', 'Đã hủy yêu cầu. Bạn có thể chọn HLV khác.');
+                break;
+            case 'end':
+                coachChangeRelation($pdo, 'client', $me, coachParseId($_POST['relation_id'] ?? null), 'end');
+                coachFlash('ok', 'Đã ngừng tập với HLV. Lịch tập và mục tiêu hiện tại vẫn được giữ, bạn tự sửa được.');
+                break;
+            case 'change':
+                $area = (string)($_POST['area'] ?? '');
+                coachRequestChange($pdo, $me, $area, coachCleanText($_POST['reason'] ?? ''));
+                coachFlash('ok', 'Đã gửi yêu cầu sửa ' . mb_strtolower(COACH_CHANGE_AREAS[$area] ?? '') . ' tới HLV.');
+                break;
+            default:
+                throw new CoachException('Thao tác không hợp lệ.');
+        }
+    } catch (CoachException $e) {
+        coachFlash('error', $e->getMessage());
+    }
+    header('Location: ' . $redirect);   // $redirect là đường dẫn viết sẵn ở trang gọi, không lấy từ request
+    exit;
+}
+
+/**
+ * Xử lý POST của HLV (dùng chung cho dashboard, clients, client): gọi SAU requireCoach().
+ *   action=accept|reject|end  relation_id                 duyệt / từ chối yêu cầu, kết thúc quan hệ
+ *   action=resolve_change     request_id, decision, reply  trả lời yêu cầu xin tự sửa của học viên
+ * coach_id luôn là người đang đăng nhập; các hàm DB tự kiểm tra relation_id/request_id thuộc HLV này.
+ * Thao tác thành công được ghi admin_audit_log với mã coach.*.
+ */
+function coachHandleCoachAction(PDO $pdo, string $redirect): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !in_array($_POST['action'] ?? '', ['accept', 'reject', 'end', 'resolve_change'], true)) {
+        return;
+    }
+    if (!verifyCsrf()) {
+        showCsrfError();
+    }
+    require_once __DIR__ . '/audit-log.php';
+    $me = (int)$_SESSION['user_id'];
+    $action = $_POST['action'];
+    try {
+        if ($action === 'resolve_change') {
+            $approve = ($_POST['decision'] ?? '') === 'approve';
+            $req = coachResolveChange($pdo, $me, coachParseId($_POST['request_id'] ?? null), $approve, coachCleanText($_POST['reply'] ?? ''));
+            auditLog($pdo, 'coach.change_request', 'client', $req['client_id'],
+                ($approve ? 'Cho phép' : 'Không cho phép') . ' học viên tự sửa ' . mb_strtolower(COACH_CHANGE_AREAS[$req['area']] ?? $req['area']));
+            coachFlash('ok', $approve ? 'Đã cho phép học viên tự sửa trong ' . COACH_UNLOCK_HOURS . ' giờ.' : 'Đã trả lời: không cho phép sửa.');
+        } else {
+            $rel = coachChangeRelation($pdo, 'coach', $me, coachParseId($_POST['relation_id'] ?? null), $action);
+            $codes = ['accept' => 'coach.accept', 'reject' => 'coach.decline', 'end' => 'coach.end'];
+            $texts = ['accept' => 'Nhận học viên', 'reject' => 'Từ chối học viên', 'end' => 'Kết thúc với học viên'];
+            auditLog($pdo, $codes[$action], 'client', $rel['client_id'], $texts[$action] . ' "' . $rel['client_name'] . '"');
+            $msg = ['accept' => 'Đã nhận "%s". Hãy giao lịch tập và đặt mục tiêu dinh dưỡng.', 'reject' => 'Đã từ chối yêu cầu của "%s".',
+                    'end' => 'Đã kết thúc quan hệ với "%s". Bạn không còn xem được dữ liệu của học viên này.'];
+            coachFlash('ok', sprintf($msg[$action], $rel['client_name']));
+        }
+    } catch (CoachException $e) {
+        coachFlash('error', $e->getMessage());
+    }
+    header('Location: ' . $redirect);   // đường dẫn viết sẵn ở trang gọi
+    exit;
 }
 
 /** Trạng thái thông báo một lần (flash) dùng chung cho các trang HLV và học viên. */

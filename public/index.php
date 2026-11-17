@@ -4,6 +4,7 @@
  *
  * Ba trạng thái:
  *   - ADMIN:            chuyển sang /admin/dashboard.php (có trang chủ riêng).
+ *   - COACH:            chuyển sang /coach/dashboard.php (khu huấn luyện viên).
  *   - Chưa đăng nhập:   trang giới thiệu (hero, tính năng, 3 bước, lời kêu gọi đăng ký).
  *   - Đã đăng nhập:     bảng điều khiển cá nhân: hôm nay tập gì, tuần này ra sao, dinh dưỡng, cân nặng.
  *
@@ -21,6 +22,11 @@ $loggedIn = isLoggedIn();
 // Quản trị viên có trang chủ riêng (tổng quan), không dùng trang chủ của người dùng
 if ($loggedIn && ($_SESSION['role'] ?? '') === 'ADMIN') {
     header('Location: /admin/dashboard.php');
+    exit;
+}
+// Huấn luyện viên cũng có trang chủ riêng (khu /coach/). Trang đó tự kiểm tra lại vai trò trong DB.
+if ($loggedIn && ($_SESSION['role'] ?? '') === 'COACH') {
+    header('Location: /coach/dashboard.php');
     exit;
 }
 
