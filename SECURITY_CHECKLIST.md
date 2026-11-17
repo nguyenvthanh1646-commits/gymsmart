@@ -299,3 +299,17 @@ Dữ liệu thử: `php tools/seed-coach-demo.php` (mật khẩu chung `Test@123
 | Nhập `<script>alert(1)</script>` vào tin nhắn, nhận xét, lời nhắn, mẫu đơn HLV, lý do từ chối | Hiện nguyên chữ ở mọi nơi (tin nhắn gán bằng `textContent`) |
 | Xem HTML trang HLV, trang danh sách HLV | Không có email học viên / email HLV (chỉ ADMIN thấy email ở trang duyệt đơn) |
 | Gửi bất kỳ form HLV nào không kèm `csrf_token` | 403 "Phiên làm việc đã hết hạn" |
+
+### Mở rộng (A-36) và kiểm thử tự động
+Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng trên và các mục dưới. Công cụ tự tạo database `gymsmart_test_hlv` và máy chủ thử, xong thì xóa; không đụng database `gymsmart`.
+
+| Cách thử | Kết quả mong đợi |
+|---|---|
+| HLV gửi `draft_remove` với `row_id` của lịch ĐANG DÙNG (không phải bản nháp) | "Không tìm thấy bài này trong bản nháp", không xóa |
+| Học viên mở lịch tập khi HLV đang có bản nháp | Không thấy bản nháp, lịch đang dùng không đổi |
+| HLV khác gửi `feedback_delete` qua trang học viên không phải của mình | 404, nhận xét còn nguyên |
+| Học viên mở `my-coach.php?history=` của người khác / id không tồn tại | 404 |
+| USER gọi chatbot `mode=coach`; HLV gửi `client_id` của học viên HLV khác | 403, không gọi AI |
+| Tải file PHP đổi đuôi `.png` làm chứng chỉ; file > 3 MB | Bị từ chối (kiểm tra nội dung, không tin đuôi) |
+| Mở `/storage/certificates/<tên>` bằng URL; USER mở `admin/certificate.php` | 404 (ngoài `public/`); 403 |
+| Đổi `certificate_file` trong DB thành `../../config.php` rồi admin mở | 404, không đọc được file ngoài thư mục |

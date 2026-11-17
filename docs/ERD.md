@@ -421,3 +421,11 @@ Khi đang có HLV, học viên **không tự sửa** lịch tập và dinh dư�
 - **Chatbot RAG đơn giản**: không cần bảng mới, chỉ query bảng `exercises` (tên, nhóm cơ, mô tả, `instructions`, `common_mistakes`) theo từ khóa rồi dẫn tới trang chi tiết bài tập
 - Khi thêm bảng mới: tạo `sql/<tên>.sql` dùng `IF NOT EXISTS`, gộp vào `schema.sql`, **cập nhật sơ đồ mermaid và bảng mô tả phía trên**
 - Tất cả bảng nên có `created_at`; bảng có thể chỉnh sửa (users, exercises, workout_plans, articles) có thêm `updated_at`
+
+## Mở rộng phân hệ HLV (`sql/coach_extras.sql`, đã gộp vào `schema.sql`)
+
+| Thay đổi | Ý nghĩa |
+|---|---|
+| `workout_plans.status` thêm `DRAFT` | Bản nháp HLV đang soạn cho học viên (`assigned_by` = HLV, mỗi HLV tối đa 1 bản nháp cho mỗi học viên). Mọi truy vấn của học viên lọc `status = 'ACTIVE'` nên không thấy bản nháp. Giao bản nháp (`coachPublishDraft`): lịch ACTIVE cũ → `ARCHIVED`, bản nháp → `ACTIVE`, trong 1 transaction |
+| `coach_feedback.updated_at` | Lúc HLV sửa nhận xét; sửa xong `read_at` về NULL để học viên được báo lại |
+| `coach_applications.certificate_file` | Tên file chứng chỉ (dạng `c<user_id>-<16 hex>.<jpg/png/webp/pdf>`) trong `storage/certificates/` — **ngoài `public/`**, chỉ ADMIN đọc qua `admin/certificate.php` |

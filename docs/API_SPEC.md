@@ -269,6 +269,19 @@ Phần lớn thao tác là **form POST thẳng vào trang** (có CSRF, Post/Redi
 | `/coach/client-nutrition.php?id=` | COACH | protein_g, carbs_g, fat_g (máy chủ tính kcal = 4P + 4C + 9F; 1200-5000 kcal; protein 0,8-3,3 g/kg; chất béo ≥ 0,5 g/kg) |
 | `/coach/profile.php` | COACH | hồ sơ HLV + `accepting` |
 
+**Mở rộng (`a-36`, cần `sql/coach_extras.sql`):**
+
+| Method | Đường dẫn | Ghi chú |
+|---|---|---|
+| GET | `/api/nutrition-history.php?client_id=` | Như `body-metrics`: người gọi là COACH (đọc DB) + quan hệ ACTIVE, sai thì 404 |
+| GET | `/api/coach-messages.php` | Thêm `data.seenUpTo` = id lớn nhất trong tin của mình mà bên kia đã đọc (hiện "Đã xem") |
+| POST | `/api/chatbot.php` | `mode = coach` + `client_id` (tùy chọn): chỉ COACH (đọc DB), `client_id` phải là học viên ACTIVE, sai thì 403; `client_id` sai kiểu 400 |
+| GET | `/admin/certificate.php?id=<id đơn>` | Chỉ ADMIN. Trả file chứng chỉ (`Content-Type` theo đuôi đã kiểm tra, `nosniff`), tên file lạ trong DB → 404 |
+| POST | `/coach/client-plan.php?id=&view=draft` | `draft_copy`, `draft_update` / `draft_replace` / `draft_remove` / `draft_add` (cùng tham số với sửa lịch), `draft_publish`, `draft_discard`. `generate` giờ tạo bản nháp |
+| POST | `/coach/client.php?id=` | `feedback_edit` (feedback_id, content), `feedback_delete` (feedback_id) |
+| GET | `/my-coach.php?history=<relation_id>` | Học viên xem lại tin nhắn, nhận xét của quan hệ ĐÃ KẾT THÚC của chính mình, sai thì 404 |
+| POST | `/coach-apply.php` | Thêm `certificate_file` (multipart, JPG/PNG/WebP/PDF ≤ 3 MB, kiểm tra nội dung bằng finfo) |
+
 Khi đang có HLV, `POST /api/workout-plan-generate.php` và `/api/workout-plan-edit.php` của học viên trả **403** `{success:false, message:"Lịch tập đang do HLV ... quản lý..."}` (trừ khi HLV đã duyệt yêu cầu sửa còn hạn).
 
 ---
