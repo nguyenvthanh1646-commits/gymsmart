@@ -107,6 +107,7 @@ class BrokenPdo extends PDO
 }
 ini_set('error_log', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null'); // không in nhật ký lỗi của phần giả lập ra màn hình
 $d = loadDashboard(new BrokenPdo(), 1, '2026-10-28', 'MAINTAIN', 0, ['a' => ['title' => 'A']]);
+check('Dữ liệu trả về có mục tiêu cho thẻ Tiến trình', $d['goal'] === 'MAINTAIN');
 check('DB lỗi: lịch tập báo error', $d['plan']['status'] === 'error');
 check('DB lỗi: tuần này báo error', $d['week']['status'] === 'error');
 check('DB lỗi: dinh dưỡng báo error', $d['nutrition']['status'] === 'error');

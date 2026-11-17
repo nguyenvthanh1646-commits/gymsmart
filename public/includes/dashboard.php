@@ -385,6 +385,7 @@ function loadDashboard(PDO $pdo, int $userId, string $today, ?string $goal, int 
         'week' => $week,
         'nutrition' => dashLoadNutrition($pdo, $userId),
         'progress' => dashLoadMetrics($pdo, $userId, $goal),
+        'goal' => $goal,          // dùng ở thẻ Tiến trình; không đọc qua biến $row vì vòng lặp bài tập ở dash-today.php ghi đè biến đó
         'unreadArticles' => $unread,
     ];
 }

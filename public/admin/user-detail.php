@@ -81,6 +81,16 @@ include __DIR__ . '/../includes/admin-nav.php';
         </div>
         <?php if (!$isSelf): ?>
         <div class="adm-actions">
+            <?php if ($user['role'] === 'COACH'): ?>
+            <!-- COACH: không đổi thẳng sang ADMIN; thu hồi HLV trước (kết thúc quan hệ với học viên trong cùng 1 transaction) -->
+            <form method="post" action="/admin/user-detail.php?id=<?= (int)$user['id'] ?>">
+                <?= csrfField() ?>
+                <input type="hidden" name="action" value="revoke_coach">
+                <input type="hidden" name="id" value="<?= (int)$user['id'] ?>">
+                <button type="submit" class="adm-btn adm-btn-danger"
+                        onclick="return confirm('Thu hồi vai trò HLV? Mọi học viên đang tập sẽ bị kết thúc, yêu cầu đang chờ bị từ chối. Lịch tập đã giao vẫn ở lại với học viên.');">Thu hồi HLV</button>
+            </form>
+            <?php else: ?>
             <form method="post" action="/admin/user-detail.php?id=<?= (int)$user['id'] ?>">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="set_role">
@@ -91,6 +101,7 @@ include __DIR__ . '/../includes/admin-nav.php';
                     <?= $user['role'] === 'ADMIN' ? 'Hạ xuống USER' : 'Lên ADMIN' ?>
                 </button>
             </form>
+            <?php endif; ?>
             <?php if ($user['role'] !== 'ADMIN'): ?>
             <form method="post" action="/admin/user-detail.php?id=<?= (int)$user['id'] ?>">
                 <?= csrfField() ?>

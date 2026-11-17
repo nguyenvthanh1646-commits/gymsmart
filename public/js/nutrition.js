@@ -2,6 +2,7 @@
 //  1. Bấm "Tùy chỉnh" thì hiện 3 ô nhập tỉ lệ %, chọn kiểu khác thì ẩn đi.
 //  2. Khi gõ tỉ lệ: hiện luôn số gram tương ứng và tổng % (đúng 100% mới hợp lệ).
 // Server vẫn kiểm tra lại toàn bộ khi gửi form (xem validateCustomPercent trong includes/meal-plan.php).
+//  3. Bấm "Đổi món": tải ngầm trang mới rồi chỉ thay phần lịch ăn, nên trang không nhảy về chỗ khác.
 (function () {
     var box = document.getElementById('nt-custom');
     if (!box) return;
@@ -33,4 +34,49 @@
     radios.forEach(function (r) { r.addEventListener('change', toggle); });
     Object.keys(inputs).forEach(function (k) { inputs[k].addEventListener('input', update); });
     update();
+})();
+
+(function () {
+    var section = document.getElementById('lich-an');
+    if (!section) return;
+
+    // Các phần phụ thuộc vào món đang chọn. Không thay form "Thực phẩm không ăn" để giữ các ô người dùng đang tick dở.
+    var parts = ['.nt-meals__ctrl', '.nt-meal-grid', '.nt-day'];
+    var loading = false;
+
+    section.addEventListener('click', function (event) {
+        var link = event.target.closest('.nt-swap');
+        // Ctrl/Shift + bấm thì để trình duyệt mở tab mới như liên kết bình thường
+        if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+        event.preventDefault();
+        if (loading) return;    // đang tải thì bỏ qua lần bấm tiếp theo
+        loading = true;
+        link.setAttribute('aria-busy', 'true');
+        link.textContent = 'Đang đổi...';
+
+        var slot = link.getAttribute('data-slot');
+        fetch(link.href, { credentials: 'same-origin' })
+            .then(function (response) {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                return response.text();
+            })
+            .then(function (html) {
+                var fresh = new DOMParser().parseFromString(html, 'text/html');
+                // Hết phiên đăng nhập thì trang trả về là trang login, không có lịch ăn
+                if (!fresh.querySelector('#lich-an .nt-meal-grid')) throw new Error('Không có lịch ăn');
+                parts.forEach(function (selector) {
+                    var current = section.querySelector(selector);
+                    var next = fresh.querySelector('#lich-an ' + selector);
+                    if (current && next) current.replaceWith(next);
+                });
+                history.replaceState(null, '', link.href);   // tải lại trang hoặc gửi link vẫn đúng món đang xem
+                // Nút cũ đã bị thay: đưa focus về nút của đúng bữa đó cho người dùng bàn phím, không cuộn trang
+                var again = section.querySelector('.nt-swap[data-slot="' + slot + '"]');
+                if (again) again.focus({ preventScroll: true });
+                loading = false;
+            })
+            .catch(function () {
+                window.location.href = link.href;            // lỗi mạng hoặc hết phiên: tải cả trang như cũ
+            });
+    });
 })();

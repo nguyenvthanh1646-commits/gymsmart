@@ -9,6 +9,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/articles.php';
+require_once __DIR__ . '/../includes/coach-db.php';
 
 requireAdmin();
 
@@ -96,6 +97,7 @@ $totalUsers = (int)(statRows($pdo, "SELECT COUNT(*) AS n FROM users WHERE role =
 $weekAgo = date('Y-m-d', strtotime('-7 day'));
 $users7 = (int)(statRows($pdo, "SELECT COUNT(*) AS n FROM users WHERE role = 'USER' AND created_at >= ?", [$weekAgo . ' 00:00:00'], 'users', $missing)[0]['n'] ?? 0);
 $sessions7 = (int)(statRows($pdo, "SELECT COUNT(*) AS n FROM (SELECT DISTINCT user_id, log_date FROM workout_logs WHERE log_date >= ?) t", [$weekAgo], 'workout_logs', $missing)[0]['n'] ?? 0);
+$coachCounts = coachAdminCounts($pdo);   // số HLV, cặp HLV-học viên đang tập (0 nếu chưa import bảng HLV)
 $views7 = (int)(statRows($pdo, "SELECT COALESCE(SUM(views), 0) AS n FROM article_views WHERE view_date >= ?", [$weekAgo], 'article_views', $missing)[0]['n'] ?? 0);
 
 /** Bảng số liệu dự phòng cho người đọc màn hình, và để xem số chính xác */
@@ -142,6 +144,11 @@ include __DIR__ . '/../includes/admin-nav.php';
         <div class="adm-stat"><div><div class="adm-stat-num"><?= $users7 ?></div><div class="adm-stat-label">Đăng ký mới (7 ngày)</div></div></div>
         <div class="adm-stat"><div><div class="adm-stat-num"><?= $sessions7 ?></div><div class="adm-stat-label">Buổi tập đã ghi (7 ngày)</div></div></div>
         <div class="adm-stat"><div><div class="adm-stat-num"><?= $views7 ?></div><div class="adm-stat-label">Lượt xem bài (7 ngày)</div></div></div>
+    </div>
+    <div class="adm-stats" style="grid-template-columns:repeat(3,1fr)">
+        <div class="adm-stat"><div><div class="adm-stat-num"><?= (int)$coachCounts['coaches'] ?></div><div class="adm-stat-label">Huấn luyện viên</div></div></div>
+        <div class="adm-stat"><div><div class="adm-stat-num"><?= (int)$coachCounts['active_pairs'] ?></div><div class="adm-stat-label">Cặp HLV – học viên đang tập</div></div></div>
+        <div class="adm-stat"><div><div class="adm-stat-num"><?= (int)$coachCounts['pending_apps'] ?></div><div class="adm-stat-label">Đơn HLV chờ duyệt</div></div></div>
     </div>
 
     <div class="adm-three">

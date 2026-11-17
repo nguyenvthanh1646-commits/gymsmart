@@ -101,17 +101,19 @@ function calculateTDEE($bmr, $activityLevel) {
  * @param float  $weightKg Cân nặng (kg)
  * @param string $goal     LOSE_FAT | MAINTAIN | GAIN_MUSCLE
  * @param string|null $experience BEGINNER | INTERMEDIATE | ADVANCED (trình độ tập luyện); null = coi như người mới
+ * @param string $pace     gentle | standard | fast (nhịp mục tiêu, xem goalPaces); mặc định standard giữ đúng kết quả cũ
  * @return array ['target_kcal', 'protein_g', 'carbs_g', 'fat_g']
  * @throws InvalidArgumentException nếu dữ liệu không hợp lệ
  */
-function calculateTargets($tdee, $weightKg, $goal, $experience = null) {
-    // Thông số theo goal: hệ số calo so với TDEE và g chất béo/kg
+function calculateTargets($tdee, $weightKg, $goal, $experience = null, $pace = 'standard') {
+    // Thông số theo goal: g chất béo/kg. Hệ số calo so với TDEE nằm ở goalPaces().
     // TODO: bạn tìm nguồn (VD: ACSM) rồi ghi lý do chọn từng số vào comment.
     $profiles = [
-        'LOSE_FAT'    => ['kcal_factor' => 0.80, 'fat_per_kg' => 0.8], // giảm 20%
-        'MAINTAIN'    => ['kcal_factor' => 1.00, 'fat_per_kg' => 0.9],
-        'GAIN_MUSCLE' => ['kcal_factor' => 1.10, 'fat_per_kg' => 1.0], // tăng 10%
+        'LOSE_FAT'    => ['fat_per_kg' => 0.8],
+        'MAINTAIN'    => ['fat_per_kg' => 0.9],
+        'GAIN_MUSCLE' => ['fat_per_kg' => 1.0],
     ];
+    $paces = goalPaces();
 
     // Protein (g/kg cân nặng) theo TRÌNH ĐỘ tập luyện, không theo mục tiêu:
     //   người mới tập  : 1.6 g/kg (phân tích tổng hợp Morton 2018: lợi ích tăng cơ gần như đạt đỉnh quanh mức ~1.6 g/kg/ngày)
@@ -133,6 +135,10 @@ function calculateTargets($tdee, $weightKg, $goal, $experience = null) {
     if (!is_string($goal) || !array_key_exists($goal, $profiles)) {
         throw new InvalidArgumentException('Mục tiêu không hợp lệ');
     }
+    // Whitelist nhịp mục tiêu
+    if (!is_string($pace) || !array_key_exists($pace, $paces[$goal])) {
+        throw new InvalidArgumentException('Nhịp mục tiêu không hợp lệ');
+    }
     // Kiểm tra số đầu vào
     if (!is_numeric($tdee) || !is_finite((float)$tdee) || $tdee <= 0
         || !is_numeric($weightKg) || !is_finite((float)$weightKg) || $weightKg <= 0) {
@@ -142,7 +148,7 @@ function calculateTargets($tdee, $weightKg, $goal, $experience = null) {
     $p = $profiles[$goal];
 
     // Calo mục tiêu = TDEE điều chỉnh theo mục tiêu
-    $targetKcal = $tdee * $p['kcal_factor'];
+    $targetKcal = $tdee * $paces[$goal][$pace];
 
     // Protein (theo trình độ) và fat (theo mục tiêu) đều tính theo cân nặng
     $proteinG = $proteinByExperience[$experience] * $weightKg;
@@ -162,5 +168,150 @@ function calculateTargets($tdee, $weightKg, $goal, $experience = null) {
         'protein_g'   => round($proteinG, 1),
         'carbs_g'     => round($carbsG, 1),
         'fat_g'       => round($fatG, 1),
+    ];
+}
+
+
+/** Số kcal tương ứng 1 kg cân nặng thay đổi. Đây là con số xấp xỉ quen dùng, thực tế khác nhau tùy người. */
+const KCAL_PER_KG = 7700;
+
+/**
+ * Nhịp mục tiêu: hệ số calo so với TDEE theo từng mục tiêu.
+ * standard là hệ số cũ (giảm 20%, tăng 10%). Duy trì luôn bằng TDEE nên ba nhịp như nhau.
+ */
+function goalPaces(): array
+{
+    return [
+        'LOSE_FAT'    => ['gentle' => 0.90, 'standard' => 0.80, 'fast' => 0.75],
+        'MAINTAIN'    => ['gentle' => 1.00, 'standard' => 1.00, 'fast' => 1.00],
+        'GAIN_MUSCLE' => ['gentle' => 1.05, 'standard' => 1.10, 'fast' => 1.15],
+    ];
+}
+
+/**
+ * Số kg thay đổi dự kiến mỗi tuần nếu ăn đúng calo mục tiêu.
+ * Âm là giảm cân. Ví dụ ăn dưới TDEE 500 kcal/ngày: -500 * 7 / 7700 = -0,45 kg/tuần.
+ */
+function expectedWeeklyChange(float $targetKcal, float $tdee): float
+{
+    return ($targetKcal - $tdee) * 7 / KCAL_PER_KG;
+}
+
+/**
+ * Chia calo khác nhau giữa ngày tập và ngày nghỉ mà TỔNG CALO CẢ TUẦN KHÔNG ĐỔI.
+ *
+ * Gọi K là calo mục tiêu, n là số ngày tập, s là mức chênh (0,10 = ngày tập ăn hơn ngày nghỉ 10% của K):
+ *   ngày tập = K * (1 + s * (7 - n) / 7)
+ *   ngày nghỉ = K * (1 - s * n / 7)
+ * Cộng lại: n * ngày tập + (7 - n) * ngày nghỉ = 7 * K, phần s tự triệt tiêu.
+ *
+ * Protein và chất béo giữ nguyên, phần chênh chỉ nằm ở tinh bột (4 kcal/g) vì tinh bột là nhiên liệu chính khi tập nặng.
+ * Mức 10% là lựa chọn của nhóm để dễ theo, không phải con số chuẩn. Ngày nghỉ không giảm quá 40% lượng tinh bột,
+ * nên với kiểu ăn ít tinh bột, mức chênh tự nhỏ lại.
+ *
+ * @return array|null ['train' => macro, 'rest' => macro] hoặc null khi không chia được (0 hoặc 7 ngày tập, không có tinh bột để chia)
+ */
+function splitTrainingRestDays(array $macros, int $trainingDays, float $shift = 0.10): ?array
+{
+    if ($trainingDays < 1 || $trainingDays > 6) {
+        return null;
+    }
+    $kcal = (float)$macros['target_kcal'];
+    $carbs = (float)$macros['carbs_g'];
+    $restDrop = $kcal * $shift * $trainingDays / 7;       // số kcal ngày nghỉ bị bớt
+    $maxDrop = $carbs * 4 * 0.40;
+    if ($maxDrop <= 0) {
+        return null;
+    }
+    if ($restDrop > $maxDrop) {
+        $restDrop = $maxDrop;
+    }
+    $trainGain = $restDrop * (7 - $trainingDays) / $trainingDays;   // cả tuần: n * trainGain = (7 - n) * restDrop
+
+    $withDelta = fn(float $delta): array => [
+        'target_kcal' => round($kcal + $delta, 1),
+        'protein_g'   => $macros['protein_g'],
+        'carbs_g'     => round($carbs + $delta / 4, 1),
+        'fat_g'       => $macros['fat_g'],
+    ];
+    return ['train' => $withDelta($trainGain), 'rest' => $withDelta(-$restDrop)];
+}
+
+/**
+ * So tốc độ thay đổi cân nặng thực tế với kế hoạch rồi gợi ý chỉnh calo.
+ *
+ * Từng bước:
+ *   1. Chỉ lấy các lần đo trong 28 ngày tính tới lần đo mới nhất (số cũ hơn có thể thuộc mục tiêu khác).
+ *   2. Cần ít nhất 3 lần đo, cách nhau tổng cộng từ 14 ngày, và lần gần nhất không quá 14 ngày trước.
+ *   3. Dùng hồi quy tuyến tính để lấy độ dốc (kg/ngày), vì cân nặng dao động theo nước và bữa ăn,
+ *      so hai đầu mút thì một lần đo lệch cũng làm sai kết quả.
+ *   4. Lệch quá 0,15 kg/tuần so với kế hoạch mới gợi ý chỉnh: quy phần lệch ra kcal/ngày,
+ *      mỗi lần chỉnh tối đa 250 kcal, làm tròn bội số 50, và không gợi ý ăn thấp hơn $floorKcal.
+ *
+ * TDEE thực tế chỉ đúng khi người dùng ăn gần với calo mục tiêu, nên trang phải nói rõ đây là ước tính.
+ *
+ * @param array  $metrics    [['recorded_date' => 'Y-m-d', 'weight_kg' => số]], thứ tự bất kỳ
+ * @param float  $floorKcal  mức calo thấp nhất được phép gợi ý
+ * @param string $today      ngày hiện tại 'Y-m-d'
+ * @return array status: need_more | stale | on_track | above_plan | below_plan
+ */
+function analyzeWeightProgress(array $metrics, float $targetKcal, float $tdee, float $floorKcal, string $today): array
+{
+    $dayNumber = fn(string $date): int => (int)floor((new DateTimeImmutable($date . ' UTC'))->getTimestamp() / 86400);
+
+    $points = [];
+    foreach ($metrics as $metric) {
+        $points[$dayNumber((string)$metric['recorded_date'])] = (float)$metric['weight_kg'];
+    }
+    ksort($points);
+    $newest = $points ? array_key_last($points) : null;
+    if ($newest !== null) {
+        $points = array_filter($points, fn(int $day) => $day >= $newest - 28, ARRAY_FILTER_USE_KEY);
+    }
+
+    $count = count($points);
+    $span = $count > 0 ? $newest - array_key_first($points) : 0;
+    $result = ['status' => 'need_more', 'count' => $count, 'span_days' => $span, 'need_count' => 3, 'need_days' => 14];
+    if ($count < 3 || $span < 14) {
+        return $result;
+    }
+    if ($dayNumber($today) - $newest > 14) {
+        $result['status'] = 'stale';
+        return $result;
+    }
+
+    // Hồi quy tuyến tính: độ dốc = tổng (x - x tb)(y - y tb) / tổng (x - x tb)^2
+    $meanX = array_sum(array_keys($points)) / $count;
+    $meanY = array_sum($points) / $count;
+    $numerator = $denominator = 0.0;
+    foreach ($points as $x => $y) {
+        $numerator += ($x - $meanX) * ($y - $meanY);
+        $denominator += ($x - $meanX) ** 2;
+    }
+    $actualPerWeek = $numerator / $denominator * 7;
+    $plannedPerWeek = expectedWeeklyChange($targetKcal, $tdee);
+    $gap = $actualPerWeek - $plannedPerWeek;
+
+    $status = 'on_track';
+    $adjust = 0;
+    $limited = false;
+    if (abs($gap) > 0.15) {
+        $status = $gap > 0 ? 'above_plan' : 'below_plan';   // above: cân nặng đang cao hơn kế hoạch nên cần bớt calo
+        $wanted = max(-250, min(250, -$gap * KCAL_PER_KG / 7));
+        $adjust = (int)(round($wanted / 50) * 50);
+        if ($adjust < 0 && $targetKcal + $adjust < $floorKcal) {
+            $adjust = min(0, (int)(ceil(($floorKcal - $targetKcal) / 50) * 50));
+            $limited = true;
+        }
+    }
+
+    $result['status'] = $status;
+    return $result + [
+        'actual_per_week'  => $actualPerWeek,
+        'planned_per_week' => $plannedPerWeek,
+        'estimated_tdee'   => $targetKcal - $actualPerWeek * KCAL_PER_KG / 7,
+        'adjust_kcal'      => $adjust,
+        'suggested_kcal'   => $targetKcal + $adjust,
+        'limited'          => $limited,
     ];
 }

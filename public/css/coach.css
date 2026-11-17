@@ -1,0 +1,184 @@
+/* coach.css — giao diện phân hệ Huấn luyện viên (HLV).
+   Dùng cho: coach-apply.php, coaches.php, my-coach.php, nhãn "Do HLV giao" ở lịch tập/dinh dưỡng, thẻ thông báo trang chủ,
+   và khung chat + danh sách nhận xét trong khu /coach/.
+   Mọi class bắt đầu bằng "ch-". Chỉ dùng token trong ui.css (--accent, --line, --ok...), không viết mã màu mới.
+   Nền nhạt của trạng thái pha bằng color-mix() từ token, chữ trạng thái pha tối để đủ tương phản 4.5:1. */
+
+.ch { max-width: 1200px; margin: 0 auto; }
+.ch [hidden] { display: none !important; }
+.ch-muted { color: var(--text-muted); }
+.ch-small { font-size: 14px; }
+.ch-label { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
+
+/* ---------- Huy hiệu trạng thái: luôn có chữ, không chỉ màu ---------- */
+.ch-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--r-pill);
+    font-size: 13px; font-weight: 600; line-height: 1.5; white-space: nowrap;
+    background: color-mix(in srgb, var(--text-muted) 12%, var(--surface)); color: var(--text); }
+.ch-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .8; }
+.ch-badge--ok { background: color-mix(in srgb, var(--ok) 14%, var(--surface)); color: color-mix(in srgb, var(--ok) 55%, #000); }
+.ch-badge--warn { background: color-mix(in srgb, var(--warn) 16%, var(--surface)); color: color-mix(in srgb, var(--warn) 50%, #000); }
+.ch-badge--danger { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); color: color-mix(in srgb, var(--danger) 60%, #000); }
+.ch-badge--info { background: color-mix(in srgb, var(--info) 12%, var(--surface)); color: color-mix(in srgb, var(--info) 55%, #000); }
+.ch-badge--accent { background: var(--accent-soft); color: color-mix(in srgb, var(--accent) 55%, #000); }
+.ch-badge--plain::before { display: none; }
+
+/* ---------- Avatar ---------- */
+.ch-av { flex: none; display: block; border-radius: 50%; object-fit: cover; background: var(--line); }
+.ch-av--txt { display: grid; place-items: center; color: #fff; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent)); }
+
+/* ---------- Đầu trang và bố cục 2 cột ---------- */
+.ch-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--s-5); align-items: start; }
+.ch-side { position: sticky; top: 88px; display: grid; gap: var(--s-4); }
+@media (max-width: 960px) { .ch-layout { grid-template-columns: 1fr; } .ch-side { position: static; } }
+
+/* ---------- Các bước của quy trình (mẫu đơn HLV) ---------- */
+.ch-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); counter-reset: st; }
+.ch-steps li { position: relative; padding-left: 42px; min-height: 32px; counter-increment: st; }
+.ch-steps li::before { content: counter(st); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center; font-weight: 700; font-size: 14px; background: var(--accent-soft); color: color-mix(in srgb, var(--accent) 55%, #000); }
+.ch-steps li.is-done::before { content: "✓"; background: color-mix(in srgb, var(--ok) 16%, var(--surface)); color: color-mix(in srgb, var(--ok) 55%, #000); }
+.ch-steps li.is-now::before { background: var(--accent); color: #fff; }
+.ch-steps b { display: block; font-size: 15px; }
+.ch-steps span { font-size: 14px; color: var(--text-muted); }
+
+/* ---------- Chọn nhiều dạng viên thuốc (checkbox thật, bàn phím dùng được) ---------- */
+.ch-legend { display: block; width: 100%; margin: 0 0 7px; padding: 0; font-size: .9rem; font-weight: 600; color: var(--text); }
+.ch-picks { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0; padding: 0; border: 0; }
+.ch-pick { position: relative; }
+.ch-pick input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.ch-pick span { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: var(--r-pill);
+    border: 1px solid var(--line); background: var(--surface); font-size: 15px; font-weight: 500; cursor: pointer;
+    transition: border-color .15s var(--ease), background .15s var(--ease), color .15s var(--ease); }
+.ch-pick span:hover { border-color: var(--accent); }
+.ch-pick input:checked + span { background: var(--text); border-color: var(--text); color: #fff; }
+.ch-pick input:checked + span::before { content: "✓"; font-weight: 700; }
+.ch-pick input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px; }
+
+/* ---------- Ô nhập: bộ đếm ký tự, lỗi dưới ô ---------- */
+.ch-count { display: block; margin-top: 6px; text-align: right; font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.ch-count.is-over { color: color-mix(in srgb, var(--danger) 70%, #000); font-weight: 600; }
+.ch-err { display: flex; gap: 6px; margin: 6px 0 0; font-size: 14px; color: color-mix(in srgb, var(--danger) 70%, #000); }
+.ch-err::before { content: "!"; flex: none; display: grid; place-items: center; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%;
+    background: var(--danger); color: #fff; font-size: 12px; font-weight: 800; }
+.field.is-invalid :is(input, select, textarea) { border-color: var(--danger); }
+.field textarea { min-height: 120px; resize: vertical; }
+.ch-check { display: flex; gap: 12px; align-items: flex-start; padding: var(--s-3) 0; cursor: pointer; }
+.ch-check input { flex: none; width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--accent); }
+.ch-rules { margin: 0 0 var(--s-3); padding-left: 20px; color: var(--text-muted); font-size: 15px; }
+.ch-rules li { margin: 4px 0; }
+
+/* ---------- Thẻ trạng thái (đơn đăng ký, quan hệ hiện tại) ---------- */
+.ch-status { display: flex; gap: var(--s-4); align-items: flex-start; }
+.ch-status__ico { flex: none; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-dark); }
+.ch-status h2 { margin: 0 0 4px; font-size: 19px; }
+.ch-status p { margin: 0 0 var(--s-2); color: var(--text-muted); }
+.ch-quote { margin: var(--s-3) 0 0; padding: var(--s-3) var(--s-4); border-left: 3px solid var(--line); background: var(--bg); border-radius: 0 var(--r) var(--r) 0;
+    white-space: pre-line; font-size: 15px; }
+.ch-kv { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: var(--s-3) 0 0; font-size: 15px; }
+.ch-kv dt { color: var(--text-muted); }
+.ch-kv dd { margin: 0; font-weight: 600; white-space: pre-line; }
+
+/* ---------- Danh sách HLV ---------- */
+.ch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--s-5); }
+.ch-coach { display: flex; flex-direction: column; gap: var(--s-3); background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: var(--s-5); box-shadow: var(--shadow-sm); }
+.ch-coach__head { display: flex; gap: var(--s-3); align-items: center; }
+.ch-coach__head h2 { margin: 0; font-size: 19px; line-height: 1.3; }
+.ch-coach__head p { margin: 2px 0 0; font-size: 14px; color: var(--text-muted); }
+.ch-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.ch-tag { padding: 3px 10px; border-radius: var(--r-pill); background: var(--bg); border: 1px solid var(--line); font-size: 13px; font-weight: 500; }
+.ch-coach__bio { margin: 0; font-size: 15px; color: var(--text); display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.ch-coach__facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-2); margin: 0; padding: var(--s-3) 0; border-block: 1px solid var(--line); text-align: center; }
+.ch-coach__facts div { display: flex; flex-direction: column; }
+.ch-coach__facts dt { order: 2; font-size: 12px; color: var(--text-muted); }
+.ch-coach__facts dd { order: 1; margin: 0; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ch-coach details { font-size: 15px; }
+.ch-coach summary { cursor: pointer; font-weight: 600; color: var(--accent-dark); min-height: 44px; display: flex; align-items: center; }
+.ch-coach details p { margin: 0 0 var(--s-2); white-space: pre-line; }
+.ch-coach__act { margin-top: auto; display: grid; gap: var(--s-2); }
+.ch-coach__act .btn { width: 100%; }
+.ch-coach.is-full { opacity: .8; }
+
+/* ---------- Trạng thái rỗng ---------- */
+.ch-empty { text-align: center; padding: var(--s-7) var(--s-5); background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r-lg); }
+.ch-empty__ico { width: 64px; height: 64px; margin: 0 auto var(--s-3); border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-dark); }
+.ch-empty h2, .ch-empty h3 { margin: 0 0 6px; font-size: 19px; }
+.ch-empty p { margin: 0 auto var(--s-4); max-width: 440px; color: var(--text-muted); }
+
+/* ---------- Dải khóa "Do HLV ... giao" trên trang lịch tập / dinh dưỡng ---------- */
+.ch-lock { display: flex; flex-wrap: wrap; gap: var(--s-3) var(--s-4); align-items: center; justify-content: space-between;
+    padding: var(--s-4) var(--s-5); margin: 0 0 var(--s-5); border-radius: var(--r-lg); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+    background: var(--accent-soft); }
+.ch-lock__txt { display: flex; gap: var(--s-3); align-items: center; min-width: 0; }
+.ch-lock__txt svg { flex: none; color: var(--accent-dark); }
+.ch-lock__txt b { display: block; }
+.ch-lock__txt span { font-size: 14px; color: var(--text-muted); }
+.ch-lock form { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; margin: 0; }
+.ch-lock.is-open { background: color-mix(in srgb, var(--ok) 10%, var(--surface)); border-color: color-mix(in srgb, var(--ok) 35%, var(--line)); }
+.ch-req { width: 100%; margin-top: var(--s-2); }
+.ch-req[hidden] { display: none; }
+.ch-req textarea { width: 100%; min-height: 84px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.ch-req .ch-req__row { display: flex; gap: var(--s-2); justify-content: flex-end; margin-top: var(--s-2); }
+
+/* ---------- Thẻ thông báo trên trang chủ ---------- */
+.ch-notice { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; justify-content: space-between; }
+.ch-notice__who { display: flex; gap: var(--s-3); align-items: center; }
+.ch-notice__who b { display: block; }
+.ch-notice__list { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+
+/* ---------- Nhận xét ---------- */
+.ch-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.ch-feed li { padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.ch-feed li.is-new { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); box-shadow: inset 3px 0 0 var(--accent); }
+.ch-feed__meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+.ch-feed p { margin: 0; white-space: pre-line; }
+
+/* ---------- Khung chat (học viên và HLV dùng chung) ---------- */
+.ch-chat { display: flex; flex-direction: column; height: min(640px, calc(100vh - 220px)); min-height: 420px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.ch-chat__head { display: flex; gap: var(--s-3); align-items: center; padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); }
+.ch-chat__head b { display: block; }
+.ch-chat__head span { font-size: 13px; color: var(--text-muted); }
+.ch-chat__log { flex: 1; overflow-y: auto; padding: var(--s-4); display: flex; flex-direction: column; gap: var(--s-2); background: var(--bg); overscroll-behavior: contain; }
+.ch-msg { max-width: min(78%, 520px); padding: 10px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line);
+    white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.5; align-self: flex-start; }
+.ch-msg.is-me { align-self: flex-end; background: var(--text); border-color: var(--text); color: #fff; }
+.ch-msg time { display: block; margin-top: 4px; font-size: 12px; opacity: .72; }
+.ch-day { align-self: center; font-size: 12px; color: var(--text-muted); padding: 2px 10px; border-radius: var(--r-pill); background: var(--surface); border: 1px solid var(--line); }
+.ch-chat__form { display: flex; gap: var(--s-2); align-items: flex-end; padding: var(--s-3); border-top: 1px solid var(--line); background: var(--surface); }
+.ch-chat__form textarea { flex: 1; min-height: 48px; max-height: 140px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r);
+    resize: none; font-size: 16px; line-height: 1.4; background: var(--surface); }
+.ch-chat__form textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.ch-chat__form .btn { min-height: 48px; }
+.ch-chat__foot { display: flex; justify-content: space-between; gap: var(--s-2); padding: 0 var(--s-3) var(--s-2); font-size: 13px; color: var(--text-muted); background: var(--surface); }
+.ch-chat__foot .is-err { color: color-mix(in srgb, var(--danger) 70%, #000); }
+.ch-chat__closed { padding: var(--s-4); text-align: center; color: var(--text-muted); border-top: 1px solid var(--line); background: var(--surface); }
+
+/* ---------- Khung xương khi đang tải ---------- */
+.ch-skel { display: block; border-radius: var(--r); background: linear-gradient(90deg, var(--line) 0%, var(--bg) 50%, var(--line) 100%);
+    background-size: 200% 100%; animation: ch-skel 1.2s var(--ease) infinite; }
+.ch-skel--msg { width: 60%; height: 44px; }
+.ch-skel--msg:nth-child(even) { align-self: flex-end; width: 45%; }
+@keyframes ch-skel { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* ---------- Tab trên trang HLV của tôi ---------- */
+.ch-tabs { display: flex; gap: var(--s-2); margin: 0 0 var(--s-4); overflow-x: auto; scrollbar-width: none; }
+.ch-tabs a { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: var(--r-pill);
+    border: 1px solid var(--line); background: var(--surface); color: var(--text); text-decoration: none; font-weight: 500; font-size: 15px; }
+.ch-tabs a.is-active { background: var(--text); border-color: var(--text); color: #fff; font-weight: 600; }
+.ch-dot { min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--r-pill); background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+    display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 600px) {
+    .ch-coach { padding: var(--s-4); }
+    .ch-grid { grid-template-columns: 1fr; gap: var(--s-4); }
+    .ch-status { flex-direction: column; }
+    .ch-kv { grid-template-columns: 1fr; gap: 2px; }
+    .ch-kv dd { margin-bottom: 8px; }
+    .ch-lock { padding: var(--s-4); }
+    .ch-lock form, .ch-lock .btn { width: 100%; }
+    .ch-msg { max-width: 88%; }
+    .ch-chat { height: calc(100vh - 170px); min-height: 380px; border-radius: var(--r); }
+}
+@media (prefers-reduced-motion: reduce) { .ch-skel { animation: none; } }
