@@ -230,11 +230,15 @@
     .cm.has-chat .cm-list { display: none; }     /* điện thoại: đang mở 1 cuộc trò chuyện thì ẩn danh sách, có nút quay lại */
     .cm:not(.has-chat) .cm-chat { display: none; }
 }
-.cm-back { display: none; }
-@media (max-width: 900px) { .cm.has-chat .cm-back { display: inline-flex; margin-bottom: var(--s-3); } }
+.cm .cm-back { display: none; }   /* .cm .cm-back: thắng .adm-btn{display:inline-flex} của admin-style.php in sau */
+@media (max-width: 900px) { .cm.has-chat .cm-chat .cm-back { display: inline-flex; margin-bottom: var(--s-3); } }
 
 /* ---------- Khu HLV: ô nhận xét gấp gọn dưới mỗi buổi tập ---------- */
 .cc-fb { margin: var(--s-2) 0; }
 .cc-fb summary { display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; font-weight: 600; color: var(--accent-dark); }
 .cc-fb form { display: grid; gap: var(--s-2); }
 .cc-fb .adm-btn { justify-self: start; }
+
+/* Cột xếp thẻ bằng grid gap: bỏ margin-top của ".card + .card" (ui.css) để khoảng cách không bị gấp đôi */
+.ch-stack { display: grid; gap: var(--s-5); min-width: 0; }
+.ch-stack > .card + .card, .ch-side > .card + .card { margin-top: 0; }

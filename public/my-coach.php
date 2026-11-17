@@ -113,7 +113,7 @@ include __DIR__ . '/includes/header.php';
 
         <?php if ($tab === 'overview'): ?>
         <div class="ch-layout">
-            <div style="display:grid;gap:var(--s-5)">
+            <div class="ch-stack">
                 <section class="card">
                     <h2 class="card__head">Lịch tập và dinh dưỡng</h2>
                     <p class="card__sub">Khi đang có HLV, bạn không tự sửa lịch tập và mục tiêu dinh dưỡng. Muốn đổi, hãy gửi yêu cầu; HLV duyệt thì bạn được tự sửa trong <?= COACH_UNLOCK_HOURS ?> giờ.</p>
