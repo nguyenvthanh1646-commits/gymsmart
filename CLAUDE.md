@@ -9,7 +9,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Quy mô:** Nhóm 5 thành viên, thời gian làm trong 1 kỳ học
 **Yêu cầu bắt buộc:** Tất cả thành viên phải **hiểu bản chất code và tự code tay** — không dùng framework che giấu logic (không Laravel, không ORM), không copy code mà không hiểu. **Không vibe code.** Cách làm việc với AI: tự viết code trước theo hiểu biết của mình, **chỉ hỏi AI khi bí ở một chỗ cụ thể** (lỗi không hiểu, không biết cú pháp, không chắc cách làm) — AI đóng vai trò giải thích/gỡ rối tại điểm nghẽn đó, không viết hộ nguyên tính năng từ đầu.
 
-> Đã loại bỏ: chat/nhắn tin giữa user-user, community/forum, role/tính năng Coach. Lý do: chi phí xây dựng không tương xứng giá trị demo. Phần "học tập" chủ yếu là **ảnh + video hướng dẫn nằm ngay trong thư viện bài tập**.
+> Đã loại bỏ: chat tự do giữa user-user, community/forum. Lý do: chi phí xây dựng không tương xứng giá trị demo. Phần "học tập" chủ yếu là **ảnh + video hướng dẫn nằm ngay trong thư viện bài tập**.
+>
+> Lưu ý: vai trò **Huấn luyện viên (COACH)** từng bị loại nhưng **đã được làm lại** theo yêu cầu đổi phạm vi (11/2026), kèm nhắn tin chỉ giữa HLV và học viên của mình. Xem mục "Phân hệ HLV" bên dưới.
 >
 > Lưu ý: module **bài viết kiến thức** từng bị loại nhưng **đã được làm lại** (PR #37, #38, #40). Xem mục "Bài viết" bên dưới.
 
@@ -43,10 +45,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   1. File: mỗi bài là 1 file `public/content/articles/<slug>.php` trả về mảng (định dạng khối `content` ghi ở comment đầu `includes/articles.php`). Ảnh bìa và hình minh họa là SVG trong `public/img/articles/`. `sources` chỉ được ghi nghiên cứu có thật, đã kiểm tra PMID/DOI (xem `docs/nghien-cuu-da-xac-minh.md`).
   2. DB: bảng `articles` do admin soạn (`admin/articles.php`, `admin/article-form.php`).
   Hiển thị qua `includes/article-markup.php`.
+- **Phân hệ HLV (vai trò `COACH`):** người dùng nộp đơn (`coach-apply.php`), ADMIN duyệt (`admin/coach-applications.php`) thì vai trò thành `COACH`; ADMIN thu hồi được (`admin/coaches.php`). Mỗi học viên chỉ có 1 HLV (`coaches.php`, `my-coach.php`). Khu `/coach/` có thanh điều hướng riêng (`includes/coach-nav.php`, cùng kiểu `/admin/`).
+  - `includes/coach-rules.php`: quy tắc thuần (kiểm tra đơn, máy trạng thái quan hệ, giới hạn macro, nhịp gửi tin). `includes/coach-db.php`: truy vấn. `includes/coach.php`: `requireCoach()`, `requireCoachClient()`.
+  - **Quy tắc quyền:** mọi trang/API của HLV gọi `requireCoach()` (đọc lại vai trò từ DB) và với dữ liệu một học viên thì `requireCoachClient()` / `canCoachAccessClient()` (quan hệ `ACTIVE` + vai trò vẫn là `COACH`). Không tin id trên URL. HLV không đọc email/mật khẩu học viên.
+  - **Khóa tự sửa:** khi đang có HLV, học viên không tự sửa lịch tập/dinh dưỡng (`coachSelfEditState()`); muốn sửa phải gửi yêu cầu, HLV duyệt thì mở khóa 24 giờ.
+  - Thao tác quan trọng của HLV ghi chung bảng `admin_audit_log` với mã `coach.*`.
 
 ### Database và file SQL
 
-`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `article_reads.sql`, `body_metrics.sql`, `nutrition_preferences.sql`, `password_resets.sql`, `split_types.sql`, `split_type_ap.sql`, `users_avatar.sql`). Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
+`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `article_reads.sql`, `body_metrics.sql`, `nutrition_preferences.sql`, `password_resets.sql`, `split_types.sql`, `users_avatar.sql`, `coach_features.sql`). `coach_features.sql` dùng cú pháp `ADD COLUMN IF NOT EXISTS` của MariaDB (XAMPP). Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
 
 ## Phạm vi tính năng
 
@@ -63,9 +70,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Tùy chọn (dồn vào Chatbot AI)
 7. Chatbot AI cơ bản → 8. Cá nhân hóa theo dữ liệu user → 9. RAG đơn giản: tra bảng `exercises` (mô tả, nhóm cơ, cách thực hiện) theo từ khóa rồi dẫn tới trang bài tập
 
-**Đã loại bỏ:** chat user-user, community/forum, role Coach.
+**Đã loại bỏ:** chat tự do user-user, community/forum.
 
-**Đã làm thêm ngoài kế hoạch ban đầu:** bài viết kiến thức có trích nghiên cứu, khu admin (người dùng, bài tập, bài viết, nhật ký hoạt động, thống kê, xuất CSV), quên/đặt lại mật khẩu, ảnh đại diện. Trạng thái từng việc xem `TASKS.md`.
+**Đã làm thêm ngoài kế hoạch ban đầu:** bài viết kiến thức có trích nghiên cứu, khu admin (người dùng, bài tập, bài viết, nhật ký hoạt động, thống kê, xuất CSV), quên/đặt lại mật khẩu, ảnh đại diện, **phân hệ Huấn luyện viên**. Trạng thái từng việc xem `TASKS.md`.
 
 ## Quy ước code (PHP/JS thuần)
 
@@ -126,6 +133,7 @@ php -S localhost:8000 -t public
 php test-workout-plan.php       # thuật toán lịch tập, dữ liệu từ test-exercises-fixture.php (không cần DB)
 php test-workout-plan-db.php    # lớp workout-plan-db.php trên SQLite in-memory (cần pdo_sqlite)
 php test-dashboard.php          # hàm thuần và lớp đọc DB của bảng điều khiển (phần DB cần pdo_sqlite)
+php test-coach.php              # phân hệ HLV: đơn đăng ký, quan hệ, quyền xem, khóa tự sửa, macro, tin nhắn (phần DB cần pdo_sqlite)
 php test-nutrition.php          # nhịp mục tiêu, ngày tập/nghỉ, tiến độ cân nặng, loại trừ thực phẩm, lịch 7 ngày (phần lưu lựa chọn cần pdo_sqlite)
 
 # Lint 1 file
@@ -174,4 +182,4 @@ Không có bước build, không có bundler, không dùng Composer/npm. Chart.j
 - Không lưu API key trong code commit
 - Không nhờ AI viết hộ nguyên tính năng/trang hoàn chỉnh ngay từ đầu — chỉ hỏi khi bí ở điểm cụ thể
 - Không copy-paste code từ AI mà không đọc hiểu trước
-- Không xây dựng lại chat user-user, community/forum, role Coach trừ khi được yêu cầu đổi phạm vi
+- Không xây dựng chat tự do user-user, community/forum trừ khi được yêu cầu đổi phạm vi. Tin nhắn chỉ có giữa HLV và học viên đang ACTIVE
