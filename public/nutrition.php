@@ -10,6 +10,9 @@
  *   3. Tính BMR → TDEE → calo mục tiêu + macro (hàm trong includes/tdee.php, việc của C)
  *      rồi áp kiểu ăn (includes/meal-plan.php) và chia macro cho từng bữa
  *   4. Lưu kết quả của hôm nay vào nutrition_targets (mỗi ngày 1 dòng)
+ *   HLV: đang có HLV thì dùng mục tiêu HLV đặt (nếu có), khóa 3 form làm đổi calo/macro (mục tiêu, kiểu ăn, nhịp)
+ *   và không tự lưu bước 4; HLV duyệt yêu cầu sửa thì mở lại trong 24 giờ (includes/coach-db.php, coachSelfEditState).
+ *   Số bữa và thực phẩm loại trừ vẫn tự đổi được vì không làm thay đổi mục tiêu.
  *   5. Vẽ trang: vòng tròn macro, tiến độ cân nặng, lịch ăn hôm nay hoặc cả tuần, danh sách đi chợ, bảng so sánh các mục tiêu
  */
 
@@ -19,6 +22,7 @@ require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/includes/tdee.php';
 require_once __DIR__ . '/includes/meal-plan.php';
 require_once __DIR__ . '/includes/nutrition-db.php';
+require_once __DIR__ . '/includes/coach.php';
 
 requireLogin();
 
@@ -66,6 +70,10 @@ $savePrefs = function (array $changes) use (&$prefs, $pdo, $userId): void {
     saveNutritionPrefs($pdo, $userId, $prefs);
 };
 
+// Đang có HLV: khóa tự sửa mục tiêu dinh dưỡng (kiểm tra ở PHP, không chỉ ẩn form)
+$nutLock = coachSelfEditState($pdo, (int)$userId, 'NUTRITION');
+$coachTarget = $nutLock['coach_id'] !== null ? coachAssignedNutrition($pdo, (int)$userId, (int)$nutLock['coach_id']) : null;
+
 $dietError = '';
 $formPct = ['p' => (int)$prefs['p'], 'c' => (int)$prefs['c'], 'f' => (int)$prefs['f']]; // giá trị hiện trong ô tùy chỉnh
 $formDiet = $prefs['diet'];
@@ -76,6 +84,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         showCsrfError();
     }
     $action = $_POST['action'] ?? '';
+
+    if ($nutLock['locked'] && in_array($action, ['goal', 'diet', 'rhythm'], true)) {
+        coachFlash('error', 'Mục tiêu dinh dưỡng đang do HLV quản lý. Hãy gửi yêu cầu sửa tới HLV.');
+        header('Location: /nutrition.php#macro');
+        exit;
+    }
 
     if ($action === 'goal') {
         // Đổi mục tiêu: whitelist rồi ghi vào hồ sơ (cùng cột với profile.php nên hai trang luôn khớp nhau)
@@ -191,10 +205,19 @@ if (empty($missing)) {
     }
 }
 
+// ===== 3b. Mục tiêu do HLV đặt thay cho kết quả tự tính (chỉ khi đang khóa; HLV cho tự sửa thì dùng lại kết quả tự tính) =====
+if ($macros !== null && $nutLock['locked'] && $coachTarget !== null) {
+    $macros = array_merge($macros, [
+        'target_kcal' => (float)$coachTarget['target_kcal'], 'protein_g' => (float)$coachTarget['protein_g'],
+        'carbs_g' => (float)$coachTarget['carbs_g'], 'fat_g' => (float)$coachTarget['fat_g'],
+    ]);
+}
+
 // ===== 4. Lưu kết quả hôm nay (mỗi ngày một dòng, vào lại thì cập nhật dòng đó) =====
-if ($macros !== null) {
+// Đang có HLV quản lý thì không tự lưu. Chỉ cập nhật dòng tự tính (assigned_by IS NULL), không đè lên dòng HLV đặt.
+if ($macros !== null && !$nutLock['locked']) {
     $today = date('Y-m-d');
-    $stmt = $pdo->prepare('SELECT id FROM nutrition_targets WHERE user_id = ? AND calculated_date = ?');
+    $stmt = $pdo->prepare('SELECT id FROM nutrition_targets WHERE user_id = ? AND calculated_date = ?' . (coachTablesReady($pdo) ? ' AND assigned_by IS NULL' : ''));
     $stmt->execute([$userId, $today]);
     $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -331,6 +354,7 @@ $pageTitle = 'Dinh dưỡng';
 include __DIR__ . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="/css/nutrition.css">
+<link rel="stylesheet" href="/css/coach.css">
 
 <div class="nt">
     <div class="pg-head">
@@ -340,6 +364,27 @@ include __DIR__ . '/includes/header.php';
         </div>
         <span class="pg-count"><?= date('d/m/Y') ?></span>
     </div>
+
+    <?php $ntFlash = coachTakeFlash(); if ($ntFlash): ?>
+        <div class="alert alert--<?= $ntFlash[0] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($ntFlash[1]) ?></div>
+    <?php endif; ?>
+    <?php if ($nutLock['coach_id'] !== null): ?>
+        <div class="ch-lock<?= $nutLock['locked'] ? '' : ' is-open' ?>" role="note">
+            <div class="ch-lock__txt">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0<?= $nutLock['locked'] ? 'v3' : '' ?>"/></svg>
+                <div>
+                    <?php if ($nutLock['locked']): ?>
+                        <b><?= $coachTarget !== null ? 'Mục tiêu do HLV ' . htmlspecialchars((string)$nutLock['coach_name']) . ' giao' : 'HLV ' . htmlspecialchars((string)$nutLock['coach_name']) . ' đang quản lý dinh dưỡng của bạn' ?></b>
+                        <span>Bạn vẫn đổi được số bữa và thực phẩm loại trừ. Đổi calo/macro cần HLV đồng ý.</span>
+                    <?php else: ?>
+                        <b>HLV cho phép bạn tự sửa tới <?= htmlspecialchars(date('H:i d/m', strtotime((string)$nutLock['unlock_until']))) ?></b>
+                        <span>Trong thời gian này trang dùng kết quả tự tính theo lựa chọn của bạn.</span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <a class="btn btn--ghost" href="/my-coach.php">HLV của tôi</a>
+        </div>
+    <?php endif; ?>
 
 <?php if ($user && !empty($missing)): ?>
     <div class="card nt-empty">
@@ -393,6 +438,30 @@ include __DIR__ . '/includes/header.php';
                 </dl>
             </section>
 
+            <?php if ($nutLock['locked']): ?>
+            <!-- Đang có HLV: thay 3 form đổi mục tiêu bằng thẻ mục tiêu HLV + nút xin sửa (form gửi về my-coach.php) -->
+            <section class="card" aria-labelledby="nt-coach-title">
+                <h2 class="card__head" id="nt-coach-title">Mục tiêu do HLV quản lý</h2>
+                <?php if ($coachTarget !== null): ?>
+                    <p class="card__sub">HLV <?= htmlspecialchars((string)$nutLock['coach_name']) ?> đặt ngày <?= htmlspecialchars(date('d/m/Y', strtotime($coachTarget['calculated_date']))) ?>: <b><?= nf($coachTarget['target_kcal']) ?> kcal</b> · P <?= nf($coachTarget['protein_g']) ?> g · C <?= nf($coachTarget['carbs_g']) ?> g · F <?= nf($coachTarget['fat_g']) ?> g.</p>
+                <?php else: ?>
+                    <p class="card__sub">HLV <?= htmlspecialchars((string)$nutLock['coach_name']) ?> chưa đặt mục tiêu riêng, trang đang dùng mức tính từ hồ sơ của bạn.</p>
+                <?php endif; ?>
+                <?php if ($nutLock['pending']): ?>
+                    <span class="ch-badge ch-badge--warn">Đã xin sửa, chờ HLV trả lời</span>
+                <?php else: ?>
+                    <button type="button" class="btn btn--ghost btn--block" data-toggle="nt-change">Xin HLV cho tự sửa</button>
+                    <form id="nt-change" class="ch-req" method="post" action="/my-coach.php" hidden>
+                        <?= csrfField() ?>
+                        <input type="hidden" name="action" value="change">
+                        <input type="hidden" name="area" value="NUTRITION">
+                        <label class="ch-label" for="nt-reason">Lý do</label>
+                        <textarea id="nt-reason" name="reason" maxlength="<?= COACH_NOTE_MAX ?>" required placeholder="Ví dụ: muốn đổi sang ăn ít tinh bột"></textarea>
+                        <div class="ch-req__row"><button type="submit" class="btn" data-busy-text="Đang gửi…">Gửi yêu cầu</button></div>
+                    </form>
+                <?php endif; ?>
+            </section>
+            <?php else: ?>
             <!-- Chọn mục tiêu: bấm là tính lại -->
             <form class="card nt-goal-form" method="post" action="/nutrition.php" aria-labelledby="nt-goal-title">
                 <?= csrfField() ?>
@@ -496,6 +565,7 @@ include __DIR__ . '/includes/header.php';
 
                 <button type="submit" class="btn btn--block">Áp dụng</button>
             </form>
+            <?php endif; /* hết phần khóa khi có HLV */ ?>
         </div>
 
         <!-- ===== Cột kết quả ===== -->
@@ -816,4 +886,5 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <script src="/js/nutrition.js"></script>
+<script src="/js/coach.js"></script>
 <?php include __DIR__ . '/includes/footer.php'; ?>

@@ -26,6 +26,12 @@ $userId = (int)$_SESSION['user_id'];
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/workout-plan-db.php';
+require_once __DIR__ . '/../includes/coach-db.php';
+
+// Đang có HLV: học viên không tự tạo/sửa lịch (trừ khi HLV đã duyệt yêu cầu sửa còn hạn)
+if ($lockMsg = coachPlanLockError($pdo, $userId)) {
+    jsonResponse(403, ['success' => false, 'message' => $lockMsg]);
+}
 
 /** Đọc số nguyên từ $_POST; thiếu hoặc sai kiểu -> 0 (các hàm bên dưới sẽ từ chối giá trị 0). */
 function postInt(string $key): int

@@ -7,10 +7,15 @@ requireLogin();
 
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/workout-plan-db.php';
+require_once __DIR__ . '/includes/coach.php';
 
 $userId = (int)$_SESSION['user_id'];
 $goal   = fetchUserGoal($pdo, $userId);
 $plan   = fetchActivePlan($pdo, $userId);
+// HLV: đang có HLV thì khóa Tạo lịch mới / Chỉnh sửa (API cũng chặn ở máy chủ); ghi log tập vẫn bình thường
+$planLock = coachSelfEditState($pdo, $userId, 'PLAN');
+$planBy   = coachPlanAssigner($pdo, $userId);
+$canEdit  = !$planLock['locked'];
 
 $libraryByGroup = [];
 if ($plan !== null) {
@@ -71,6 +76,7 @@ $pageTitle = 'Lịch tập của bạn';
 include __DIR__ . '/includes/header.php';
 ?>
 <link rel="stylesheet" href="/css/workout-plan.css">
+<link rel="stylesheet" href="/css/coach.css">
 
 <div class="wp workout-plan" id="workout-plan-root" data-csrf="<?= htmlspecialchars(csrfToken()) ?>">
 
@@ -90,14 +96,41 @@ include __DIR__ . '/includes/header.php';
         </div>
         <?php if ($plan !== null): ?>
             <div class="wp-head__actions">
-                <button type="button" class="btn btn--ghost" id="workout-plan-toggle-create" aria-expanded="false" aria-controls="create-plan-section">Tạo lịch mới</button>
+                <?php if ($canEdit): ?><button type="button" class="btn btn--ghost" id="workout-plan-toggle-create" aria-expanded="false" aria-controls="create-plan-section">Tạo lịch mới</button><?php endif; ?>
                 <a href="api/export-workout-plan.php" class="btn btn--ghost">Xuất lịch</a>
-                <button type="button" class="btn" id="workout-plan-toggle-edit">Chỉnh sửa lịch</button>
+                <?php if ($canEdit): ?><button type="button" class="btn" id="workout-plan-toggle-edit">Chỉnh sửa lịch</button><?php endif; ?>
             </div>
         <?php endif; ?>
     </header>
 
+    <?php if ($planLock['coach_id'] !== null): ?>
+        <!-- Nhãn "Do HLV ... giao" và trạng thái khóa (UI_UX_PROMPT.md mục 7, khu HLV) -->
+        <div class="ch-lock<?= $canEdit ? ' is-open' : '' ?>" role="note">
+            <div class="ch-lock__txt">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0<?= $canEdit ? '' : 'v3' ?>"/></svg>
+                <div>
+                    <b><?php if ($plan !== null && $planBy !== null): ?>Do HLV <?= htmlspecialchars($planBy['full_name']) ?> giao<?php elseif ($plan !== null): ?>HLV <?= htmlspecialchars((string)$planLock['coach_name']) ?> đang quản lý lịch tập của bạn<?php else: ?>HLV <?= htmlspecialchars((string)$planLock['coach_name']) ?> chưa giao lịch tập<?php endif; ?></b>
+                    <span><?php if ($canEdit): ?>HLV cho phép bạn tự sửa tới <?= htmlspecialchars(date('H:i d/m', strtotime((string)$planLock['unlock_until']))) ?>.<?php elseif ($planLock['pending']): ?>Bạn đã xin sửa lịch, đang chờ HLV trả lời. Vẫn ghi log buổi tập bình thường.<?php else: ?>Bạn vẫn ghi log từng buổi. Muốn đổi bài, set hay ngày tập thì gửi yêu cầu cho HLV.<?php endif; ?></span>
+                </div>
+            </div>
+            <?php if (!$canEdit && !$planLock['pending']): ?>
+                <button type="button" class="btn btn--ghost" data-toggle="wp-change">Xin HLV cho sửa lịch</button>
+                <form id="wp-change" class="ch-req" method="post" action="/my-coach.php" hidden>
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="change">
+                    <input type="hidden" name="area" value="PLAN">
+                    <label class="ch-label" for="wp-reason">Lý do</label>
+                    <textarea id="wp-reason" name="reason" maxlength="<?= COACH_NOTE_MAX ?>" required placeholder="Ví dụ: tuần này đau vai, muốn bỏ bài đẩy qua đầu"></textarea>
+                    <div class="ch-req__row"><button type="submit" class="btn" data-busy-text="Đang gửi…">Gửi yêu cầu</button></div>
+                </form>
+            <?php else: ?>
+                <a class="btn btn--ghost" href="/my-coach.php">HLV của tôi</a>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
     <!-- FORM TẠO LỊCH: hiện sẵn khi chưa có lịch, ẩn khi đã có (bấm "Tạo lịch mới" để mở) -->
+    <?php if ($canEdit): ?>
     <section class="wp-card wp-create" id="create-plan-section" <?= $plan !== null ? 'hidden' : '' ?>>
         <h2 class="wp-card__title">Gợi ý lịch tập cho bạn</h2>
         <p class="wp-card__sub">Chọn số buổi và trình độ, hệ thống chia buổi theo mẫu và chọn bài phù hợp.</p>
@@ -163,6 +196,17 @@ include __DIR__ . '/includes/header.php';
         <?php endif; ?>
         <p id="workout-plan-message" class="workout-plan__message" role="status"></p>
     </section>
+    <?php elseif ($plan === null): ?>
+        <!-- Đang có HLV mà chưa có lịch: không tự tạo, chờ HLV giao -->
+        <div class="ch-empty">
+            <div class="ch-empty__ico" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+            </div>
+            <h2>Chờ HLV giao lịch tập</h2>
+            <p>HLV sẽ xây lịch theo hồ sơ của bạn. Nhắn tin cho HLV nếu bạn có lịch rảnh hoặc chấn thương cần lưu ý.</p>
+            <a class="btn" href="/my-coach.php">HLV của tôi</a>
+        </div>
+    <?php endif; ?>
 
     <?php if ($plan !== null): ?>
         <p id="workout-plan-edit-message" class="workout-plan__message" role="status"></p>
@@ -361,4 +405,5 @@ include __DIR__ . '/includes/header.php';
 </div>
 
 <script src="js/workout-plan.js"></script>
+<script src="/js/coach.js"></script>
 <?php include __DIR__ . '/includes/footer.php'; ?>
