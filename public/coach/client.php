@@ -67,7 +67,6 @@ try {
 }
 $bmi = ($client['weight_kg'] && $client['height_cm']) ? $client['weight_kg'] / (($client['height_cm'] / 100) ** 2) : null;
 $dayNames = [1 => 'Thứ 2', 2 => 'Thứ 3', 3 => 'Thứ 4', 4 => 'Thứ 5', 5 => 'Thứ 6', 6 => 'Thứ 7', 7 => 'Chủ nhật'];
-$nf = fn($n, int $d = 0) => number_format((float)$n, $d, ',', '.');
 
 $pageTitle = 'Hồ sơ học viên';
 $pageCss = ['/css/coach.css'];
@@ -91,9 +90,9 @@ include __DIR__ . '/../includes/coach-nav.php';
             </div>
         </div>
         <div class="adm-actions" style="flex-wrap:wrap">
-            <a class="adm-btn" href="/coach/client-plan.php?id=<?= $clientId ?>">Giao lịch tập</a>
-            <a class="adm-btn adm-btn-ghost" href="/coach/client-nutrition.php?id=<?= $clientId ?>">Đặt dinh dưỡng</a>
-            <a class="adm-btn adm-btn-ghost" href="/coach/messages.php?id=<?= $clientId ?>">Nhắn tin</a>
+            <a class="adm-btn" href="/coach/client-plan.php?id=<?= (int)$clientId ?>">Giao lịch tập</a>
+            <a class="adm-btn adm-btn-ghost" href="/coach/client-nutrition.php?id=<?= (int)$clientId ?>">Đặt dinh dưỡng</a>
+            <a class="adm-btn adm-btn-ghost" href="/coach/messages.php?id=<?= (int)$clientId ?>">Nhắn tin</a>
         </div>
     </div>
 
@@ -130,7 +129,7 @@ include __DIR__ . '/../includes/coach-nav.php';
         <div style="display:grid;gap:16px;min-width:0">
             <section class="adm-panel adm-card-pad" aria-labelledby="h-chart">
                 <h2 id="h-chart">Cân nặng</h2>
-                <div id="cc-chart" data-client="<?= $clientId ?>">
+                <div id="cc-chart" data-client="<?= (int)$clientId ?>">
                     <span class="ch-skel" style="height:240px" aria-hidden="true"></span>
                     <p class="adm-sub" id="cc-chart-msg" role="status">Đang tải số đo…</p>
                     <div class="adm-chart" hidden><canvas id="cc-canvas" role="img" aria-label="Biểu đồ cân nặng của học viên theo ngày"></canvas></div>
@@ -161,7 +160,7 @@ include __DIR__ . '/../includes/coach-nav.php';
                             <ul class="adm-list">
                                 <?php foreach ($rows as $r): ?>
                                     <li><span><?= htmlspecialchars($r['name']) ?><?php if ($r['note'] !== null && $r['note'] !== ''): ?><br><small>“<?= htmlspecialchars($r['note']) ?>”</small><?php endif; ?></span>
-                                        <span class="adm-mono"><?= (int)$r['sets_completed'] ?> × <?= (int)$r['reps_completed'] ?><?= $r['weight_kg_used'] !== null ? ' · ' . $nf($r['weight_kg_used'], 1) . ' kg' : '' ?></span></li>
+                                        <span class="adm-mono"><?= (int)$r['sets_completed'] ?> × <?= (int)$r['reps_completed'] ?><?= $r['weight_kg_used'] !== null ? ' · ' . coachNum($r['weight_kg_used'], 1) . ' kg' : '' ?></span></li>
                                 <?php endforeach; ?>
                             </ul>
                             <?php foreach ($feedbackByDate[$date] ?? [] as $f): ?>
@@ -188,9 +187,9 @@ include __DIR__ . '/../includes/coach-nav.php';
                 <h2 id="h-body">Chỉ số cơ thể</h2>
                 <dl class="adm-kv">
                     <div><dt>Tuổi · giới tính</dt><dd><?= $client['age'] ? (int)$client['age'] : '—' ?> · <?= htmlspecialchars(COACH_GENDER_LABELS[$client['gender']] ?? '—') ?></dd></div>
-                    <div><dt>Chiều cao</dt><dd><?= $client['height_cm'] ? $nf($client['height_cm']) . ' cm' : '—' ?></dd></div>
-                    <div><dt>Cân nặng (hồ sơ)</dt><dd><?= $client['weight_kg'] ? $nf($client['weight_kg'], 1) . ' kg' : '—' ?></dd></div>
-                    <div><dt>BMI</dt><dd><?= $bmi ? $nf($bmi, 1) : '—' ?></dd></div>
+                    <div><dt>Chiều cao</dt><dd><?= $client['height_cm'] ? coachNum($client['height_cm']) . ' cm' : '—' ?></dd></div>
+                    <div><dt>Cân nặng (hồ sơ)</dt><dd><?= $client['weight_kg'] ? coachNum($client['weight_kg'], 1) . ' kg' : '—' ?></dd></div>
+                    <div><dt>BMI</dt><dd><?= $bmi ? coachNum($bmi, 1) : '—' ?></dd></div>
                     <div><dt>Vận động</dt><dd><?= htmlspecialchars(COACH_ACTIVITY_LABELS[$client['activity_level']] ?? '—') ?></dd></div>
                 </dl>
             </section>
@@ -201,19 +200,19 @@ include __DIR__ . '/../includes/coach-nav.php';
                     <p class="adm-sub">Hồ sơ học viên chưa đủ thông tin để tính TDEE.</p>
                 <?php else: ?>
                     <dl class="adm-kv">
-                        <div><dt>BMR</dt><dd><?= $nf($bmr) ?> kcal</dd></div>
-                        <div><dt>TDEE</dt><dd><?= $nf($tdee) ?> kcal</dd></div>
-                        <?php if ($auto): ?><div><dt>Tự tính theo mục tiêu</dt><dd><?= $nf($auto['target_kcal']) ?> kcal</dd></div><?php endif; ?>
+                        <div><dt>BMR</dt><dd><?= coachNum($bmr) ?> kcal</dd></div>
+                        <div><dt>TDEE</dt><dd><?= coachNum($tdee) ?> kcal</dd></div>
+                        <?php if ($auto): ?><div><dt>Tự tính theo mục tiêu</dt><dd><?= coachNum($auto['target_kcal']) ?> kcal</dd></div><?php endif; ?>
                     </dl>
                 <?php endif; ?>
                 <h3 style="margin:16px 0 6px;font-size:1rem">Mục tiêu đang dùng</h3>
                 <?php if ($target === null): ?>
                     <p class="adm-sub">Chưa có.</p>
                 <?php else: ?>
-                    <p style="margin:0"><b><?= $nf($target['target_kcal']) ?> kcal</b> · P <?= $nf($target['protein_g']) ?> g · C <?= $nf($target['carbs_g']) ?> g · F <?= $nf($target['fat_g']) ?> g</p>
+                    <p style="margin:0"><b><?= coachNum($target['target_kcal']) ?> kcal</b> · P <?= coachNum($target['protein_g']) ?> g · C <?= coachNum($target['carbs_g']) ?> g · F <?= coachNum($target['fat_g']) ?> g</p>
                     <p class="adm-sub" style="margin-top:4px"><?= (int)$target['assigned_by'] === $coachId ? 'Do bạn đặt' : ($target['assigned_by'] ? 'Do HLV khác đặt' : 'Học viên tự tính') ?> ngày <?= htmlspecialchars(date('d/m/Y', strtotime($target['calculated_date']))) ?></p>
                 <?php endif; ?>
-                <a class="adm-btn adm-btn-ghost adm-btn-sm" style="margin-top:12px" href="/coach/client-nutrition.php?id=<?= $clientId ?>">Đặt mục tiêu</a>
+                <a class="adm-btn adm-btn-ghost adm-btn-sm" style="margin-top:12px" href="/coach/client-nutrition.php?id=<?= (int)$clientId ?>">Đặt mục tiêu</a>
             </section>
 
             <section class="adm-panel adm-card-pad" aria-labelledby="h-plan">
@@ -229,7 +228,7 @@ include __DIR__ . '/../includes/coach-nav.php';
                         <?php endforeach; ?>
                     </ul>
                 <?php endif; ?>
-                <a class="adm-btn adm-btn-sm" style="margin-top:12px" href="/coach/client-plan.php?id=<?= $clientId ?>"><?= $plan ? 'Sửa lịch' : 'Giao lịch' ?></a>
+                <a class="adm-btn adm-btn-sm" style="margin-top:12px" href="/coach/client-plan.php?id=<?= (int)$clientId ?>"><?= $plan ? 'Sửa lịch' : 'Giao lịch' ?></a>
             </section>
 
             <section class="adm-panel adm-card-pad">

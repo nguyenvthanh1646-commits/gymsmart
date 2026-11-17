@@ -155,7 +155,7 @@ include __DIR__ . '/../includes/admin-nav.php';
     <?php endif; ?>
     <div class="adm-todo" role="group" aria-label="Lọc theo trạng thái">
         <?php foreach (['PENDING' => 'Đang chờ', 'APPROVED' => 'Đã duyệt', 'REJECTED' => 'Từ chối', 'all' => 'Tất cả'] as $key => $label): ?>
-            <a href="/admin/coach-applications.php?status=<?= $key ?>"<?= ($status === $key || ($key === 'all' && $status === '')) ? ' aria-current="page" class="is-on"' : '' ?>><?= $label ?></a>
+            <a href="/admin/coach-applications.php?status=<?= htmlspecialchars($key) ?>"<?= ($status === $key || ($key === 'all' && $status === '')) ? ' aria-current="page" class="is-on"' : '' ?>><?= htmlspecialchars($label) ?></a>
         <?php endforeach; ?>
     </div>
     <div class="adm-panel">

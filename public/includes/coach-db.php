@@ -299,7 +299,7 @@ function coachRejectApplication(PDO $pdo, int $appId, int $adminId, string $note
 function coachRevoke(PDO $pdo, int $coachId, int $adminId): array
 {
     return coachTx($pdo, function () use ($pdo, $coachId, $adminId) {
-        $stmt = $pdo->prepare('SELECT full_name, role FROM users WHERE id = ?' . coachForUpdate($pdo));
+        $stmt = $pdo->prepare('SELECT full_name, role FROM users WHERE id = ?' . coachForUpdate($pdo));   // audit:ok coachForUpdate() chỉ trả " FOR UPDATE" hoặc rỗng
         $stmt->execute([$coachId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($user === false || $user['role'] !== 'COACH') {
@@ -468,7 +468,7 @@ function coachChangeRelation(PDO $pdo, string $actor, int $actorId, int $relatio
         }
         $now = coachNow();
         if ($action === 'accept') {
-            $p = $pdo->prepare('SELECT max_clients FROM coach_profiles WHERE user_id = ?' . coachForUpdate($pdo));
+            $p = $pdo->prepare('SELECT max_clients FROM coach_profiles WHERE user_id = ?' . coachForUpdate($pdo));   // audit:ok coachForUpdate() chỉ trả " FOR UPDATE" hoặc rỗng
             $p->execute([$rel['coach_id']]);
             $max = (int)$p->fetchColumn();
             $c = $pdo->prepare("SELECT COUNT(*) FROM coach_clients WHERE coach_id = ? AND status = 'ACTIVE'");

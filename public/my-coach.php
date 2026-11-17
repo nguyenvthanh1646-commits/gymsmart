@@ -105,7 +105,7 @@ include __DIR__ . '/includes/header.php';
             <?php foreach ($tabs as $key => $label):
                 $count = $key === 'feedback' ? (int)($notice['feedback'] ?? 0) : ($key === 'messages' ? (int)($notice['messages'] ?? 0) : 0);
             ?>
-                <a href="/my-coach.php?tab=<?= $key ?>"<?= $tab === $key ? ' class="is-active" aria-current="page"' : '' ?>>
+                <a href="/my-coach.php?tab=<?= htmlspecialchars($key) ?>"<?= $tab === $key ? ' class="is-active" aria-current="page"' : '' ?>>
                     <?= htmlspecialchars($label) ?><?php if ($count > 0 && $tab !== $key): ?> <span class="ch-dot" aria-label="<?= $count ?> mới"><?= $count ?></span><?php endif; ?>
                 </a>
             <?php endforeach; ?>

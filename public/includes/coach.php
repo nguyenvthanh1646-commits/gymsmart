@@ -185,6 +185,12 @@ function coachChatBox(int $withId, string $name, ?string $avatar, string $subtit
     return (string)ob_get_clean();
 }
 
+/** Số kiểu Việt Nam: 2.230 hoặc 72,5 (dùng khi in số ra HTML; kết quả chỉ có chữ số, dấu chấm, dấu phẩy nên an toàn). */
+function coachNum($n, int $decimals = 0): string
+{
+    return number_format((float)$n, $decimals, ',', '.');
+}
+
 /** Chữ cái đầu của TÊN (từ cuối trong họ tên Việt Nam) để vẽ avatar tròn khi chưa có ảnh. */
 function coachInitial(string $fullName): string
 {

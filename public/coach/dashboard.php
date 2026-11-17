@@ -88,7 +88,7 @@ $ico = function (string $inner): string {
                                 </form>
                                 <form method="post" action="/coach/dashboard.php">
                                     <?= csrfField() ?><input type="hidden" name="action" value="accept"><input type="hidden" name="relation_id" value="<?= (int)$p['id'] ?>">
-                                    <button type="submit" class="adm-btn adm-btn-sm" data-busy-text="Đang xử lý…"<?= $seats === 0 ? ' disabled title="Đã đủ học viên"' : '' ?>>Nhận học viên</button>
+                                    <button type="submit" class="adm-btn adm-btn-sm" data-busy-text="Đang xử lý…"<?= $seats === 0 ? ' disabled title="Đã đủ học viên"' : '' /* audit:ok chữ viết sẵn */ ?>>Nhận học viên</button>
                                 </form>
                             </div>
                         </li>
