@@ -318,6 +318,15 @@ Khi đang có HLV, `POST /api/workout-plan-generate.php` và `/api/workout-plan-
 
 ---
 
+## 9b. Tổng kết tuần bằng AI (A-46)
+
+| Method | File | Quyền | Mô tả |
+|---|---|---|---|
+| POST | `report.php` (form) | User + `csrf_token` | AI viết tổng kết tuần vừa xong từ số liệu thật, lưu bảng `weekly_summaries`, rồi chuyển về `report.php#tong-ket` (Post/Redirect/Get, kết quả báo bằng flash) |
+
+- Tối đa 1 lần mỗi 24 giờ cho mỗi tuần; tuần không có buổi tập hay lần cân nào thì không gọi AI.
+- Chỉ gửi số liệu tổng hợp (không tên, email, ghi chú). Lỗi AI hiện câu thân thiện (`aiFriendlyError()`), chi tiết chỉ ghi log máy chủ.
+
 ## 10. Thông báo (A-44) — triển khai thật
 
 | Method | File | Quyền | Mô tả |

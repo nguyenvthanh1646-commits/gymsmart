@@ -21,6 +21,7 @@ erDiagram
     USERS ||--o| NUTRITION_PREFERENCES : "lưu lựa chọn"
     USERS ||--o{ CHATBOT_SESSIONS : "trò chuyện với GymSmart AI"
     USERS ||--o{ NOTIFICATIONS : "nhận thông báo"
+    USERS ||--o{ WEEKLY_SUMMARIES : "tổng kết tuần (AI)"
     USERS ||--o{ PASSWORD_RESETS : "yêu cầu đặt lại"
 
     EXERCISES ||--o{ WORKOUT_PLAN_EXERCISES : "được dùng trong"
@@ -420,6 +421,11 @@ Khi đang có HLV, học viên **không tự sửa** lịch tập và dinh dư�
 
 ### `notifications`
 Mỗi dòng là một thông báo cho MỘT người (`user_id`, xóa người thì xóa theo). `type` là mã sự kiện viết sẵn trong code (`coach.message`, `coach.feedback`, `coach.request`, `coach.relation`, `coach.plan`, `coach.nutrition`, `coach.change_request`, `coach.change_reply`, `coach.application_approved`, `coach.application_rejected`, `coach.revoked`, `admin.coach_application`). `link` là đường dẫn nội bộ bắt đầu bằng `/` do code tạo. `read_at` NULL = chưa đọc. Index `(user_id, read_at, id)` cho việc đếm số chưa đọc và lấy danh sách mới nhất. Tin nhắn, nhận xét, giao lịch, đặt mục tiêu được gộp: đã có thông báo CHƯA ĐỌC cùng `type` + `link` thì cập nhật nội dung thay vì thêm dòng. Thông báo được ghi trong cùng transaction với thao tác gây ra nó (`includes/coach-db.php`).
+
+## Tổng kết tuần bằng AI (`sql/weekly_summaries.sql`, đã gộp vào `schema.sql`, A-46)
+
+### `weekly_summaries`
+Mỗi người tối đa 1 bản cho mỗi tuần (`UNIQUE (user_id, week_start)`, `week_start` là thứ Hai). `stats_json` lưu đúng số liệu đã gửi cho AI (số ngày tập so với lịch, set, khối lượng nâng, bài tăng tạ, cân nặng) để kiểm tra lại bản tổng kết dựa trên con số nào; `content` là 3 dòng AI viết. Lưu lại để không gọi AI mỗi lần mở trang; tạo lại tối đa 1 lần mỗi 24 giờ.
 
 ## Ghi chú khi triển khai
 

@@ -369,3 +369,13 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | HLV nhắn tin chứa `<script>alert(1)</script>` | Học viên thấy đúng chữ đó trong chuông, không chạy script (textContent) |
 | Sửa cột `link` trong DB thành `https://web-la.com` hoặc `javascript:...` | Chuông và trang Thông báo bỏ link đó (`notifSafeLink()`), không chuyển ra ngoài |
 | DB cũ chưa import `sql/notifications.sql` | Mọi trang và thao tác HLV vẫn chạy, chuông không có số |
+
+### Tổng kết tuần bằng AI (A-46)
+
+| Thử | Kết quả đúng |
+|---|---|
+| POST `report.php` thiếu `csrf_token` | Trang báo lỗi mã bảo vệ, không gọi AI |
+| Bấm "Tạo tổng kết" lần 2 trong cùng ngày (sửa HTML để hiện lại nút) | Báo "tối đa 1 lần mỗi ngày", không gọi AI |
+| Tuần trước không có dữ liệu | Báo chưa có gì để tổng kết, không gọi AI |
+| Xem `stats_json` trong DB | Chỉ có số liệu tổng hợp, không có tên, email, ghi chú |
+| AI trả lời có thẻ HTML | Hiện đúng chữ (htmlspecialchars), không chạy mã |
