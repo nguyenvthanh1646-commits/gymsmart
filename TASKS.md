@@ -87,6 +87,7 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - `tools/install.php` (tạo / nâng cấp DB một lệnh, `--demo` nạp tài khoản thử), `tools/run-tests.php` (chạy mọi test)
   - `admin/users.php`: tìm kiếm, lọc vai trò, phân trang ở máy chủ (20 dòng/trang)
   - Header `Content-Security-Policy` trong `includes/header.php`
+- [x] A-40 Sửa lỗi giao diện (`a-40-sua-loi-giao-dien`): lịch sử số đo ở điện thoại gọn 2 dòng và ẩn ô trống (trang ngắn khoảng 1/4); biểu đồ mỡ/eo chỉ tạo trục có dữ liệu; nút Xóa số đo bị tô thành nút cam; biểu đồ calo của HLV chỉ 1 mốc thì hiện con số; chân trang không bị nút chatbot che; nhãn ô nội dung bài viết; `favicon.ico`
 
 ---
 
