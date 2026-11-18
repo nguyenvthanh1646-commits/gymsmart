@@ -1,0 +1,76 @@
+/* report.css — trang Báo cáo & thành tích (report.php). Class bắt đầu bằng "rp-". Chỉ dùng token chuẩn trong ui.css.
+   Có phần @media print để "In / lưu PDF" ra trang gọn: ẩn menu, chân trang, nút chat và các nút bấm. */
+
+.rp { max-width: 1100px; margin: 0 auto; }
+.rp-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s-4); margin-bottom: var(--s-5); }
+.rp-head h1 { margin: 0; font-size: 30px; font-weight: 800; color: var(--text); }
+.rp-sub { margin: 6px 0 0; color: var(--text-muted); max-width: 40em; }
+.rp-actions { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.rp-actions .btn { min-height: 44px; }
+.rp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.rp-streak { display: grid; gap: var(--s-4); grid-template-columns: 1fr; margin-bottom: var(--s-5); }
+.rp-stat { display: grid; gap: 4px; padding: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-sm); }
+.rp-stat--main { background: var(--ink); border-color: var(--ink); color: #fff; }
+.rp-stat__label { color: var(--text-muted); font-size: 14px; font-weight: 600; }
+.rp-stat--main .rp-stat__label, .rp-stat--main .rp-stat__note { color: var(--text-on-dark); }
+.rp-stat__value { font-size: 34px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; color: inherit; }
+.rp-stat__value small { font-size: 15px; font-weight: 600; color: var(--text-muted); }
+.rp-stat--main .rp-stat__value small { color: var(--text-on-dark); }
+.rp-stat__note { color: var(--text-muted); font-size: 13px; }
+.rp-meter { display: block; height: 8px; margin-top: 6px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
+.rp-meter i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+
+.rp-card { margin-bottom: var(--s-5); padding: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-sm); }
+.rp-card__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-4); }
+.rp-card__head h2 { margin: 0; font-size: 22px; font-weight: 700; color: var(--text); }
+.rp-months { display: flex; gap: var(--s-2); }
+.rp-months a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-pill);
+    color: var(--text); font-weight: 600; text-decoration: none; }
+.rp-months a:hover { border-color: var(--accent); color: var(--accent-dark); }
+.rp-count { color: var(--text-muted); font-weight: 600; }
+
+.rp-nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); margin: 0; }
+.rp-nums div { padding: var(--s-4); border-radius: var(--r); background: var(--bg); }
+.rp-nums dt { color: var(--text-muted); font-size: 13px; font-weight: 600; }
+.rp-nums dd { margin: 4px 0 0; font-size: 26px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.rp-nums dd small { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+.rp-delta { display: block; }
+.rp-note { margin: var(--s-3) 0 0; color: var(--text-muted); font-size: 13px; }
+.rp-h3 { margin: var(--s-5) 0 var(--s-2); font-size: 17px; font-weight: 700; color: var(--text); }
+.rp-top { margin: 0; padding: 0; list-style: none; counter-reset: rp; }
+.rp-top li { display: flex; justify-content: space-between; gap: var(--s-3); padding: 10px 0; border-top: 1px solid var(--line); counter-increment: rp; }
+.rp-top li span::before { content: counter(rp) ". "; color: var(--text-muted); }
+.rp-top b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.rp-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--s-3); margin: 0; padding: 0; list-style: none; }
+.rp-badge { display: flex; gap: var(--s-3); padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
+.rp-badge.is-on { background: var(--accent-soft); border-color: #ffd2bd; }
+.rp-badge__icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface); color: var(--text-muted); font-size: 20px; }
+.rp-badge.is-on .rp-badge__icon { background: var(--accent); color: #fff; }
+.rp-badge__title { margin: 0; font-weight: 700; color: var(--text); }
+.rp-badge__desc { margin: 2px 0 0; color: var(--text-muted); font-size: 13px; line-height: 1.45; }
+.rp-badge__state { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--text-muted); }
+.rp-badge.is-on .rp-badge__state { color: var(--accent-dark); }
+
+.rp-empty { padding: var(--s-5); text-align: center; color: var(--text-muted); }
+.rp-empty__title { margin: 0 0 4px; font-size: 18px; font-weight: 700; color: var(--text); }
+.rp-print-note { display: none; }
+.rp-months a:focus-visible, .rp-actions .btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+@media (min-width: 720px) {
+    .rp-streak { grid-template-columns: 1.3fr 1fr 1fr; }
+    .rp-nums { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .rp-head h1 { font-size: 40px; }
+}
+
+/* In / lưu PDF: chỉ giữ nội dung báo cáo, nền trắng, không bóng */
+@media print {
+    .nb, .ft, .gc, .rp-actions, .rp-months, .rp-empty .btn { display: none; }   /* thanh menu, chân trang, nút chat do file khác vẽ */
+    body { background: #fff; }
+    .container { padding: 0; }
+    .rp-card, .rp-stat, .rp-badge { box-shadow: none; break-inside: avoid; }
+    .rp-stat--main { background: #fff; color: var(--text); border-color: var(--line); }
+    .rp-stat--main .rp-stat__label, .rp-stat--main .rp-stat__note, .rp-stat--main .rp-stat__value small { color: var(--text-muted); }
+    .rp-print-note { display: block; color: var(--text-muted); font-size: 12px; }
+}

@@ -60,6 +60,10 @@ if ($dash['nutrition']['status'] === 'ok') {
 if ($dash['progress']['status'] === 'ok') {
     $duStats[] = ['chart', 'Cân nặng', dashNumber((float)$dash['progress']['latest']['weight_kg']), 'kg'];
 }
+// Chuỗi tuần tập đều (F1): chỉ hiện khi đã từng có tuần đạt, để người mới không thấy số 0 vô nghĩa
+if ($dash['streak'] !== null && $dash['streak']['best'] > 0) {
+    $duStats[] = ['target', 'Chuỗi tuần tập đều', (string)$dash['streak']['current'], 'tuần'];
+}
 ?>
 <script src="/js/home-user.js" defer></script>
 

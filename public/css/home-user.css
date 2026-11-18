@@ -287,7 +287,7 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
 }
 @media (min-width: 1040px) {
     .du-hero__in { padding-top: 48px; padding-bottom: 92px; }
-    .du-hero__stats { grid-template-columns: repeat(2, 196px); max-width: none; }
+    .du-hero__stats { grid-template-columns: repeat(auto-fit, minmax(170px, 196px)); max-width: none; }   /* 2 hoặc 3 ô (thêm Chuỗi tuần) cùng một hàng */
     /* Mặc định (ngày nghỉ hoặc chưa có lịch): thẻ Hôm nay ngắn, nằm cùng hàng với Dinh dưỡng */
     .du-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .du-card--today { grid-column: 1 / span 2; grid-row: 1; }

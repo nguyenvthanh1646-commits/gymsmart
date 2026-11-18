@@ -13,6 +13,8 @@
 require_once __DIR__ . '/workout-plan.php';
 require_once __DIR__ . '/workout-plan-db.php';
 require_once __DIR__ . '/meal-plan.php';
+require_once __DIR__ . '/achievements.php';
+require_once __DIR__ . '/report-db.php';
 
 const DASH_DAY_NAMES  = [1 => 'Thứ Hai', 2 => 'Thứ Ba', 3 => 'Thứ Tư', 4 => 'Thứ Năm', 5 => 'Thứ Sáu', 6 => 'Thứ Bảy', 7 => 'Chủ nhật'];
 const DASH_DAY_SHORT  = [1 => 'T2', 2 => 'T3', 3 => 'T4', 4 => 'T5', 5 => 'T6', 6 => 'T7', 7 => 'CN'];
@@ -370,6 +372,15 @@ function loadDashboard(PDO $pdo, int $userId, string $today, ?string $goal, int 
     $nextSummary = $next === null ? null : ['day' => $next['day'], 'nextWeek' => $next['nextWeek'], 'rows' => $withImage($nextRows)]
         + dashSessionSummary($nextRows, $labels[$next['day']] ?? null);
 
+    // Chuỗi tuần tập đều (F1, includes/achievements.php): mục tiêu mỗi tuần = số buổi trong lịch
+    try {
+        $streak = achWeeklyStreak(reportTrainingDates($pdo, $userId), $today,
+            $plan['status'] === 'ok' ? (int)$plan['days_per_week'] : ACH_DEFAULT_WEEK_TARGET);
+    } catch (Throwable $e) {
+        error_log('dashboard: chuỗi tuần: ' . $e->getMessage());
+        $streak = null;
+    }
+
     $read = dashLoadReadSlugs($pdo, $userId);
     $unread = array_filter($mustReadArticles, fn($slug) => !in_array($slug, $read, true), ARRAY_FILTER_USE_KEY);
 
@@ -387,5 +398,6 @@ function loadDashboard(PDO $pdo, int $userId, string $today, ?string $goal, int 
         'progress' => dashLoadMetrics($pdo, $userId, $goal),
         'goal' => $goal,          // dùng ở thẻ Tiến trình; không đọc qua biến $row vì vòng lặp bài tập ở dash-today.php ghi đè biến đó
         'unreadArticles' => $unread,
+        'streak' => $streak,
     ];
 }

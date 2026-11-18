@@ -363,6 +363,7 @@ include __DIR__ . '/includes/header.php';
             <h1>Tiến trình</h1>
             <p class="pg-sub">Ghi lại cân nặng và số đo theo ngày để thấy cơ thể thay đổi thế nào so với mục tiêu của bạn.</p>
         </div>
+        <a class="btn btn--ghost pr-report-link" href="/report.php">Báo cáo &amp; thành tích</a>
         <?php if ($count > 0): ?>
             <p class="pg-count"><b><?= (int)$count ?></b> lần đo<?= $stat['days'] > 0 ? ' trong ' . (int)$stat['days'] . ' ngày' : '' ?></p>
         <?php endif; ?>
