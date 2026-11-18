@@ -92,6 +92,11 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - `includes/progression.php` (thuần): `suggestProgression()` tăng tải kép (đạt 8 lặp mọi set 2 buổi liền cùng mức tạ thì tăng 2,5 kg chân/lưng, 1 kg nhóm khác; 2 buổi liền dưới 6 lặp thì giảm ~10%; bài không tạ thì thêm lặp), `summarizeSessionSets()`; test `test-progression.php`
   - `workout-session.php` + `js/workout-session.js` + `css/workout-session.css`: tick từng set, đồng hồ nghỉ (±30 giây, bỏ qua, rung/kêu khi hết), nhớ tạm tiến độ khi lỡ tải lại, lưu cả buổi một lần qua `api/log-session.php` (transaction)
   - `workout-plan.php` dùng gợi ý mới (một truy vấn cho cả lịch thay cho mỗi bài một truy vấn), nút "Bắt đầu tập" từng ngày; trang chủ: nút chính và thẻ Hôm nay mở chế độ Đang tập
+- [x] A-42 Chatbot dùng dữ liệu thật và lưu lịch sử (`a-42-chatbot-du-lieu`, đề xuất D1 + lỗi 13):
+  - `includes/chat-context.php`: bật "Dùng hồ sơ của tôi" thì AI biết lịch tập, buổi hôm nay kèm mức tạ gợi ý (từ `progression.php`), nhật ký 7 ngày, số đo 30 ngày; trả lời kèm nút mở Đang tập / Tiến trình
+  - Lịch sử lưu trên máy chủ (bảng `chatbot_*` có sẵn, trước đây chưa dùng): mở máy khác vẫn thấy; nút "Cuộc trò chuyện mới" và "Xóa lịch sử"; giữ 5 cuộc gần nhất
+  - Giới hạn 30 câu/giờ theo tài khoản (trước chỉ theo session, đăng nhập lại là hết giới hạn)
+  - Chip gợi ý theo trang (Lịch tập, Đang tập, Dinh dưỡng, Tiến trình, chi tiết bài tập); test `test-chat.php` (23 bước)
 
 ---
 

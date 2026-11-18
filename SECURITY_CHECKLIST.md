@@ -334,3 +334,15 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | Tạ 9999, lặp 0, trùng `row_id`, `rows=abc` | 422, không ghi |
 | Gửi số đã gộp sẵn từ trình duyệt | Máy chủ bỏ qua, tự gộp lại từ từng set |
 | Mở `workout-session.php?day=abc` | Về ngày hôm nay, không lỗi |
+
+### Chatbot dùng dữ liệu thật và lịch sử (A-42)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Tắt "Dùng hồ sơ của tôi", hỏi "hôm nay tôi tập gì" | AI trả lời chung và nhắc bật công tắc, không có số liệu riêng |
+| Bật công tắc, hỏi lại | Có lịch, mức tạ gợi ý thật; không có tên, email, ghi chú trong prompt (`test-chat.php`) |
+| Khách gọi `GET api/chatbot-history.php` | 401 |
+| `POST api/chatbot-history.php {"action":"clear"}` thiếu `X-CSRF-Token` | 403, không xóa |
+| Tài khoản A đọc lịch sử | Chỉ thấy hội thoại của A (user_id lấy từ session) |
+| Gửi hơn 30 câu/giờ, đăng xuất rồi đăng nhập lại gửi tiếp | Vẫn 429 (đếm theo tài khoản trong DB) |
+| Trợ lý quản trị, trợ lý HLV | Không lưu lịch sử vào DB |

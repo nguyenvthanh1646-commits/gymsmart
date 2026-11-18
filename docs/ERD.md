@@ -363,7 +363,7 @@ Lưu kết quả tính TDEE/macro theo từng lần tính (không phải 1-1 c�
 Lựa chọn trên trang Dinh dưỡng, mỗi người tối đa 1 dòng (`user_id` là khóa chính): kiểu ăn, tỉ lệ % tùy chỉnh, số bữa, thực phẩm loại trừ (`excluded_foods`, các mã cách nhau bởi dấu phẩy), nhịp mục tiêu, bật/tắt calo theo ngày tập. Chưa import bảng thì trang giữ lựa chọn trong session.
 
 ### `chatbot_sessions`, `chatbot_messages`
-**Chưa dùng.** Lịch sử hội thoại hiện lưu ở trình duyệt (`js/chatbot.js`) và gửi kèm mỗi lần hỏi. Giữ bảng cho bước "lưu lịch sử trên server" sau này.
+Dùng từ A-42 (`includes/chat-history.php`): mỗi "cuộc trò chuyện" của GymSmart AI là một dòng `chatbot_sessions` (tiêu đề = câu hỏi đầu), mỗi lượt hỏi/đáp là 2 dòng `chatbot_messages` (`USER`, `ASSISTANT`). Chỉ lưu chế độ người tập; giữ 5 cuộc gần nhất mỗi người, người dùng tự xóa được. Số câu `USER` trong 1 giờ dùng để giới hạn tần suất theo tài khoản. Không cần đổi cấu trúc bảng.
 
 ### `password_resets`
 Mã đặt lại mật khẩu. Chỉ lưu **bản băm SHA-256** của mã 32 byte ngẫu nhiên; mã thật chỉ có trong link. Hết hạn 30 phút (`expires_at`), dùng một lần (`used_at`). Xóa user thì xóa theo (CASCADE).

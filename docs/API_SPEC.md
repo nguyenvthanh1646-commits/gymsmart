@@ -246,6 +246,20 @@ Không có module bài viết riêng. Ảnh, video và hướng dẫn nằm ngay
 
 ## 8. Chatbot AI
 
+**Triển khai thật (PHP thuần, A-13 và A-42):**
+
+| Method | File | Quyền | Mô tả |
+|---|---|---|---|
+| POST | `api/chatbot.php` | User + header `X-CSRF-Token` | Gửi câu hỏi (JSON `message`, `mode`, `history`, `personalize`), nhận `{ reply, links }` |
+| GET | `api/chatbot-history.php` | User | Cuộc trò chuyện mới nhất đã lưu: `{ success, data: [{ who: me|bot, text, at }] }` (tối đa 40 tin) |
+| POST | `api/chatbot-history.php` | User + `X-CSRF-Token` | JSON `{ "action": "new" }` mở cuộc mới; `{ "action": "clear" }` xóa toàn bộ lịch sử của chính mình |
+
+- Chỉ chế độ người tập được lưu lịch sử (bảng `chatbot_sessions`, `chatbot_messages`), giữ 5 cuộc gần nhất. Trợ lý quản trị và trợ lý HLV không lưu.
+- `personalize: true` (công tắc "Dùng hồ sơ của tôi"): máy chủ thêm hồ sơ, mục tiêu dinh dưỡng, lịch tập, buổi hôm nay kèm mức tạ gợi ý, nhật ký 7 ngày và số đo 30 ngày vào prompt (`includes/chat-context.php`). Không gửi tên, email, ghi chú.
+- Giới hạn: 1 câu mỗi 3 giây và 30 câu mỗi giờ theo session, thêm 30 câu mỗi giờ theo TÀI KHOẢN (đếm trong `chatbot_messages`), quá thì 429 `RATE_HOUR` / `RATE_GAP`.
+
+Thiết kế REST ban đầu (để tham khảo, không triển khai):
+
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
 | POST | `/chatbot/sessions` | User | Tạo phiên chat mới |
