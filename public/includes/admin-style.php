@@ -227,6 +227,7 @@ body{overflow-x:hidden}
 .adm-wrap button[type="submit"].adm-btn{box-shadow:none;border-radius:10px;font-size:inherit;padding:0 18px;transform:none}
 .adm-wrap button[type="submit"].adm-btn-sm{padding:0 14px;font-size:.92rem}
 .adm-wrap button[type="submit"].adm-btn-ghost{background:#fff;color:#111;border:1px solid var(--adm-line)}
+.adm-wrap .adm-tools > button.adm-btn{height:46px;min-height:46px;margin:0;align-self:center}   /* nút Lọc cao bằng ô tìm kiếm */
 .adm-wrap button[type="submit"].adm-btn-ghost:hover{background:#f3f4f6}
 .adm-wrap button[type="submit"].adm-btn-danger{background:#fff;color:var(--adm-danger);border:1px solid #fecaca}
 .adm-wrap button[type="submit"].adm-btn-danger:hover{background:#fef2f2}
