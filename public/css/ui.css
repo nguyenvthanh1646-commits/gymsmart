@@ -314,3 +314,8 @@ a { color: var(--ui-accent-dark); }
 .guest-cta p { margin: 0; max-width: 46em; color: var(--text); font-weight: 600; }
 .guest-cta__acts { display: flex; flex-wrap: wrap; gap: var(--s-2); }
 .guest-cta__acts .btn { min-height: 44px; }
+
+/* Thư viện bài tập có thêm ô lọc Dụng cụ (A-47) */
+.filter-bar--4 { grid-template-columns: minmax(0, 1fr) 160px 160px 170px auto; }
+.tag--equip { background: var(--accent-soft); color: var(--accent-dark); }
+@media (max-width: 760px) { .filter-bar--4 { grid-template-columns: 1fr 1fr; } }

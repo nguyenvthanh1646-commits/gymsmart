@@ -13,6 +13,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/audit-log.php';
 require_once __DIR__ . '/../includes/functions.php'; // exerciseImageFileOk()
+require_once __DIR__ . '/../includes/equipment-db.php'; // ô Dụng cụ (A-47); DB cũ chưa có cột thì ẩn ô này
 
 requireAdmin();
 
@@ -68,6 +69,8 @@ foreach ($fields as $f) {
     $form[$f] = $exercise[$f] ?? '';
 }
 $errors = [];
+$hasEquipment = exerciseEquipmentReady($pdo);
+$form['equipment'] = (string)($exercise['equipment'] ?? 'NONE');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf()) {
@@ -92,6 +95,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!array_key_exists($form['difficulty'], $difficultyOptions)) {
         $errors[] = 'Vui lòng chọn độ khó.';
+    }
+    $form['equipment'] = (string)($_POST['equipment'] ?? 'NONE');
+    if ($hasEquipment && !array_key_exists($form['equipment'], EQUIPMENT_LABELS)) {
+        $errors[] = 'Dụng cụ không hợp lệ.';
     }
     if ($form['description'] === '' || $form['instructions'] === '' || $form['common_mistakes'] === '') {
         $errors[] = 'Mô tả, các bước thực hiện và lỗi thường gặp không được để trống.';
@@ -136,7 +143,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
             );
             $stmt->execute($params);
-            auditLog($pdo, 'exercise.create', 'exercise', $pdo->lastInsertId(), 'Thêm bài tập "' . $form['name'] . '"');
+            $newExerciseId = (int)$pdo->lastInsertId();
+            if ($hasEquipment) {
+                $pdo->prepare('UPDATE exercises SET equipment = ? WHERE id = ?')->execute([$form['equipment'], $newExerciseId]);
+            }
+            auditLog($pdo, 'exercise.create', 'exercise', $newExerciseId, 'Thêm bài tập "' . $form['name'] . '"');
             $_SESSION['flash'] = ['ok', 'Đã thêm bài tập.'];
         } else {
             $stmt = $pdo->prepare(
@@ -147,6 +158,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $params[] = $editId;
             $stmt->execute($params);
+            if ($hasEquipment) {
+                $pdo->prepare('UPDATE exercises SET equipment = ? WHERE id = ?')->execute([$form['equipment'], $editId]);
+            }
             auditLog($pdo, 'exercise.update', 'exercise', $editId, 'Sửa bài tập "' . $form['name'] . '"');
             $_SESSION['flash'] = ['ok', 'Đã cập nhật bài tập.'];
         }
@@ -218,6 +232,12 @@ function renderOptions(array $options, string $selected): void
                     <label for="difficulty">Độ khó</label>
                     <select class="adm-select" id="difficulty" name="difficulty" required><?php renderOptions($difficultyOptions, $form['difficulty']); ?></select>
                 </div>
+                <?php if ($hasEquipment): ?>
+                    <div class="adm-field">
+                        <label for="equipment">Dụng cụ</label>
+                        <select class="adm-select" id="equipment" name="equipment"><?php renderOptions(EQUIPMENT_LABELS, $form['equipment']); ?></select>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
 
