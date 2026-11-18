@@ -140,10 +140,10 @@ include __DIR__ . '/../includes/admin-nav.php';
     <?php endif; ?>
 
     <div class="adm-stats">
-        <div class="adm-stat"><div><div class="adm-stat-num"><?= $totalUsers ?></div><div class="adm-stat-label">Người dùng</div></div></div>
-        <div class="adm-stat"><div><div class="adm-stat-num"><?= $users7 ?></div><div class="adm-stat-label">Đăng ký mới (7 ngày)</div></div></div>
-        <div class="adm-stat"><div><div class="adm-stat-num"><?= $sessions7 ?></div><div class="adm-stat-label">Buổi tập đã ghi (7 ngày)</div></div></div>
-        <div class="adm-stat"><div><div class="adm-stat-num"><?= $views7 ?></div><div class="adm-stat-label">Lượt xem bài (7 ngày)</div></div></div>
+        <div class="adm-stat"><div><div class="adm-stat-num"><?= (int)$totalUsers ?></div><div class="adm-stat-label">Người dùng</div></div></div>
+        <div class="adm-stat"><div><div class="adm-stat-num"><?= (int)$users7 ?></div><div class="adm-stat-label">Đăng ký mới (7 ngày)</div></div></div>
+        <div class="adm-stat"><div><div class="adm-stat-num"><?= (int)$sessions7 ?></div><div class="adm-stat-label">Buổi tập đã ghi (7 ngày)</div></div></div>
+        <div class="adm-stat"><div><div class="adm-stat-num"><?= (int)$views7 ?></div><div class="adm-stat-label">Lượt xem bài (7 ngày)</div></div></div>
     </div>
     <div class="adm-stats" style="grid-template-columns:repeat(3,1fr)">
         <div class="adm-stat"><div><div class="adm-stat-num"><?= (int)$coachCounts['coaches'] ?></div><div class="adm-stat-label">Huấn luyện viên</div></div></div>

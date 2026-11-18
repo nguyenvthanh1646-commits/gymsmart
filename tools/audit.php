@@ -39,7 +39,11 @@ foreach ($it as $file) {
     $lines = explode("\n", $code);
 
     // ----- 1. Trang chưa chặn người chưa đăng nhập -----
-    if (!$inInc && !in_array($base, $publicPages, true)
+    // API trả JSON không dùng requireLogin() (hàm đó chuyển hướng sang trang HTML) mà tự trả 401:
+    // chấp nhận apiBoot() hoặc đoạn kiểm tra $_SESSION['user_id'] / isLoggedIn() có mã 401 ngay sau đó.
+    $apiGuard = strpos($path, '/api/') !== false
+        && preg_match('/apiBoot\s*\(|(empty\(\s*\$_SESSION\[.user_id.\]\s*\)|!\s*isLoggedIn\s*\(\s*\))\s*\)\s*\{[\s\S]{0,200}?401/', $code);
+    if (!$inInc && !in_array($base, $publicPages, true) && !$apiGuard
         && !preg_match('/requireLogin\s*\(|requireAdmin\s*\(|requireCoach\s*\(/', $code)) {
         add($findings, 'CAO', $path, 1, 'Không thấy requireLogin()/requireAdmin()/requireCoach(): người chưa đăng nhập có vào được không?');
     }

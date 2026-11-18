@@ -222,7 +222,7 @@ include __DIR__ . '/includes/header.php';
                         <label for="password">Mật khẩu</label>
                         <div class="pw">
                             <input type="password" id="password" name="password" autocomplete="new-password" minlength="8" maxlength="72" required>
-                            <button type="button" class="pw__btn" data-pw-toggle="password" aria-label="Hiện mật khẩu" aria-pressed="false"><?= $eye ?></button>
+                            <button type="button" class="pw__btn" data-pw-toggle="password" aria-label="Hiện mật khẩu" aria-pressed="false"><?= $eye /* audit:ok: biểu tượng SVG viết sẵn trong file, không có dữ liệu người dùng */ ?></button>
                         </div>
                         <div class="rg-meter" id="rg-meter" aria-hidden="true"><span></span><span></span><span></span><span></span><em id="rg-meter-text">Từ 8 đến 72 ký tự</em></div>
                         <?= fieldError($errors, 'password') ?>
@@ -231,7 +231,7 @@ include __DIR__ . '/includes/header.php';
                         <label for="password2">Nhập lại mật khẩu</label>
                         <div class="pw">
                             <input type="password" id="password2" name="password2" autocomplete="new-password" minlength="8" maxlength="72" required>
-                            <button type="button" class="pw__btn" data-pw-toggle="password2" aria-label="Hiện mật khẩu" aria-pressed="false"><?= $eye ?></button>
+                            <button type="button" class="pw__btn" data-pw-toggle="password2" aria-label="Hiện mật khẩu" aria-pressed="false"><?= $eye /* audit:ok */ ?></button>
                         </div>
                         <?= fieldError($errors, 'password2') ?>
                     </div>
