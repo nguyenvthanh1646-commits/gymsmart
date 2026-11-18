@@ -326,6 +326,8 @@ Lưu thông tin tài khoản và chỉ số cơ thể cơ bản (dùng chung đ�
 | avatar | varchar, NULL | đường dẫn tương đối `uploads/avatars/<tên>.jpg`; NULL = hiện chữ cái đầu |
 
 ### `exercises`
+Cột `equipment` (A-47, `sql/exercise_equipment.sql`): dụng cụ cần cho bài, một trong `NONE`, `BENCH`, `BARS`, `BAND`, `ROPE`, `DUMBBELL`, `BARBELL`, `MACHINE`, `CABLE`; điền cho 40 bài theo phần cách thực hiện. Dùng để lọc thư viện, tìm bài tương đương (cùng vai trò trong `WORKOUT_EXERCISE_ROLES`, khác dụng cụ) và hiện trên thẻ bài. Kỷ lục cá nhân tính trực tiếp từ `workout_logs`, không cần bảng riêng.
+
 Thư viện bài tập kèm ảnh và video hướng dẫn, do `ADMIN` quản lý (CRUD), user chỉ đọc. Dữ liệu: `sql/seed_exercises_v2.sql` (40 bài, id 1–40 cố định, `WORKOUT_EXERCISE_ROLES` trong `includes/workout-plan.php` dựa vào các id này) rồi `sql/seed_exercise_media.sql` (ảnh + video).
 
 | Cột | Ghi chú |

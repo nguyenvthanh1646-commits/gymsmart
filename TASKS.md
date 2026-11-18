@@ -108,6 +108,10 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - `test-coach.php` thêm 12 bước kiểm tra thông báo (115 bước)
 - [x] A-45 Khách xem thư viện bài tập và bài viết (`a-45-khach-xem-thu-vien`, đề xuất A3): bỏ `requireLogin()` ở 4 trang chỉ đọc, thanh menu khách có Bài tập & Video và Bài viết, dải mời đăng ký (`includes/guest-cta.php`), `tools/audit.php` thêm 4 trang vào danh sách công khai. Lịch tập, dinh dưỡng, tiến trình, báo cáo vẫn cần đăng nhập
 - [x] A-46 Tổng kết tuần bằng AI (`a-46-ai-tong-ket-tuan`, đề xuất D2, cần thêm `sql/weekly_summaries.sql`): `includes/weekly-summary.php` tính số liệu tuần (so với lịch, so với tuần trước, bài tăng tạ so với 4 tuần trước, cân nặng) rồi Gemini viết 3 dòng Điểm tốt / Cần chú ý / Tuần tới, chỉ dùng đúng các con số đó; lưu bảng `weekly_summaries`, tạo lại tối đa 1 lần/ngày; ô mới trên trang Báo cáo kèm cảnh báo y tế cố định; test `test-weekly.php` (21 bước)
+- [x] A-47 Kỷ lục cá nhân và đổi bài khi thiếu dụng cụ (`a-47-ky-luc-doi-bai`, đề xuất B3, cần thêm `sql/exercise_equipment.sql`):
+  - Cột `exercises.equipment` điền cho 40 bài theo cách thực hiện; thư viện lọc theo dụng cụ, thẻ bài có nhãn dụng cụ; form admin có ô Dụng cụ
+  - `includes/equipment.php`: bài tương đương cùng vai trò khác dụng cụ, kỷ lục cá nhân; hiện ở trang chi tiết bài tập, chế độ Đang tập ("Thiếu dụng cụ? Thay bằng"), ô đổi bài của Lịch tập (nhóm "Tương đương" lên đầu)
+  - Lưu buổi tập báo "Kỷ lục mới"; trang Báo cáo có mục Kỷ lục cá nhân; trang chi tiết bài có kỷ lục của chính mình; test `test-equipment.php` (19 bước)
 
 ---
 
