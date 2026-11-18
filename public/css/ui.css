@@ -247,6 +247,8 @@ a { color: var(--ui-accent-dark); }
 .ft__links a { color: #d6dcee; text-decoration: none; font-size: .93rem; }
 .ft__links a:hover { color: #ff9b63; }
 .ft__copy { border-top: 1px solid rgba(255, 255, 255, .08); max-width: 1180px; margin: 0 auto; padding: 16px 20px 22px; font-size: .82rem; color: #7f8aa8; }
+/* Điện thoại: chừa chỗ bên phải cho nút chatbot nổi (56px, cách mép 16px) để không che dòng bản quyền */
+@media (max-width: 640px) { body:has(#gc-fab) .ft__copy { padding-right: 88px; } }
 
 /* ===== Điện thoại ===== */
 @media (max-width: 900px) {

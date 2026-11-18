@@ -261,6 +261,7 @@ include __DIR__ . '/../includes/admin-nav.php';
         <div class="adm-form-section">
             <h2>Nội dung</h2>
             <div class="adm-field">
+                <label for="body">Nội dung bài (xem cú pháp bên dưới)</label>
                 <textarea class="adm-textarea adm-code" id="body" name="body" rows="22" required><?= htmlspecialchars($form['body']) ?></textarea>
                 <details class="adm-data"><summary>Cú pháp soạn bài</summary>
 <pre class="adm-code" style="white-space:pre-wrap;margin:8px 0 0">Đoạn văn thường (các dòng liền nhau là một đoạn, dòng trống để tách đoạn)

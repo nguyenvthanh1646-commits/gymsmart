@@ -36,6 +36,13 @@
             r.body.data.forEach(function (d) { if (d[field] !== null && d[field] !== undefined) byDate[d.date] = d[field]; });
             var dates = Object.keys(byDate).sort();
             if (dates.length === 0) { show(box.dataset.empty || 'Chưa có dữ liệu.'); return; }
+            // Một mốc thì biểu đồ chỉ là một chấm giữa khung trống: hiện con số kèm ngày dễ đọc hơn
+            if (dates.length === 1) {
+                var p1 = dates[0].split('-');
+                show(box.dataset.label + ': ' + Number(byDate[dates[0]]).toLocaleString('vi-VN') + ' ' + unit
+                    + ' (đặt ngày ' + p1[2] + '/' + p1[1] + '/' + p1[0] + '). Biểu đồ hiện khi có từ 2 mốc.');
+                return;
+            }
             if (typeof Chart === 'undefined') {
                 show('Không tải được thư viện biểu đồ. Giá trị gần nhất: ' + byDate[dates[dates.length - 1]] + ' ' + unit + '.');
                 return;
