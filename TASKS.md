@@ -106,6 +106,7 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - Bảng `notifications`; `includes/notifications.php`; 12 loại sự kiện gắn trong `coach-db.php` / `coach-extras.php` (đơn HLV mới cho ADMIN, đơn được duyệt / từ chối, yêu cầu học viên, HLV nhận / từ chối / kết thúc, giao lịch, đặt dinh dưỡng, xin tự sửa và trả lời, nhận xét, tin nhắn, thu hồi HLV)
   - Chuông trên thanh người dùng, khu HLV, khu admin; trang `notifications.php` chạy được khi tắt JS; mở khung chat hoặc trang HLV của tôi thì thông báo tương ứng tự thành đã đọc
   - `test-coach.php` thêm 12 bước kiểm tra thông báo (115 bước)
+- [x] A-45 Khách xem thư viện bài tập và bài viết (`a-45-khach-xem-thu-vien`, đề xuất A3): bỏ `requireLogin()` ở 4 trang chỉ đọc, thanh menu khách có Bài tập & Video và Bài viết, dải mời đăng ký (`includes/guest-cta.php`), `tools/audit.php` thêm 4 trang vào danh sách công khai. Lịch tập, dinh dưỡng, tiến trình, báo cáo vẫn cần đăng nhập
 
 ---
 

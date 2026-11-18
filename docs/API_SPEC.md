@@ -74,8 +74,8 @@ Khi sửa một file API thì giữ đúng kiểu trả về của file đó, v�
 
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
-| GET | `/exercises` | User | Danh sách bài tập, filter query param |
-| GET | `/exercises/{id}` | User | Chi tiết 1 bài tập |
+| GET | `/exercises` | Khách + User (từ A-45) | Danh sách bài tập, filter query param |
+| GET | `/exercises/{id}` | Khách + User (từ A-45) | Chi tiết 1 bài tập |
 | POST | `/exercises` | Admin | Tạo bài tập mới |
 | PUT | `/exercises/{id}` | Admin | Sửa bài tập |
 | DELETE | `/exercises/{id}` | Admin | Xóa bài tập |

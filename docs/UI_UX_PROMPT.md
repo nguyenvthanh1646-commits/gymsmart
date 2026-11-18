@@ -95,6 +95,7 @@ Quy tắc màu:
   - Mục đang mở có chữ cam và gạch chân cam 3px.
   - Bên phải là avatar tròn cam và nút Đăng xuất dạng viền.
   - Trên điện thoại thu gọn thành nút menu.
+- **Thanh điều hướng của khách:** Bài tập & Video, Bài viết (trang chủ khách có thêm Tính năng), bên phải Đăng nhập và nút Đăng ký. Ở thư viện bài tập và bài viết, khách thấy một dải mời đăng ký nền `--accent-soft` ngay dưới tiêu đề (`includes/guest-cta.php`).
 - **Thanh điều hướng quản trị:** nền `--ink`, nhãn `ADMIN` cam, nút "Xem trang người dùng". Khu HLV dùng cùng kiểu với nhãn `HLV`.
 - **Nút:**
   - Chính: nền cam, chữ trắng, bo `--r`, có hover/active/focus.

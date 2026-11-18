@@ -60,8 +60,10 @@ Mở từng URL trong 3 trạng thái: **chưa đăng nhập**, **USER**, **ADMI
 | `/index.php` | Trang giới thiệu | Trang chủ | Chuyển sang `/admin/dashboard.php` |
 | `/login.php`, `/register.php` | Xem được | Chuyển về trang chủ | Chuyển về trang chủ |
 | `/profile.php` | Chuyển về đăng nhập | Xem được | Xem được |
-| `/exercises.php` | Chuyển về đăng nhập | Xem được | Xem được |
-| `/exercise-detail.php?id=1` | Chuyển về đăng nhập | Xem được | Xem được |
+| `/exercises.php` | Xem được (chỉ đọc, có dải mời đăng ký; từ A-45) | Xem được | Xem được |
+| `/exercise-detail.php?id=1` | Xem được (chỉ đọc; từ A-45) | Xem được | Xem được |
+| `/articles.php`, `/article.php?slug=` | Xem được (không ghi "đã đọc" cho khách; từ A-45) | Xem được | Xem được |
+| `/workout-plan.php`, `/nutrition.php`, `/progress.php`, `/report.php` | Chuyển về đăng nhập | Xem được | Xem được |
 | `/admin/dashboard.php` | Chuyển về đăng nhập | **Bị chặn** | Xem được |
 | `/admin/exercises.php` | Chuyển về đăng nhập | **Bị chặn** | Xem được |
 | `/admin/exercise-form.php` | Chuyển về đăng nhập | **Bị chặn** | Xem được |
