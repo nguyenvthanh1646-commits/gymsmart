@@ -15,7 +15,7 @@ require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php'; // exerciseImageSrc()
 
-requireLogin(); // theo API_SPEC: xem thư viện bài tập cần đăng nhập
+// Khách xem được (A-45): trang chỉ đọc, không có dữ liệu cá nhân. Ghi nhật ký, lịch tập vẫn cần đăng nhập ở trang khác.
 
 // ===== Bảng nhãn: giá trị trong DB → chữ hiển thị tiếng Việt =====
 // Khóa bên trái PHẢI trùng đúng giá trị lưu trong cột của bảng exercises.
@@ -161,6 +161,7 @@ include __DIR__ . '/includes/header.php';
         <p class="pg-sub">Chọn nhóm cơ, lọc theo loại và độ khó, rồi bấm vào bài tập để xem video hướng dẫn.</p>
     </div>
 </div>
+<?php $guestCtaText = 'Tạo tài khoản miễn phí để GymSmart xếp các bài này thành lịch tập theo trình độ, gợi ý mức tạ và ghi nhật ký từng set.'; include __DIR__ . '/includes/guest-cta.php'; // chỉ hiện với khách ?>
 
 <!-- Hàng nút lọc theo nhóm cơ: giữ nguyên các bộ lọc khác đang bật -->
 <nav class="chips" aria-label="Lọc theo nhóm cơ">

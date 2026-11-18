@@ -1,7 +1,7 @@
 <?php
 // public/exercise-detail.php - Trang chi tiết bài tập (D1)
 require_once __DIR__ . '/includes/auth.php';
-requireLogin(); // giống exercises.php: xem thư viện bài tập cần đăng nhập
+// Khách xem được (A-45): giống exercises.php, chỉ đọc.
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/video.php';
 require_once __DIR__ . '/includes/functions.php'; // exerciseImageSrc()
@@ -103,6 +103,7 @@ include __DIR__ . '/includes/header.php';
         </div>
     </div>
 
+    <?php $guestCtaText = 'Muốn tập bài này theo lịch và được gợi ý mức tạ mỗi buổi? Tạo tài khoản miễn phí.'; include __DIR__ . '/includes/guest-cta.php'; // chỉ hiện với khách ?>
     <div class="exd">
         <div class="exd__main">
             <?php if ($embedUrl !== null): // chỉ hiện khung video khi có video hợp lệ ?>

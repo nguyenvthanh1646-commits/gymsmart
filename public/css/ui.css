@@ -307,3 +307,10 @@ a { color: var(--ui-accent-dark); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Dải mời đăng ký cho khách ở thư viện bài tập và bài viết (includes/guest-cta.php, A-45) */
+.guest-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3); margin: 0 0 var(--s-5);
+    padding: var(--s-4) var(--s-5); border: 1px solid #ffd2bd; border-radius: var(--r-lg); background: var(--accent-soft); }
+.guest-cta p { margin: 0; max-width: 46em; color: var(--text); font-weight: 600; }
+.guest-cta__acts { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.guest-cta__acts .btn { min-height: 44px; }

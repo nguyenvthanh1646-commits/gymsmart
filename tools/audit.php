@@ -17,7 +17,8 @@ if (!is_dir($root)) {
 }
 
 // Trang công khai, không cần đăng nhập
-$publicPages = ['index.php', 'login.php', 'register.php', 'logout.php', 'forgot-password.php', 'reset-password.php'];
+$publicPages = ['index.php', 'login.php', 'register.php', 'logout.php', 'forgot-password.php', 'reset-password.php',
+    'exercises.php', 'exercise-detail.php', 'articles.php', 'article.php'];   // 4 trang cuối: khách xem được (A-45), chỉ đọc
 
 $findings = []; // [mức, file, số dòng, mô tả]
 

@@ -52,7 +52,7 @@ if ($loggedIn) {
         } catch (Throwable $e) { /* chưa import sql/users_avatar.sql: bỏ qua */ }
     }
 }
-// Khách ở trang chủ: các trang tính năng đều cần đăng nhập nên liên kết chỉ cuộn tới mục ngay trong trang
+// Khách ở trang chủ: có thêm liên kết cuộn tới mục Tính năng ngay trong trang (thanh menu kính tối của trang khách)
 $navGuestHome = !$loggedIn && $navCurrent === 'index.php';
 // Trang chủ sau đăng nhập dùng chủ đề tối (css/home-user.css), các trang khác giữ nền sáng
 $navUserHome = $loggedIn && $navCurrent === 'index.php';
@@ -78,10 +78,12 @@ $navAvatar = ($loggedIn && is_string($_SESSION['avatar'] ?? null) && preg_match(
                 </nav>
             <?php endif; ?>
 
-            <?php if ($navGuestHome): ?>
+            <?php if (!$loggedIn): ?>
+                <!-- Khách: thư viện bài tập và bài viết xem được không cần đăng nhập (A-45); trang chủ khách có thêm liên kết cuộn tới mục Tính năng -->
                 <nav class="nb__links" aria-label="Chính">
-                    <a href="#tinh-nang">Tính năng</a>
-                    <a href="#kien-thuc">Bài viết</a>
+                    <?php if ($navGuestHome): ?><a href="#tinh-nang">Tính năng</a><?php endif; ?>
+                    <a href="/exercises.php" class="<?= in_array($navCurrent, ['exercises.php', 'exercise-detail.php'], true) ? 'is-active' : '' ?>">Bài tập &amp; Video</a>
+                    <a href="/articles.php" class="<?= in_array($navCurrent, ['articles.php', 'article.php'], true) ? 'is-active' : '' ?>">Bài viết</a>
                 </nav>
             <?php endif; ?>
 
