@@ -11,9 +11,52 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/workout-plan-db.php';
 require_once __DIR__ . '/includes/report-db.php';
 require_once __DIR__ . '/includes/achievements.php';
+require_once __DIR__ . '/includes/csrf.php';
+require_once __DIR__ . '/includes/weekly-summary.php';
 
 $userId = (int)$_SESSION['user_id'];
 $today = date('Y-m-d');
+$lastWeek = date('Y-m-d', strtotime(achWeekStart($today) . ' -7 days'));   // thứ Hai của tuần vừa xong
+$goalLabels = ['LOSE_FAT' => 'giảm mỡ', 'MAINTAIN' => 'duy trì cân nặng', 'GAIN_MUSCLE' => 'tăng cơ'];
+
+// ===== POST: AI viết tổng kết tuần vừa xong (D2). Post/Redirect/Get, kết quả báo bằng flash trong session =====
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    if (!verifyCsrf()) {
+        showCsrfError();
+    }
+    $flash = ['error', 'Chưa tạo được bản tổng kết.'];
+    try {
+        $existing = weeklyGet($pdo, $userId, $lastWeek);
+        if (!weeklyCanGenerate($existing, time())) {
+            $flash = ['error', 'Mỗi tuần chỉ tạo lại tối đa 1 lần mỗi ngày. Bạn quay lại sau nhé.'];
+        } else {
+            $plan = fetchActivePlan($pdo, $userId);
+            $stats = weeklyLoad($pdo, $userId, $lastWeek, $plan !== null ? (int)$plan['days_per_week'] : 0);
+            if ($stats['sessions'] === 0 && $stats['weightEnd'] === null) {
+                $flash = ['error', 'Tuần trước chưa có buổi tập hay lần cân nào nên chưa có gì để tổng kết.'];
+            } else {
+                require_once __DIR__ . '/includes/ai.php';
+                $prompt = weeklyPrompt($stats, $goalLabels[fetchUserGoal($pdo, $userId) ?? ''] ?? 'chưa chọn');
+                $res = aiGenerate($prompt['system'], [['role' => 'user', 'text' => $prompt['user']]], ['maxTokens' => 700, 'temperature' => 0.5]);
+                if ($res['ok'] && trim($res['text']) !== '') {
+                    weeklySave($pdo, $userId, $lastWeek, $stats, weeklyCleanReply($res['text']));
+                    $flash = ['ok', 'Đã tạo bản tổng kết tuần.'];
+                } else {
+                    error_log('report weekly: ' . $res['code'] . ' ' . $res['detail']);
+                    $flash = ['error', aiFriendlyError($res['code'])];
+                }
+            }
+        }
+    } catch (PDOException $e) {
+        error_log('report weekly: ' . $e->getMessage());   // thường do DB cũ chưa có bảng weekly_summaries
+        $flash = ['error', 'Chưa lưu được bản tổng kết. Quản trị viên cần chạy sql/weekly_summaries.sql.'];
+    }
+    $_SESSION['report_flash'] = $flash;
+    header('Location: /report.php#tong-ket');
+    exit;
+}
+$reportFlash = $_SESSION['report_flash'] ?? null;
+unset($_SESSION['report_flash']);
 $thisMonth = date('Y-m');
 $month = (string)($_GET['month'] ?? $thisMonth);
 if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) || $month > $thisMonth) {
@@ -35,6 +78,13 @@ try {
     $sum = achMonthSummary(reportLogsBetween($pdo, $userId, $from, $to), reportMetricsBetween($pdo, $userId, $from, $to));
     $prevFrom = $prevMonth . '-01';
     $prev = achMonthSummary(reportLogsBetween($pdo, $userId, $prevFrom, date('Y-m-t', strtotime($prevFrom))), []);
+    try {
+        $weekly = weeklyGet($pdo, $userId, $lastWeek);
+        $weeklyReady = true;
+    } catch (PDOException $e) {
+        $weekly = null;
+        $weeklyReady = false;   // chưa import sql/weekly_summaries.sql: ẩn nút tạo
+    }
 } catch (PDOException $e) {
     error_log('report.php: ' . $e->getMessage());
     $loadError = true;
@@ -85,6 +135,34 @@ include __DIR__ . '/includes/header.php';
             <b class="rp-stat__value"><?= (int)$streak['best'] ?> <small>tuần</small></b>
             <span class="rp-stat__note"><?= count($trainingDates) ?> ngày tập từ trước tới nay</span>
         </div>
+    </section>
+
+    <!-- ===== Tổng kết tuần bằng AI (D2) ===== -->
+    <section class="rp-card rp-ai" id="tong-ket" aria-labelledby="rp-ai-title">
+        <div class="rp-card__head">
+            <h2 id="rp-ai-title">Tổng kết tuần trước bằng AI</h2>
+            <span class="rp-count"><?= htmlspecialchars(date('d/m', strtotime($lastWeek)) . ' - ' . date('d/m/Y', strtotime($lastWeek . ' +6 days'))) ?></span>
+        </div>
+        <?php if ($reportFlash): ?>
+            <p class="rp-flash rp-flash--<?= $reportFlash[0] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($reportFlash[1]) ?></p>
+        <?php endif; ?>
+        <?php if ($weekly): ?>
+            <div class="rp-ai__text">
+                <?php foreach (explode("\n", (string)$weekly['content']) as $line): ?>
+                    <p><?= htmlspecialchars($line) ?></p>
+                <?php endforeach; ?>
+            </div>
+            <p class="rp-note">Viết lúc <?= htmlspecialchars(date('H:i d/m/Y', strtotime($weekly['created_at']))) ?> từ số liệu nhật ký và số đo của bạn.</p>
+        <?php else: ?>
+            <p class="rp-ai__intro">GymSmart AI đọc số buổi tập so với lịch, khối lượng nâng, bài đã tăng tạ và cân nặng của tuần trước, rồi viết 3 dòng: điểm tốt, điều cần chú ý, gợi ý cho tuần tới.</p>
+        <?php endif; ?>
+        <?php if ($weeklyReady && weeklyCanGenerate($weekly, time())): ?>
+            <form method="post" action="/report.php" class="rp-ai__form" data-ai-form>
+                <?= csrfField() ?>
+                <button type="submit" class="btn<?= $weekly ? ' btn--ghost' : '' ?>"><?= $weekly ? 'Viết lại tổng kết' : 'Tạo tổng kết tuần' ?></button>
+            </form>
+        <?php endif; ?>
+        <p class="rp-ai__warn">Nội dung do AI viết, chỉ để tham khảo, không thay thế tư vấn của bác sĩ hay chuyên gia dinh dưỡng. Có chấn thương hoặc bệnh nền thì hỏi chuyên gia trước khi đổi cách tập, cách ăn.</p>
     </section>
 
     <!-- ===== Báo cáo tháng ===== -->
@@ -164,5 +242,14 @@ include __DIR__ . '/includes/header.php';
 <script>
 // Nút "In / lưu PDF": mở hộp in của trình duyệt; chọn "Lưu dưới dạng PDF" để có file PDF
 document.querySelector('[data-print]').addEventListener('click', function () { window.print(); });
+// Nút tạo tổng kết: AI có thể mất 10-30 giây, khóa nút để khỏi bấm nhiều lần
+var aiForm = document.querySelector('[data-ai-form]');
+if (aiForm) {
+    aiForm.addEventListener('submit', function () {
+        var b = aiForm.querySelector('button');
+        b.disabled = true;
+        b.textContent = 'GymSmart AI đang viết… (10-30 giây)';
+    });
+}
 </script>
 <?php include __DIR__ . '/includes/footer.php'; ?>

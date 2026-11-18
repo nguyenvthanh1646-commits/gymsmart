@@ -74,3 +74,18 @@
     .rp-stat--main .rp-stat__label, .rp-stat--main .rp-stat__note, .rp-stat--main .rp-stat__value small { color: var(--text-muted); }
     .rp-print-note { display: block; color: var(--text-muted); font-size: 12px; }
 }
+
+/* Tổng kết tuần bằng AI (A-46) */
+.rp-flash { margin: 0 0 var(--s-3); padding: 10px 14px; border-radius: var(--r); font-weight: 600; }
+.rp-flash--ok { background: #ecfdf3; color: #067647; }
+.rp-flash--error { background: #fef3f2; color: #b42318; }
+.rp-ai__text { padding: var(--s-4); border-left: 3px solid var(--accent); border-radius: var(--r); background: var(--bg); }
+.rp-ai__text p { margin: 0; line-height: 1.6; color: var(--text); }
+.rp-ai__text p + p { margin-top: 8px; }
+.rp-ai__intro { margin: 0; color: var(--text-muted); max-width: 52em; }
+.rp-ai__form { margin-top: var(--s-3); }
+.rp-ai__form .btn { min-height: 44px; }
+.rp-ai__form .btn:disabled { opacity: .7; cursor: progress; transform: none; }
+.rp-ai__warn { margin: var(--s-3) 0 0; color: var(--text-muted); font-size: 13px; }
+@media print { .rp-ai__form { display: none; } }
+.rp-card { scroll-margin-top: 84px; }   /* nhảy tới #tong-ket: tiêu đề không bị thanh menu dính che */
