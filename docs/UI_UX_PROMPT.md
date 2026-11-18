@@ -129,7 +129,7 @@ Quy tắc màu:
   - Bên dưới: dải từ khóa chạy ngang, công cụ tính calo (tính trong trình duyệt), lưới bento, 3 bước, chatbot mẫu, bài viết thật, kêu gọi cuối trang nền cam; mọi khối nền sáng.
   - Chuyển động chỉ chạy khi nhìn thấy và tab đang mở; tắt hết khi `prefers-reduced-motion`.
 - **Trang chủ đã đăng nhập (bảng điều khiển):**
-  - Dùng nền sáng như trang chức năng, không dùng nền xanh đen.
+  - Nền tối `--ink` (thẻ xanh đen). Đầu trang theo hướng "Future sport" giống hero trang khách: lưới sàn phối cảnh, quầng sáng cam (không dùng `--glow-cool`), lời chào viết hoa nghiêng có tên tô gradient cam, ô số liệu nghiêng viền trái cam. Từ 900px có thêm ảnh gym cắt bình hành bên phải; màn hình hẹp ẩn ảnh để số liệu lên sớm.
   - Gồm: lời chào và ngày, một nút hành động theo trạng thái (Tạo lịch tập, Bắt đầu buổi tập, Hoàn thiện hồ sơ), thẻ Hôm nay, thẻ Tuần này (dải 7 ngày, có chữ Đã tập, Chưa tập, Nghỉ), thẻ Dinh dưỡng (vòng macro), thẻ Tiến trình (sparkline cân nặng).
 - **Đăng ký:** 3 bước (Tài khoản, Cơ thể, Mục tiêu) có thanh tiến độ, giữ lại dữ liệu khi lỗi.
 - **Đăng nhập, quên mật khẩu:** tối giản, có liên kết qua lại, thông báo chung không lộ email có tồn tại.

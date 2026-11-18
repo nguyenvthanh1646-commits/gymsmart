@@ -52,20 +52,32 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
 .du-body { position: relative; z-index: 1; margin-top: -44px; padding-bottom: 96px; } /* thẻ tuần vắt lên ảnh; chừa đáy cho nút chat */
 .du-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* ===== Đầu trang có ảnh ===== */
-.du-hero { position: relative; isolation: isolate; overflow: hidden; background: #000001; }
-.du-hero__photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
-/* Lớp phủ giữ chữ luôn dễ đọc, đáy tan vào màu nền trang để thẻ tuần vắt lên liền mạch */
-.du-hero::after {
-    content: ""; position: absolute; inset: 0; z-index: -1;
+/* ===== Đầu trang kiểu "Future sport" (cùng ngôn ngữ với hero trang khách, không dùng màu lạnh vì --glow-cool chỉ cho trang khách) ===== */
+.du-hero { position: relative; isolation: isolate; overflow: hidden; background: var(--gs-ink); }
+/* Lưới sàn phối cảnh, tĩnh */
+.du-hero__floor {
+    position: absolute; left: -20%; right: -20%; bottom: -10%; height: 70%; z-index: -2;
+    background-image: linear-gradient(rgba(255, 138, 61, .18) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 138, 61, .18) 1px, transparent 1px);
+    background-size: 56px 56px; transform: perspective(600px) rotateX(62deg); transform-origin: bottom;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 45%, #000 65%, transparent); mask-image: linear-gradient(180deg, transparent, #000 45%, #000 65%, transparent);
+}
+/* Quầng sáng cam, đáy tan vào màu nền trang để thẻ tuần vắt lên liền mạch */
+.du-hero__glow {
+    position: absolute; inset: 0; z-index: -1;
     background:
-        radial-gradient(60% 50% at 80% 10%, rgba(255, 90, 31, .22), transparent 70%),
-        linear-gradient(180deg, rgba(11, 16, 32, .55) 0%, rgba(11, 16, 32, .84) 46%, var(--gs-ink) 100%);
+        linear-gradient(180deg, transparent 72%, var(--gs-ink) 100%),   /* lớp đầu nằm trên cùng: đáy tan hẳn vào nền */
+        radial-gradient(560px 380px at 80% 8%, rgba(255, 90, 31, .32), transparent 65%),
+        radial-gradient(700px 400px at 8% 110%, rgba(255, 90, 31, .14), transparent 70%);
 }
 .du-hero__in { display: grid; gap: 18px; padding-top: 28px; padding-bottom: 72px; }
-.du-hero__date { margin: 0 0 4px; color: #ffc196; font-size: .92rem; font-weight: 600; }
-.du-hero__title { margin: 0; color: #fff; font-size: clamp(2.1rem, 8vw, 3.2rem); font-weight: 800; line-height: 1.12; letter-spacing: -.025em; }
-.du-hero__title em { font-style: normal; color: #ffb27a; }
+.du-hero__date { display: inline-flex; align-items: center; gap: 10px; margin: 0 0 14px; padding: 6px 14px; border: 1px solid rgba(255, 255, 255, .14); border-radius: 999px; background: rgba(255, 255, 255, .06); color: #ffc196; font-size: .88rem; font-weight: 600; }
+.du-hero__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gs-accent); box-shadow: 0 0 0 4px rgba(255, 90, 31, .2), 0 0 12px var(--gs-accent); }
+/* Tiêu đề viết hoa nghiêng kiểu áo đấu; line-height đủ cho dấu tiếng Việt chồng trên chữ hoa */
+.du-hero__title { margin: 0; color: #fff; font-size: clamp(2.2rem, 8vw, 3.6rem); font-weight: 800; line-height: 1.16; letter-spacing: -.03em; text-transform: uppercase; transform: skewX(-8deg); transform-origin: left bottom; }
+.du-hero__title em { font-style: normal; background: linear-gradient(100deg, #ff8a3d, #ff5a1f 60%, #ffb38a); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 20px rgba(255, 90, 31, .35)); }
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+    .du-hero__title em { background: none; color: #ffb27a; filter: none; }
+}
 .du-hero__lead { margin: 8px 0 18px; max-width: 34em; color: var(--du-text-soft); font-size: 1.05rem; line-height: 1.55; }
 .du-btn {
     display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 28px; border-radius: 999px;
@@ -75,11 +87,21 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
 .du-btn:hover { color: var(--gs-ink); filter: brightness(1.08); text-decoration: none; transform: translateY(-1px); }
 
 .du-hero__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
-.du-stat { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: center; padding: 12px; border: 1px solid rgba(255, 255, 255, .14); border-radius: 14px; background: rgba(11, 16, 32, .72); }
+/* Ô số liệu kiểu bảng điểm: nghiêng, viền trái cam (giống dải số liệu trang khách) */
+.du-stat { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: center; padding: 12px; border: 1px solid rgba(255, 255, 255, .12); border-left: 3px solid var(--gs-accent); border-radius: 14px; background: rgba(255, 255, 255, .05); transform: skewX(-8deg); }
 .du-stat__icon { grid-row: span 2; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--du-orange-soft); color: var(--gs-accent-2); }
 .du-stat dt { color: var(--du-text-muted); font-size: .78rem; }
 .du-stat dd { margin: 0; color: #fff; font-size: 1.12rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .du-stat small { color: var(--du-text-muted); font-size: .76rem; font-weight: 500; }
+
+/* Ảnh cắt hình bình hành có vạch quét và vạch tốc độ chéo; ẩn ở màn hình hẹp để số liệu lên sớm */
+.du-hero__art { display: none; }
+.du-hero__frame { position: absolute; inset: 0 0 0 10%; overflow: hidden; clip-path: polygon(16% 0, 100% 0, 84% 100%, 0 100%); background: #111a33; }
+.du-hero__frame img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; filter: saturate(1.05) contrast(1.05); }
+.du-hero__frame::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(11, 16, 32, .7)); }
+.du-hero__scan { position: absolute; inset: 0; z-index: 1; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .06) 0 1px, transparent 1px 4px); pointer-events: none; }
+.du-hero__stripes { position: absolute; left: 0; top: 8%; width: 96px; height: 96px; z-index: 2;
+    background: repeating-linear-gradient(-60deg, var(--gs-accent) 0 7px, transparent 7px 16px); -webkit-mask-image: linear-gradient(135deg, #000, transparent); mask-image: linear-gradient(135deg, #000, transparent); }
 
 .du-notice { margin: 0 0 14px; padding: 12px 16px; border: 1px solid rgba(255, 138, 61, .5); border-radius: 14px; background: #2a1d1f; color: #ffe3d1; font-size: .94rem; line-height: 1.55; }
 .du-notice b { color: #fff; }
@@ -242,13 +264,6 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
 @media (min-width: 720px) {
     .du-wrap { padding: 0 20px; }
     .du-hero__in { padding-top: 40px; padding-bottom: 84px; }
-    .du-hero__photo { object-position: 63% 30%; }
-    .du-hero::after {
-        background:
-            radial-gradient(40% 70% at 66% 30%, rgba(255, 90, 31, .16), transparent 72%),
-            linear-gradient(180deg, transparent 55%, var(--gs-ink) 100%),
-            linear-gradient(90deg, rgba(11, 16, 32, .95) 0, rgba(11, 16, 32, .82) 55%, rgba(11, 16, 32, .5) 100%);
-    }
     .du-week { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 24px; padding: 22px; }
     .du-week__empty { grid-column: 1 / -1; }
     .du-day { padding: 12px 2px; }
@@ -264,15 +279,15 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
     .du-log { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: end; }
     .du-log__save { grid-column: auto; padding: 0 22px; }
 }
+/* Màn hình rộng: chữ và số liệu bên trái, ảnh bên phải */
+@media (min-width: 900px) {
+    .du-hero__in { grid-template-columns: minmax(0, 1fr) minmax(0, 440px); column-gap: 40px; align-items: center; }
+    .du-hero__copy, .du-hero__stats { grid-column: 1; }
+    .du-hero__art { display: block; position: relative; grid-column: 2; grid-row: 1 / span 2; aspect-ratio: 4 / 3; }
+}
 @media (min-width: 1040px) {
-    .du-hero__in { grid-template-columns: minmax(0, 1fr) auto; align-items: end; padding-top: 48px; padding-bottom: 92px; }
+    .du-hero__in { padding-top: 48px; padding-bottom: 92px; }
     .du-hero__stats { grid-template-columns: repeat(2, 196px); max-width: none; }
-    .du-hero::after {
-        background:
-            radial-gradient(34% 80% at 64% 26%, rgba(255, 90, 31, .14), transparent 72%),
-            linear-gradient(180deg, transparent 52%, var(--gs-ink) 100%),
-            linear-gradient(90deg, rgba(11, 16, 32, .96) 0, rgba(11, 16, 32, .88) 44%, rgba(11, 16, 32, .25) 66%, rgba(11, 16, 32, .5) 100%);
-    }
     /* Mặc định (ngày nghỉ hoặc chưa có lịch): thẻ Hôm nay ngắn, nằm cùng hàng với Dinh dưỡng */
     .du-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .du-card--today { grid-column: 1 / span 2; grid-row: 1; }
