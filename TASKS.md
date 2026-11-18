@@ -77,6 +77,19 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
 
 ---
 
+## Nâng cấp 11/2026 (đề xuất đã duyệt, mỗi gói một nhánh xếp chồng từ `a-37-landing-tre-trung`)
+
+Ảnh trước nâng cấp: `docs/screens/upgrade-before-*.png`, ảnh sau: `upgrade-after-*.png`.
+
+- [x] A-39 Sửa lỗi nền (`a-39-sua-loi-nen`):
+  - Múi giờ PHP và MySQL lệch 6 giờ (php.ini Europe/Berlin, MySQL theo giờ máy): `includes/db.php` đặt cả hai về `Asia/Ho_Chi_Minh` (đổi được bằng `APP_TIMEZONE`)
+  - `sql/body_metrics_fix.sql`: DB cũ có cột số đo kiểu FLOAT, cân nặng cho NULL, thiếu index; `users_avatar.sql` chạy lại được
+  - `tools/install.php` (tạo / nâng cấp DB một lệnh, `--demo` nạp tài khoản thử), `tools/run-tests.php` (chạy mọi test)
+  - `admin/users.php`: tìm kiếm, lọc vai trò, phân trang ở máy chủ (20 dòng/trang)
+  - Header `Content-Security-Policy` trong `includes/header.php`
+
+---
+
 ## B — Thư viện bài tập + Lịch tập
 
 - [x] B-1 → B-5 Trang danh sách bài tập: lưới thẻ, lọc nhóm cơ, loại, độ khó, ô tìm kiếm (A làm tạm, B chỉ cần đọc hiểu)
@@ -126,10 +139,10 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
 
 ## E — Giao diện + Chatbot
 
-- [ ] E-1 `style.css` khung: biến màu, chữ, bố cục chung; dùng các class đang có (`card`, `btn`)
-- [ ] E-2 Giao diện đăng ký, đăng nhập, hồ sơ, trang chủ theo wireframe
-- [ ] E-3 Responsive (điện thoại, máy tính bảng) cho các trang đã có
-- [ ] E-4 Giao diện trang lịch tập và trang TDEE/Macro (sau khi B và C có trang)
+- [x] E-1 `style.css` khung: biến màu, chữ, bố cục chung; dùng các class đang có (`card`, `btn`) — A làm thay ở A-6 (`ui.css`), E cần đọc hiểu
+- [x] E-2 Giao diện đăng ký, đăng nhập, hồ sơ, trang chủ theo wireframe — A làm thay ở A-6, A-15, A-16, A-38
+- [x] E-3 Responsive (điện thoại, máy tính bảng) cho các trang đã có — A làm thay, kiểm tra ở 390/768/1440px (`docs/screens/`)
+- [x] E-4 Giao diện trang lịch tập và trang TDEE/Macro (sau khi B và C có trang) — A làm thay ở A-6, A-11, A-26
 - [x] E-5 (Tùy chọn) Chatbot mức 1: `api/chatbot.php` và widget chat nổi (A làm lại ở A-13)
 
 ---

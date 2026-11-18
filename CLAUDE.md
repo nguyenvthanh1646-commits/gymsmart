@@ -53,7 +53,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Database và file SQL
 
-`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `article_reads.sql`, `body_metrics.sql`, `nutrition_preferences.sql`, `password_resets.sql`, `split_types.sql`, `users_avatar.sql`, `coach_features.sql`, `coach_extras.sql`). `coach_features.sql` dùng cú pháp `ADD COLUMN IF NOT EXISTS` của MariaDB (XAMPP). Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
+`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `article_reads.sql`, `body_metrics.sql`, `nutrition_preferences.sql`, `password_resets.sql`, `split_types.sql`, `users_avatar.sql`, `coach_features.sql`, `coach_extras.sql`, `body_metrics_fix.sql`). Mọi file bổ sung đều **chạy lại nhiều lần vẫn an toàn** (dùng cú pháp `IF NOT EXISTS` của MariaDB/XAMPP), nên database cũ chỉ cần `php tools/install.php --upgrade`. Thêm file bổ sung mới thì nhớ thêm tên vào hằng `MIGRATIONS` trong `tools/install.php`. Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
 
 ## Phạm vi tính năng
 
@@ -145,6 +145,14 @@ php tools/audit.php public
 
 # Kiểm tra vì sao chatbot không trả lời (cURL, khóa API, model, SSL). Có gọi thật tới Gemini
 php tools/chatbot-check.php
+
+# Dựng database một lệnh (thay cho import từng file trong phpMyAdmin). DB đã có bảng thì tự dừng, không ghi đè
+php tools/install.php                 # tạo DB_NAME: schema.sql + 40 bài tập + ảnh/video
+php tools/install.php --upgrade       # DB cũ: chạy lại mọi file bổ sung trong sql/ (không mất dữ liệu)
+php tools/install.php --db=gymsmart_demo --fresh --demo   # DB thử riêng kèm tài khoản thử @gymsmart.test
+
+# Chạy mọi test một lệnh, in bảng tổng kết (--http thêm kịch bản HLV qua HTTP, cần MySQL)
+php tools/run-tests.php
 ```
 
 Không có bước build, không có bundler, không dùng Composer/npm. Chart.js được lưu sẵn ở `public/js/lib/chart.umd.min.js` (không tải qua CDN).
@@ -153,7 +161,8 @@ Không có bước build, không có bundler, không dùng Composer/npm. Chart.j
 
 **Database:** dùng XAMPP/MAMP (có sẵn phpMyAdmin), hoặc cài phpMyAdmin riêng nếu dùng MySQL độc lập.
 - Tạo database `gymsmart` qua giao diện phpMyAdmin
-- Tab **Import** → chọn `sql/schema.sql`, rồi `sql/seed_exercises_v2.sql`, rồi các file bổ sung trong `sql/` (xem mục "Database và file SQL")
+- Tab **Import** → chọn `sql/schema.sql`, rồi `sql/seed_exercises_v2.sql`, rồi các file bổ sung trong `sql/` (xem mục "Database và file SQL"). Cách nhanh hơn: `php tools/install.php` (tạo mới) hoặc `php tools/install.php --upgrade` (DB cũ)
+- Múi giờ: `includes/db.php` đặt PHP và phiên MySQL cùng `Asia/Ho_Chi_Minh` (đổi bằng hằng `APP_TIMEZONE` trong `config.php`). Công cụ dòng lệnh trỏ được sang DB khác bằng biến môi trường `GYMSMART_DB` (trang web luôn dùng `DB_NAME`)
 - Khi sửa cấu trúc bảng trực tiếp trên phpMyAdmin, **nhớ export lại và cập nhật `sql/schema.sql`** để cả nhóm đồng bộ (tab Export → chọn format SQL)
 
 ## Quy trình Git của nhóm

@@ -313,3 +313,14 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | Tải file PHP đổi đuôi `.png` làm chứng chỉ; file > 3 MB | Bị từ chối (kiểm tra nội dung, không tin đuôi) |
 | Mở `/storage/certificates/<tên>` bằng URL; USER mở `admin/certificate.php` | 404 (ngoài `public/`); 403 |
 | Đổi `certificate_file` trong DB thành `../../config.php` rồi admin mở | 404, không đọc được file ngoài thư mục |
+
+## Bổ sung: Nâng cấp 11/2026 (A-39)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Xem header của một trang bất kỳ (F12 > Network) | Có `Content-Security-Policy` chỉ cho script/CSS/fetch từ chính website, khung nhúng chỉ `youtube-nocookie.com` |
+| Mở trang chi tiết bài tập có video, F12 > Console | Video chạy, không có dòng "Refused to ..." (CSP chặn nhầm) |
+| `admin/users.php?q=%25` hoặc `?q=_` | Tìm đúng chữ `%`/`_`, không thành mẫu khớp mọi dòng (đã thoát ký tự LIKE) |
+| `admin/users.php?role=ABC&page=-5` | Bỏ qua vai trò lạ, về trang 1, không lỗi |
+| Ghi nhật ký lúc 0-6 giờ sáng | Ngày nhật ký, "Hôm nay" ở trang chủ và tỉ lệ tập của HLV cùng một ngày (PHP và MySQL cùng múi giờ) |
+| `php tools/install.php` khi DB thật đã có bảng | Dừng, không ghi đè; `--fresh` trên DB thật bắt buộc thêm `--yes` |

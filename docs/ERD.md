@@ -352,7 +352,7 @@ Ghi nhận thực tế mỗi lần user tập (khác với kế hoạch trong `w
 > `workout_plan_exercise_id` nullable: tập ngoài lịch thì lưu NULL, chỉ bắt buộc `exercise_id`. Khi có giá trị, PHP kiểm tra dòng đó thuộc lịch ACTIVE của chính user (`saveWorkoutLog()`).
 
 ### `body_metrics`
-Lưu theo mốc thời gian (không update đè), để vẽ biểu đồ tiến trình cân nặng/số đo. `weight_kg` bắt buộc, các số đo khác để trống = NULL. Có index `(user_id, recorded_date)`.
+Lưu theo mốc thời gian (không update đè), để vẽ biểu đồ tiến trình cân nặng/số đo. `weight_kg` bắt buộc, các số đo khác để trống = NULL. Có index `(user_id, recorded_date)`. Các cột số đo là DECIMAL (không dùng FLOAT để khỏi sai số làm tròn); database tạo từ bản `body_metrics.sql` đời đầu cần chạy `sql/body_metrics_fix.sql`.
 
 ### `nutrition_targets`
 Lưu kết quả tính TDEE/macro theo từng lần tính (không phải 1-1 cố định với user, vì chỉ số cơ thể/mục tiêu có thể thay đổi → giữ lịch sử).
