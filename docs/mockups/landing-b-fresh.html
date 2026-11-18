@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup B · Fresh energetic — GymSmart</title>
+<!-- MOCKUP TĨNH để chọn hướng thiết kế, mở trực tiếp bằng trình duyệt. Không phải code của trang thật. -->
+<link rel="stylesheet" href="../../public/css/fonts.css">
+<style>
+:root{
+  --accent:#ff5a1f; --accent-2:#ff8a3d; --accent-soft:#fff1ea;
+  --ink:#0b1020; --text:#131a2e; --text-muted:#667085; --line:#e4e8f1; --bg:#f4f6fb; --surface:#fff;
+  --glow:#22d3ee;                 /* màu lạnh phụ: CHỈ dùng làm ánh sáng/gradient, không dùng cho chữ hay nút */
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box} html,body{margin:0}
+body{font-family:'Be Vietnam Pro','Segoe UI',system-ui,sans-serif;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+.mk-note{position:sticky;top:0;z-index:50;background:#fffaeb;color:#93370d;border-bottom:1px solid #fedf89;font-size:13px;padding:6px 16px;text-align:center}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.nav{display:flex;align-items:center;gap:28px;height:72px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;text-decoration:none}
+.logo i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent-2),var(--accent));display:grid;place-items:center;font-style:normal;color:#fff}
+.logo b{color:var(--accent)}
+.nav a.l{text-decoration:none;font-weight:500;font-size:15px;color:#344054}
+.nav .sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 26px;border-radius:999px;font:inherit;font-weight:700;text-decoration:none;border:2px solid transparent;position:relative;overflow:hidden;transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.btn--solid{background:var(--ink);color:#fff;box-shadow:0 10px 24px rgba(11,16,32,.2)}
+.btn--solid::after{content:"";position:absolute;inset:-40% auto -40% -60%;width:40%;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transition:left .5s var(--ease)}
+.btn--solid:hover{transform:translateY(-2px)} .btn--solid:hover::after{left:120%}
+.btn--orange{background:linear-gradient(135deg,var(--accent-2),var(--accent));color:#fff;box-shadow:0 12px 28px rgba(255,90,31,.35)}
+.btn--line{border-color:var(--ink);color:var(--ink);background:transparent}
+.btn--sm{min-height:44px;padding:0 18px;font-size:14px}
+
+/* ===== Hero nửa sáng nửa cam ===== */
+.hero{position:relative;overflow:hidden;background:#fff}
+.hero__in{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:40px;align-items:center;padding:40px 0 72px}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--accent-soft);color:#b93810;font-weight:700;font-size:13px}
+h1{margin:20px 0 18px;font-size:clamp(44px,7.4vw,96px);line-height:.98;font-weight:800;letter-spacing:-.045em;color:var(--ink)}
+h1 .grad{background:linear-gradient(100deg,var(--accent) 0%,var(--accent-2) 55%,#ffb38a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{margin:0;max-width:500px;font-size:18px;line-height:1.6;color:#475467}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 14px}
+.fine{margin:0;font-size:14px;color:var(--text-muted)}
+
+.stage{position:relative;aspect-ratio:4/5;max-height:620px}
+.blob{position:absolute;inset:6% 0 0 8%;border-radius:48px 160px 48px 48px;background:linear-gradient(150deg,var(--accent-2),var(--accent) 70%);overflow:hidden;box-shadow:0 30px 60px rgba(255,90,31,.3)}
+.blob::before{content:"";position:absolute;inset:0;background:url('../../public/assets/img/hero/hero-800.webp') 50% 20%/cover;mix-blend-mode:luminosity;opacity:.85}
+.blob::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(255,90,31,.55))}
+.halo{position:absolute;width:280px;height:280px;right:-60px;top:-30px;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.45),transparent 70%);filter:blur(6px)}
+.ring-deco{position:absolute;left:-10px;bottom:10%;width:120px;height:120px;border-radius:50%;border:14px solid var(--ink);opacity:.9}
+.chip{position:absolute;background:#fff;border-radius:20px;padding:14px 16px;box-shadow:0 18px 40px rgba(16,24,40,.16);min-width:170px}
+.chip small{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text-muted);font-weight:600}
+.chip small em{font-style:normal;color:#b93810;background:var(--accent-soft);padding:1px 8px;border-radius:99px}
+.chip b{display:block;margin-top:4px;font-size:28px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.chip b span{font-size:13px;font-weight:600;color:var(--text-muted)}
+.chip--kcal{left:-6%;top:16%}
+.chip--macro{right:-4%;top:46%;min-width:200px}
+.chip--ai{left:2%;bottom:4%;max-width:290px}
+.mbar{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:center;font-size:12px;margin-top:8px;color:#475467}
+.mbar div{height:8px;border-radius:99px;background:#f2f4f7;overflow:hidden} .mbar i{display:block;height:100%;border-radius:99px}
+.ai{display:flex;gap:10px;align-items:flex-start;margin-top:6px;font-size:14px;line-height:1.45;color:var(--text)}
+.ai span{flex:none;width:28px;height:28px;border-radius:9px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800}
+
+/* Marquee cam */
+.mq-clip{overflow:hidden;padding:18px 0}
+.mq{background:var(--accent);color:var(--ink);overflow:hidden;transform:rotate(-1.5deg);margin:0 -20px;box-shadow:0 10px 30px rgba(255,90,31,.25)}
+.mq__track{display:flex;gap:36px;width:max-content;padding:16px 0;animation:mq 38s linear infinite;font-weight:800;font-size:20px;letter-spacing:-.01em}
+.mq__track span{display:inline-flex;align-items:center;gap:36px;white-space:nowrap}
+.mq__track span::after{content:"●";font-size:10px}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+.sec{padding:96px 0}
+.sec h2{margin:0 0 10px;font-size:clamp(30px,4vw,52px);font-weight:800;letter-spacing:-.04em;line-height:1.05;color:var(--ink)}
+.sec .sub{margin:0 0 36px;color:var(--text-muted);font-size:17px;max-width:620px}
+.bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:200px;gap:18px}
+.b{background:#fff;border-radius:28px;padding:24px;position:relative;overflow:hidden;border:1px solid var(--line)}
+.b h3{margin:14px 0 6px;font-size:20px;font-weight:800;letter-spacing:-.02em} .b p{margin:0;color:var(--text-muted);font-size:15px;line-height:1.5}
+.b .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--accent-soft);color:#c2410c;font-size:20px}
+.b--big{grid-column:span 2;grid-row:span 2;background:linear-gradient(150deg,var(--accent-2),var(--accent));border:0;color:var(--ink)}
+.b--big p{color:#3b1708} .b--big .ic{background:rgba(255,255,255,.35);color:var(--ink)}
+.b--big .big-num{position:absolute;right:24px;bottom:10px;font-size:160px;font-weight:800;line-height:1;letter-spacing:-.06em;color:rgba(255,255,255,.28)}
+.b--dark{background:var(--ink);color:#fff;border:0} .b--dark p{color:#c7d0e6} .b--dark .ic{background:rgba(255,255,255,.1);color:#ffb38a}
+.b--wide{grid-column:span 2}
+.dots7{position:absolute;left:24px;right:24px;bottom:22px;display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dots7 i{height:36px;border-radius:12px;background:#f2f4f7} .dots7 i.on{background:var(--accent)}
+
+@media (max-width:960px){
+  .hero__in{grid-template-columns:1fr;padding:24px 0 56px}
+  .stage{max-width:460px;width:100%;margin:0 auto}
+  .bento{grid-template-columns:1fr 1fr}
+}
+@media (max-width:600px){
+  .wrap{padding:0 16px}
+  .nav a.l{display:none}
+  .lead{font-size:16px}
+  .cta .btn{flex:1}
+  .chip--kcal{left:0} .chip--macro{right:0}
+  .bento{grid-template-columns:1fr;grid-auto-rows:auto}
+  .b,.b--big,.b--wide{grid-column:auto;grid-row:auto;min-height:180px}
+  .b--big{min-height:300px}
+  .sticky{display:flex}
+}
+.sticky{display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:40}
+.sticky .btn{width:100%}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="mk-note">MOCKUP hướng B · "Fresh energetic" — chỉ để chọn hướng, mọi số liệu là <b>Ví dụ</b></div>
+
+<section class="hero">
+  <div class="wrap">
+    <nav class="nav">
+      <a class="logo" href="#"><i>G</i><span>Gym<b>Smart</b></span></a>
+      <a class="l" href="#tinh-nang">Tính năng</a><a class="l" href="#">Bài viết</a>
+      <span class="sp"></span>
+      <a class="btn btn--line btn--sm" href="#">Đăng nhập</a>
+      <a class="btn btn--orange btn--sm" href="#">Đăng ký</a>
+    </nav>
+    <div class="hero__in">
+      <div>
+        <span class="badge">⚡ Lịch tập và dinh dưỡng có AI hỗ trợ</span>
+        <h1>Tập đúng.<br>Ăn đủ.<br><span class="grad">Tiến bộ</span> thật.</h1>
+        <p class="lead">GymSmart gợi ý lịch tập, tính calo và macro theo cơ thể bạn, rồi ghi lại từng buổi để bạn thấy mình đi được bao xa.</p>
+        <div class="cta">
+          <a class="btn btn--orange" href="#">Tạo tài khoản miễn phí</a>
+          <a class="btn btn--line" href="#tinh-nang">Xem tính năng</a>
+        </div>
+        <p class="fine">Miễn phí · Đăng ký 3 bước · Không cần thẻ</p>
+      </div>
+
+      <div class="stage" role="group" aria-label="Ví dụ minh họa, không phải dữ liệu người dùng thật">
+        <div class="halo" aria-hidden="true"></div>
+        <div class="blob" aria-hidden="true"></div>
+        <div class="ring-deco" aria-hidden="true"></div>
+        <div class="chip chip--kcal"><small>Calo mục tiêu <em>Ví dụ</em></small><b id="kcal">2.650 <span>kcal</span></b></div>
+        <div class="chip chip--macro"><small>Macro hôm nay <em>Ví dụ</em></small>
+          <div class="mbar">Đạm<div><i style="width:62%;background:var(--accent)"></i></div></div>
+          <div class="mbar">Tinh bột<div><i style="width:88%;background:var(--accent-2)"></i></div></div>
+          <div class="mbar">Chất béo<div><i style="width:40%;background:#ffc29e"></i></div></div>
+        </div>
+        <div class="chip chip--ai"><small>GymSmart AI <em>Ví dụ</em></small>
+          <div class="ai"><span>AI</span><p style="margin:0">Mới tập ngực? Bắt đầu với Hít đất 3×10 và Ép ngực máy 3×12.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="mq-clip"><div class="mq" aria-hidden="true"><div class="mq__track">
+  <span>Lịch tập AI</span><span>TDEE &amp; Macro</span><span>40 bài tập có video</span><span>Biểu đồ tiến trình</span><span>Chatbot 24/7</span><span>Bài viết có dẫn chứng</span>
+  <span>Lịch tập AI</span><span>TDEE &amp; Macro</span><span>40 bài tập có video</span><span>Biểu đồ tiến trình</span><span>Chatbot 24/7</span><span>Bài viết có dẫn chứng</span>
+</div></div></div>
+
+<section class="sec" id="tinh-nang">
+  <div class="wrap">
+    <h2>Một app.<br>Cả hành trình tập.</h2>
+    <p class="sub">Hồ sơ của bạn quyết định lịch tập và dinh dưỡng; nhật ký cho thấy bạn tiến bộ ra sao.</p>
+    <div class="bento">
+      <div class="b b--big"><span class="ic">▶</span><h3>Thư viện bài tập có video</h3><p>Mỗi bài có video, các bước thực hiện và lỗi thường gặp.</p><span class="big-num" aria-hidden="true">40</span></div>
+      <div class="b b--dark"><span class="ic">✦</span><h3>Chatbot 24/7</h3><p>Hỏi theo hồ sơ của bạn.</p></div>
+      <div class="b"><span class="ic">◔</span><h3>TDEE &amp; Macro</h3><p>Công thức Mifflin–St Jeor.</p></div>
+      <div class="b b--wide"><span class="ic">▦</span><h3>Lịch tập tuần</h3><p>Chia buổi theo mục tiêu và số ngày bạn có.</p>
+        <div class="dots7" aria-hidden="true"><i class="on"></i><i></i><i class="on"></i><i></i><i class="on"></i><i></i><i></i></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="sticky"><a class="btn btn--orange" href="#">Tạo tài khoản miễn phí</a></div>
+</body>
+</html>
