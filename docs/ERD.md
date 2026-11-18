@@ -22,6 +22,9 @@ erDiagram
     USERS ||--o{ CHATBOT_SESSIONS : "trò chuyện với GymSmart AI"
     USERS ||--o{ NOTIFICATIONS : "nhận thông báo"
     USERS ||--o{ WEEKLY_SUMMARIES : "tổng kết tuần (AI)"
+    USERS ||--o{ COACH_PLAN_TEMPLATES : "HLV lưu mẫu lịch"
+    COACH_PLAN_TEMPLATES ||--o{ COACH_PLAN_TEMPLATE_ITEMS : "gồm"
+    EXERCISES ||--o{ COACH_PLAN_TEMPLATE_ITEMS : "dùng trong mẫu"
     USERS ||--o{ PASSWORD_RESETS : "yêu cầu đặt lại"
 
     EXERCISES ||--o{ WORKOUT_PLAN_EXERCISES : "được dùng trong"
@@ -428,6 +431,11 @@ Mỗi dòng là một thông báo cho MỘT người (`user_id`, xóa người t
 
 ### `weekly_summaries`
 Mỗi người tối đa 1 bản cho mỗi tuần (`UNIQUE (user_id, week_start)`, `week_start` là thứ Hai). `stats_json` lưu đúng số liệu đã gửi cho AI (số ngày tập so với lịch, set, khối lượng nâng, bài tăng tạ, cân nặng) để kiểm tra lại bản tổng kết dựa trên con số nào; `content` là 3 dòng AI viết. Lưu lại để không gọi AI mỗi lần mở trang; tạo lại tối đa 1 lần mỗi 24 giờ.
+
+## Mẫu lịch tập của HLV (`sql/coach_templates.sql`, đã gộp vào `schema.sql`, A-48)
+
+### `coach_plan_templates`, `coach_plan_template_items`
+Mỗi mẫu thuộc đúng 1 HLV (`coach_id`, xóa HLV thì xóa mẫu), lưu tên, kiểu chia, số buổi. Các bài của mẫu nằm ở bảng con: bài nào (`exercise_id`, xóa bài khỏi thư viện thì tự mất khỏi mẫu), thứ mấy, set, lặp, thứ tự. Giao mẫu thì mỗi học viên được thêm một lịch mới vào `workout_plans` (`assigned_by` = HLV, lịch cũ → `ARCHIVED`); mẫu và lịch đã giao độc lập nhau, xóa mẫu không ảnh hưởng lịch đã giao.
 
 ## Ghi chú khi triển khai
 

@@ -379,3 +379,12 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | Tuần trước không có dữ liệu | Báo chưa có gì để tổng kết, không gọi AI |
 | Xem `stats_json` trong DB | Chỉ có số liệu tổng hợp, không có tên, email, ghi chú |
 | AI trả lời có thẻ HTML | Hiện đúng chữ (htmlspecialchars), không chạy mã |
+
+### Mẫu lịch HLV (A-48)
+
+| Thử | Kết quả đúng |
+|---|---|
+| USER hoặc khách mở `/coach/templates.php` | 403 / chuyển đăng nhập |
+| HLV B gửi `template_id` của HLV A (apply / delete) | Báo "Không tìm thấy mẫu", không đổi gì |
+| Sửa form, thêm `clients[]` là id học viên của HLV khác hoặc đã kết thúc | Người đó bị bỏ qua ("Bỏ qua ... người không còn tập với bạn"), lịch của họ không đổi |
+| Gửi form thiếu `csrf_token` | Trang báo lỗi mã bảo vệ |
