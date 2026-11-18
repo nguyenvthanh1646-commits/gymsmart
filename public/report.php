@@ -13,6 +13,7 @@ require_once __DIR__ . '/includes/report-db.php';
 require_once __DIR__ . '/includes/achievements.php';
 require_once __DIR__ . '/includes/csrf.php';
 require_once __DIR__ . '/includes/weekly-summary.php';
+require_once __DIR__ . '/includes/equipment-db.php';   // kỷ lục cá nhân (A-47)
 
 $userId = (int)$_SESSION['user_id'];
 $today = date('Y-m-d');
@@ -75,6 +76,10 @@ try {
     $metricDates = reportMetricDates($pdo, $userId);
     $streak = achWeeklyStreak($trainingDates, $today, $target);
     $badges = achMilestones($trainingDates, $metricDates, $streak);
+    // Kỷ lục cá nhân: mỗi bài một dòng, kỷ lục đạt gần đây nhất lên đầu, tối đa 8
+    $records = personalRecords(recordLogs($pdo, $userId));
+    uasort($records, fn($a, $b) => strcmp($b['date'], $a['date']));
+    $records = array_slice($records, 0, 8, true);
     $sum = achMonthSummary(reportLogsBetween($pdo, $userId, $from, $to), reportMetricsBetween($pdo, $userId, $from, $to));
     $prevFrom = $prevMonth . '-01';
     $prev = achMonthSummary(reportLogsBetween($pdo, $userId, $prevFrom, date('Y-m-t', strtotime($prevFrom))), []);
@@ -211,6 +216,24 @@ include __DIR__ . '/includes/header.php';
             <?php endif; ?>
         <?php endif; ?>
     </section>
+
+    <!-- ===== Kỷ lục cá nhân (A-47) ===== -->
+    <?php if ($records): ?>
+        <section class="rp-card" aria-labelledby="rp-pr-title">
+            <div class="rp-card__head">
+                <h2 id="rp-pr-title">Kỷ lục cá nhân</h2>
+                <span class="rp-count">Mức tạ nặng nhất từng ghi (bài không tạ: số lặp nhiều nhất)</span>
+            </div>
+            <ol class="rp-top rp-pr">
+                <?php foreach ($records as $exId => $r): ?>
+                    <li>
+                        <span><a href="/exercise-detail.php?id=<?= (int)$exId ?>"><?= htmlspecialchars($r['name']) ?></a></span>
+                        <b><?= $r['kind'] === 'weight' ? htmlspecialchars($num($r['weight'], 1)) . ' kg × ' . (int)$r['reps'] : (int)$r['reps'] . ' lặp' ?> <small><?= htmlspecialchars($dmy($r['date'])) ?></small></b>
+                    </li>
+                <?php endforeach; ?>
+            </ol>
+        </section>
+    <?php endif; ?>
 
     <!-- ===== Huy hiệu ===== -->
     <section class="rp-card" aria-labelledby="rp-badge-title">

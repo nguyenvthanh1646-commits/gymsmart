@@ -9,6 +9,7 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/workout-plan-db.php';
 require_once __DIR__ . '/includes/coach.php';
 require_once __DIR__ . '/includes/progression.php';
+require_once __DIR__ . '/includes/equipment-db.php';   // ô đổi bài: bài tương đương khác dụng cụ lên đầu (A-47)
 
 $userId = (int)$_SESSION['user_id'];
 $goal   = fetchUserGoal($pdo, $userId);
@@ -25,6 +26,8 @@ if ($plan !== null) {
     foreach (fetchExerciseLibrary($pdo) as $lib) {
         $libraryByGroup[$lib['muscle_group']][] = $lib;
     }
+    $libraryEquip = exerciseLibraryWithEquipment($pdo);
+    $equipById = array_column($libraryEquip, 'equipment', 'id');
 }
 
 $dayNames    = [1 => 'Thứ 2', 2 => 'Thứ 3', 3 => 'Thứ 4', 4 => 'Thứ 5', 5 => 'Thứ 6', 6 => 'Thứ 7', 7 => 'Chủ nhật'];
@@ -338,10 +341,27 @@ include __DIR__ . '/includes/header.php';
                                             <button type="button" class="btn btn--ghost" data-action="update">Lưu</button>
                                             <select name="new_exercise_id" aria-label="Đổi sang bài khác">
                                                 <option value="">Đổi sang bài khác...</option>
-                                                <?php foreach ($libraryByGroup[$row['muscle_group']] ?? [] as $lib): ?>
-                                                    <?php if ((int)$lib['id'] === (int)$row['exercise_id']) continue; ?>
-                                                    <option value="<?= (int)$lib['id'] ?>"><?= htmlspecialchars($lib['name']) ?></option>
-                                                <?php endforeach; ?>
+                                                <?php
+                                                // Bài tương đương (cùng vai trò, khác dụng cụ) lên đầu để thay khi phòng tập thiếu dụng cụ
+                                                $equivIds = array_column(equivalentExercises((int)$row['exercise_id'], $libraryEquip, WORKOUT_EXERCISE_ROLES, null, 10), 'id');
+                                                $sameGroup = array_filter($libraryByGroup[$row['muscle_group']] ?? [], fn($l) => (int)$l['id'] !== (int)$row['exercise_id']);
+                                                ?>
+                                                <?php if ($equivIds): ?>
+                                                    <optgroup label="Tương đương (cùng vai trò)">
+                                                        <?php foreach ($sameGroup as $lib): ?>
+                                                            <?php if (in_array((int)$lib['id'], $equivIds, true)): ?>
+                                                                <option value="<?= (int)$lib['id'] ?>"><?= htmlspecialchars($lib['name'] . ' · ' . equipmentLabel($equipById[$lib['id']] ?? null)) ?></option>
+                                                            <?php endif; ?>
+                                                        <?php endforeach; ?>
+                                                    </optgroup>
+                                                <?php endif; ?>
+                                                <optgroup label="Cùng nhóm cơ">
+                                                    <?php foreach ($sameGroup as $lib): ?>
+                                                        <?php if (!in_array((int)$lib['id'], $equivIds, true)): ?>
+                                                            <option value="<?= (int)$lib['id'] ?>"><?= htmlspecialchars($lib['name'] . ' · ' . equipmentLabel($equipById[$lib['id']] ?? null)) ?></option>
+                                                        <?php endif; ?>
+                                                    <?php endforeach; ?>
+                                                </optgroup>
                                             </select>
                                             <button type="button" class="btn btn--ghost" data-action="replace">Đổi</button>
                                             <button type="button" class="btn btn--ghost wp-edit__remove" data-action="remove">Xóa</button>

@@ -92,3 +92,10 @@ body:has(#gc-fab) .ws-bar { padding-right: 80px; }
 @media (max-width: 420px) {
     .ws-timer__btn[data-timer-add="-30"] { display: none; }   /* màn hình rất hẹp: giữ +30s và Bỏ qua */
 }
+
+/* Bài tương đương khi thiếu dụng cụ, kỷ lục mới sau khi lưu (A-47) */
+.ws-alt { margin: 0 0 var(--s-3); color: var(--text-muted); font-size: 13px; line-height: 1.6; }
+.ws-alt a { color: var(--accent-dark); font-weight: 600; }
+.ws-alt span { color: var(--text-muted); }
+.ws-pr { display: inline-block; margin-right: 6px; color: #067647; }
+body:has(.ws-bar) .gc-nudge { display: none; }   /* bóng thoại nhắc của chatbot sẽ đè lên thanh lưu, nên ẩn ở trang này */

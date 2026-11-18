@@ -37,6 +37,7 @@ if (!verifyCsrf()) {
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/workout-plan-db.php';
 require_once __DIR__ . '/../includes/progression.php';
+require_once __DIR__ . '/../includes/equipment-db.php';   // kỷ lục cá nhân trước/sau buổi (A-47)
 
 $userId = (int)$_SESSION['user_id'];
 $rows = $_POST['rows'] ?? null;
@@ -72,8 +73,11 @@ foreach ($rows as $row) {
 }
 
 try {
+    $before = personalRecords(recordLogs($pdo, $userId));
     $saved = saveWorkoutSession($pdo, $userId, $entries);
-    sessionOut(200, ['success' => true, 'saved' => $saved, 'message' => "Đã lưu $saved bài vào nhật ký."]);
+    // Kỷ lục mới: so kỷ lục trước và sau khi lưu (lần đầu tập một bài thì chưa tính là kỷ lục)
+    $records = recordsImproved($before, personalRecords(recordLogs($pdo, $userId)));
+    sessionOut(200, ['success' => true, 'saved' => $saved, 'records' => $records, 'message' => "Đã lưu $saved bài vào nhật ký."]);
 } catch (InvalidArgumentException $e) {
     sessionOut(422, ['success' => false, 'message' => $e->getMessage()]);
 } catch (PlanNotFoundException $e) {

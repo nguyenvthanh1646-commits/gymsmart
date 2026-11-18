@@ -13,6 +13,7 @@ requireLogin();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/workout-plan-db.php';
 require_once __DIR__ . '/includes/progression.php';
+require_once __DIR__ . '/includes/equipment-db.php';   // bài tương đương khi thiếu dụng cụ (A-47)
 
 $userId = (int)$_SESSION['user_id'];
 $todayDow = (int)date('N');
@@ -42,6 +43,7 @@ if ($plan !== null) {
     $sessionLabel = workoutSessionLabels($plan['split_type'], (int)$plan['days_per_week'])[$day] ?? '';
     $recent = fetchRecentLogsByExercise($pdo, $userId, array_column($rows, 'exercise_id'));
     $loggedToday = $isToday ? fetchLoggedRowsOn($pdo, $userId, date('Y-m-d')) : [];
+    $library = $rows ? exerciseLibraryWithEquipment($pdo) : [];
 }
 $totalSets = array_sum(array_column($rows, 'sets'));
 $restSeconds = WORKOUT_REST_MINUTES[0] * 60;
@@ -126,6 +128,12 @@ include __DIR__ . '/includes/header.php';
                         <b><?= ['start' => 'Buổi đầu', 'increase' => 'Tăng tạ', 'keep' => 'Giữ mức', 'decrease' => 'Giảm tạ', 'reps' => 'Thêm lặp'][$tip['action']] ?></b>
                         <?= htmlspecialchars($tip['text']) ?>
                     </p>
+                    <?php $alts = equivalentExercises($exId, $library ?? [], WORKOUT_EXERCISE_ROLES, null, 3); ?>
+                    <?php if ($alts): ?>
+                        <p class="ws-alt">Thiếu dụng cụ? Thay bằng:
+                            <?php foreach ($alts as $k => $alt): ?><?= $k > 0 ? ' · ' : '' ?><a href="/exercise-detail.php?id=<?= (int)$alt['id'] ?>" target="_blank" rel="noopener"><?= htmlspecialchars($alt['name']) ?></a> <span>(<?= htmlspecialchars($alt['label']) ?>)</span><?php endforeach; ?>
+                        </p>
+                    <?php endif; ?>
                     <table class="ws-sets">
                         <thead><tr><th scope="col">Set</th><th scope="col">Tạ (kg)</th><th scope="col">Lặp</th><th scope="col"><span class="ws-sr">Trạng thái</span></th></tr></thead>
                         <tbody data-sets>

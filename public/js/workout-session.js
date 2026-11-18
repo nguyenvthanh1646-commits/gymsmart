@@ -199,6 +199,13 @@
                     saveBtn.textContent = '✓ Đã lưu';
                     msg.innerHTML = '';
                     msg.appendChild(document.createTextNode((data.message || 'Đã lưu.') + ' '));
+                    // Kỷ lục mới (máy chủ so kỷ lục trước và sau khi lưu)
+                    (data.records || []).forEach(function (r) {
+                        var b = document.createElement('b');
+                        b.className = 'ws-pr';
+                        b.textContent = '🏆 Kỷ lục mới: ' + r.name + ' ' + (r.weight > 0 ? String(r.weight).replace('.', ',') + ' kg × ' + r.reps + ' lặp' : r.reps + ' lặp') + '. ';
+                        msg.appendChild(b);
+                    });
                     var a = document.createElement('a');
                     a.href = '/index.php';
                     a.textContent = 'Về trang chủ';

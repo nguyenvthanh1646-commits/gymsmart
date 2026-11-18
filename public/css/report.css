@@ -89,3 +89,4 @@
 .rp-ai__warn { margin: var(--s-3) 0 0; color: var(--text-muted); font-size: 13px; }
 @media print { .rp-ai__form { display: none; } }
 .rp-card { scroll-margin-top: 84px; }   /* nhảy tới #tong-ket: tiêu đề không bị thanh menu dính che */
+.rp-pr a { color: var(--text); font-weight: 600; } .rp-pr a:hover { color: var(--accent-dark); } .rp-pr small { margin-left: 6px; color: var(--text-muted); font-weight: 500; }
