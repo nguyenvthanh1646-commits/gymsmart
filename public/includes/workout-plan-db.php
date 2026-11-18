@@ -292,17 +292,65 @@ function addPlanExercise(PDO $pdo, int $userId, int $dayOfWeek, int $exerciseId,
     $insert->execute([$planId, $exerciseId, $dayOfWeek, $sets, $reps, $nextOrder]);
     return (int)$pdo->lastInsertId();
 }
-/** Lấy kết quả tập gần nhất của bài tập này để làm mốc Progressive Overload */
-function fetchLastWorkoutLog(PDO $pdo, int $userId, int $exerciseId): ?array {
+/**
+ * Nhật ký gần đây của NHIỀU bài trong một truy vấn (thay cho gọi fetchLastWorkoutLog từng bài), dùng cho gợi ý tăng tạ.
+ * Trả [exercise_id => [['date','weight','sets','reps'], ...]] mới nhất trước, mỗi bài tối đa $perExercise dòng;
+ * bài chưa tập có mảng rỗng. Danh sách id là số nguyên do server tự lấy từ lịch, vẫn đi qua dấu ?.
+ */
+function fetchRecentLogsByExercise(PDO $pdo, int $userId, array $exerciseIds, int $perExercise = 6): array
+{
+    $ids = array_values(array_unique(array_map('intval', $exerciseIds)));
+    if ($ids === []) {
+        return [];
+    }
+    $marks = implode(',', array_fill(0, count($ids), '?'));
     $stmt = $pdo->prepare(
-        "SELECT weight_kg_used, sets_completed, reps_completed, log_date 
-         FROM workout_logs 
-         WHERE user_id = ? AND exercise_id = ? 
-         ORDER BY log_date DESC, id DESC LIMIT 1"
+        "SELECT exercise_id, log_date, weight_kg_used, sets_completed, reps_completed
+         FROM workout_logs WHERE user_id = ? AND exercise_id IN ($marks)
+         ORDER BY exercise_id, log_date DESC, id DESC" // audit:ok (chỉ ghép các dấu ?)
     );
-    $stmt->execute([$userId, $exerciseId]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $row ?: null;
+    $stmt->execute(array_merge([$userId], $ids));
+    $out = array_fill_keys($ids, []);
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $id = (int)$r['exercise_id'];
+        if (count($out[$id]) < $perExercise) {
+            $out[$id][] = ['date' => (string)$r['log_date'], 'weight' => (float)$r['weight_kg_used'],
+                'sets' => (int)$r['sets_completed'], 'reps' => (int)$r['reps_completed']];
+        }
+    }
+    return $out;
+}
+
+/** Các dòng lịch (workout_plan_exercise_id) của user đã có nhật ký ngày $date (Y-m-d), dạng [row_id => true]. */
+function fetchLoggedRowsOn(PDO $pdo, int $userId, string $date): array
+{
+    $stmt = $pdo->prepare('SELECT DISTINCT workout_plan_exercise_id FROM workout_logs WHERE user_id = ? AND log_date = ? AND workout_plan_exercise_id IS NOT NULL');
+    $stmt->execute([$userId, $date]);
+    return array_fill_keys(array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN)), true);
+}
+
+/**
+ * Lưu cả một buổi tập (chế độ Đang tập) trong MỘT transaction: một bài lỗi thì không lưu bài nào,
+ * tránh buổi tập bị ghi nửa chừng. Mỗi phần tử: ['row_id' => int, 'weight' => float, 'sets' => int, 'reps' => int].
+ * Mỗi dòng vẫn qua saveWorkoutLog() nên vẫn kiểm tra dòng lịch thuộc lịch ACTIVE của chính user.
+ * @return int số bài đã lưu
+ */
+function saveWorkoutSession(PDO $pdo, int $userId, array $entries): int
+{
+    if ($entries === []) {
+        throw new InvalidArgumentException('Chưa có set nào được đánh dấu xong.');
+    }
+    $pdo->beginTransaction();
+    try {
+        foreach ($entries as $e) {
+            saveWorkoutLog($pdo, $userId, (int)$e['row_id'], 0, (int)$e['sets'], (int)$e['reps'], (float)$e['weight']);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+    return count($entries);
 }
 
 /**
