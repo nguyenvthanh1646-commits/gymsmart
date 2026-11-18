@@ -133,6 +133,24 @@ Khi sửa một file API thì giữ đúng kiểu trả về của file đó, v�
 | GET | `/workout-logs?from=&to=` | User | Lịch sử tập theo khoảng ngày |
 | DELETE | `/workout-logs/{id}` | User | Xóa 1 log (nhập nhầm) |
 
+**Triển khai thật (PHP thuần):**
+
+| Method | File | Quyền | Mô tả |
+|---|---|---|---|
+| POST | `api/log-workout.php` | User + CSRF | Ghi 1 bài (`row_id`, `exercise_id`, `sets`, `reps`, `weight`) |
+| POST | `api/log-session.php` | User + CSRF | Chế độ "Đang tập": lưu cả buổi một lần (A-41) |
+
+**POST `api/log-session.php`** (form, kèm `csrf_token`), chỉ gửi các set đã đánh dấu xong:
+```
+rows[0][row_id]=92
+rows[0][sets][0][weight]=20   rows[0][sets][0][reps]=8
+rows[0][sets][1][weight]=20   rows[0][sets][1][reps]=7
+```
+- Máy chủ tự gộp các set của một bài thành MỘT dòng `workout_logs` (`summarizeSessionSets()`): tạ nặng nhất, số set ở mức tạ đó, số lặp thấp nhất ở mức tạ đó. Không tin số đã gộp từ trình duyệt.
+- Giới hạn: tối đa 20 bài, 10 set mỗi bài; tạ 0-500 kg, lặp 1-100; không trùng `row_id`. `row_id` phải thuộc lịch ACTIVE của chính người đăng nhập.
+- Lưu trong một transaction: một bài lỗi thì không lưu bài nào.
+- Trả về `{ "success": true, "saved": 1, "message": "Đã lưu 1 bài vào nhật ký." }`; lỗi 401 / 403 (CSRF) / 404 (dòng lịch không thuộc bạn) / 405 / 422 / 500 dạng `{ "success": false, "message": "..." }`.
+
 **POST `/workout-logs`**
 ```json
 {

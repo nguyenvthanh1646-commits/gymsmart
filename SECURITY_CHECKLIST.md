@@ -324,3 +324,13 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | `admin/users.php?role=ABC&page=-5` | Bỏ qua vai trò lạ, về trang 1, không lỗi |
 | Ghi nhật ký lúc 0-6 giờ sáng | Ngày nhật ký, "Hôm nay" ở trang chủ và tỉ lệ tập của HLV cùng một ngày (PHP và MySQL cùng múi giờ) |
 | `php tools/install.php` khi DB thật đã có bảng | Dừng, không ghi đè; `--fresh` trên DB thật bắt buộc thêm `--yes` |
+
+### Chế độ Đang tập (A-41)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Gọi `api/log-session.php` khi chưa đăng nhập / thiếu `csrf_token` | 401 / 403 |
+| Gửi `row_id` thuộc lịch của người khác | 404, không ghi dòng nào (transaction) |
+| Tạ 9999, lặp 0, trùng `row_id`, `rows=abc` | 422, không ghi |
+| Gửi số đã gộp sẵn từ trình duyệt | Máy chủ bỏ qua, tự gộp lại từ từng set |
+| Mở `workout-session.php?day=abc` | Về ngày hôm nay, không lỗi |

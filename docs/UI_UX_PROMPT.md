@@ -138,6 +138,7 @@ Quy tắc màu:
   - Thẻ có ảnh cùng tỷ lệ 4:3 và huy hiệu độ khó.
   - Trang chi tiết có video 16:9, các bước, lỗi thường gặp và bài cùng nhóm cơ.
 - **Lịch tập:** xem theo ngày trong tuần; mỗi bài là một dòng (set × rep, mức tạ gợi ý); ghi nhật ký nhanh.
+- **Đang tập (`workout-session.php`):** dùng một tay trong phòng gym: ô nhập và nút cao từ 48px, bàn phím số; mỗi set một dòng có nút "Xong"; gợi ý mức tạ có nhãn chữ (Tăng tạ, Giữ mức, Giảm tạ), không chỉ dùng màu; thanh dính đáy chứa đồng hồ nghỉ và nút lưu, chừa chỗ cho nút chatbot.
 - **TDEE/Macro:** số lớn kèm vòng macro, đổi mục tiêu thì tính lại ngay, lịch ăn theo bữa.
 - **Tiến trình:** form số đo ngắn, biểu đồ đường một trục, chọn khoảng 7/30/90 ngày, có trạng thái rỗng.
 - **Bài viết:**

@@ -88,6 +88,10 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - `admin/users.php`: tìm kiếm, lọc vai trò, phân trang ở máy chủ (20 dòng/trang)
   - Header `Content-Security-Policy` trong `includes/header.php`
 - [x] A-40 Sửa lỗi giao diện (`a-40-sua-loi-giao-dien`): lịch sử số đo ở điện thoại gọn 2 dòng và ẩn ô trống (trang ngắn khoảng 1/4); biểu đồ mỡ/eo chỉ tạo trục có dữ liệu; nút Xóa số đo bị tô thành nút cam; biểu đồ calo của HLV chỉ 1 mốc thì hiện con số; chân trang không bị nút chatbot che; nhãn ô nội dung bài viết; `favicon.ico`
+- [x] A-41 Chế độ "Đang tập" và gợi ý tăng tạ (`a-41-dang-tap`, đề xuất B1 + B2):
+  - `includes/progression.php` (thuần): `suggestProgression()` tăng tải kép (đạt 8 lặp mọi set 2 buổi liền cùng mức tạ thì tăng 2,5 kg chân/lưng, 1 kg nhóm khác; 2 buổi liền dưới 6 lặp thì giảm ~10%; bài không tạ thì thêm lặp), `summarizeSessionSets()`; test `test-progression.php`
+  - `workout-session.php` + `js/workout-session.js` + `css/workout-session.css`: tick từng set, đồng hồ nghỉ (±30 giây, bỏ qua, rung/kêu khi hết), nhớ tạm tiến độ khi lỡ tải lại, lưu cả buổi một lần qua `api/log-session.php` (transaction)
+  - `workout-plan.php` dùng gợi ý mới (một truy vấn cho cả lịch thay cho mỗi bài một truy vấn), nút "Bắt đầu tập" từng ngày; trang chủ: nút chính và thẻ Hôm nay mở chế độ Đang tập
 
 ---
 
