@@ -60,6 +60,10 @@
 .pr-link:hover, button.pr-link:hover { background: var(--ui-accent-soft); }
 button.pr-link--danger { color: #b42318; }
 button.pr-link--danger:hover { background: #fef3f2; }
+/* style.css tô cam mọi button[type=submit] không có .btn (độ ưu tiên 0,2,1): nút Xóa dạng liên kết phải thắng bằng 0,3,1 */
+.pr-actions button[type="submit"].pr-link { padding: 5px 10px; border-radius: 8px; background: transparent; box-shadow: none; transform: none; font-size: .86rem; }
+.pr-actions button[type="submit"].pr-link--danger { color: #b42318; }
+.pr-actions button[type="submit"].pr-link--danger:hover { background: #fef3f2; }
 .pr-more-link { margin: 14px 0 0; text-align: center; font-weight: 600; }
 
 /* ===== Chưa có dữ liệu ===== */
@@ -90,6 +94,17 @@ button.pr-link--danger:hover { background: #fef3f2; }
     .pr-table td::before { content: attr(data-label); font-size: .8rem; font-weight: 600; color: var(--color-text-muted); text-align: left; }
     .pr-table td.pr-actions { justify-content: flex-end; }
     .pr-table td.pr-actions::before { content: none; }
+    /* Mỗi lần đo gọn thành lưới: dòng 1 = ngày | cân nặng, dòng 2 = thay đổi | Sửa Xóa, các số đo phụ chỉ hiện khi có giá trị */
+    .pr-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 12px 4px; }
+    .pr-table td { padding: 0; width: auto; }
+    .pr-table td[data-label="Ngày"] { grid-row: 1; grid-column: 1; justify-content: flex-start; font-weight: 700; }
+    .pr-table td[data-label="Cân nặng"] { grid-row: 1; grid-column: 2; }
+    .pr-table td[data-label="Thay đổi"] { grid-row: 2; grid-column: 1; justify-content: flex-start; }
+    .pr-table td.pr-actions { grid-row: 2; grid-column: 2; }
+    .pr-table td[data-label="Ngày"]::before, .pr-table td[data-label="Cân nặng"]::before, .pr-table td[data-label="Thay đổi"]::before { content: none; }
+    .pr-table td.pr-opt { grid-column: 1 / -1; justify-content: flex-start; font-size: .88rem; }
+    .pr-table td.pr-opt::before { min-width: 4.5em; }
+    .pr-table td.pr-opt.is-empty { display: none; }
 }
 
 /* Ô nhập luôn vừa khít khung chứa (không tràn ra khỏi thẻ) */

@@ -559,10 +559,10 @@ include __DIR__ . '/includes/header.php';
                                             <span class="pr-chip pr-chip--<?= htmlspecialchars(deltaTone($r['dw'], $goal)) ?>"><?= htmlspecialchars(signed($r['dw'])) ?> kg</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="num" data-label="% mỡ"><?= $r['body_fat_percent'] === null ? '<span class="pr-none">—</span>' : htmlspecialchars(num($r['body_fat_percent'])) . '%' ?></td>
-                                    <td class="num" data-label="Ngực"><?= $r['chest_cm'] === null ? '<span class="pr-none">—</span>' : htmlspecialchars(num($r['chest_cm'])) ?></td>
-                                    <td class="num" data-label="Eo"><?= $r['waist_cm'] === null ? '<span class="pr-none">—</span>' : htmlspecialchars(num($r['waist_cm'])) ?></td>
-                                    <td class="num" data-label="Tay"><?= $r['arm_cm'] === null ? '<span class="pr-none">—</span>' : htmlspecialchars(num($r['arm_cm'])) ?></td>
+                                    <td class="num pr-opt<?= $r['body_fat_percent'] === null ? ' is-empty' : '' ?>" data-label="% mỡ"><?= $r['body_fat_percent'] === null ? '<span class="pr-none">—</span>' : htmlspecialchars(num($r['body_fat_percent'])) . '%' ?></td>
+                                    <td class="num pr-opt<?= $r['chest_cm'] === null ? ' is-empty' : '' ?>" data-label="Ngực"><?= $r['chest_cm'] === null ? '<span class="pr-none">—</span>' : htmlspecialchars(num($r['chest_cm'])) ?></td>
+                                    <td class="num pr-opt<?= $r['waist_cm'] === null ? ' is-empty' : '' ?>" data-label="Eo"><?= $r['waist_cm'] === null ? '<span class="pr-none">—</span>' : htmlspecialchars(num($r['waist_cm'])) ?></td>
+                                    <td class="num pr-opt<?= $r['arm_cm'] === null ? ' is-empty' : '' ?>" data-label="Tay"><?= $r['arm_cm'] === null ? '<span class="pr-none">—</span>' : htmlspecialchars(num($r['arm_cm'])) ?></td>
                                     <td class="pr-actions">
                                         <a class="pr-link" href="/progress.php?edit=<?= (int)$r['id'] ?>#form" aria-label="Sửa số đo ngày <?= htmlspecialchars(dmy($r['recorded_date'])) ?>">Sửa</a>
                                         <form method="post" action="/progress.php" data-confirm="Xóa số đo ngày <?= htmlspecialchars(dmy($r['recorded_date'])) ?>?">
