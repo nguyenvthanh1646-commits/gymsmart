@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS exercises (
     image_url VARCHAR(500) NULL,              -- chỉ TÊN FILE trong public/img/exercises/, ví dụ 12.jpg
     video_url VARCHAR(500) NULL,              -- chỉ ID YouTube 11 ký tự
     difficulty ENUM('BEGINNER', 'INTERMEDIATE', 'ADVANCED') NOT NULL DEFAULT 'BEGINNER',
+    equipment VARCHAR(20) NOT NULL DEFAULT 'NONE',      -- dụng cụ cần (A-47, sql/exercise_equipment.sql): NONE | BENCH | BARS | BAND | ROPE | DUMBBELL | BARBELL | MACHINE | CABLE
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
