@@ -53,16 +53,7 @@ function hmIcon(string $name, int $size = 24): string
         . ($paths[$name] ?? '') . '</svg>';
 }
 
-// 7 tính năng ở trang khách: [biểu tượng, tiêu đề, mô tả]
-$guestFeatures = [
-    ['calendar', 'Lịch tập cá nhân hóa', 'Gợi ý số buổi, bài tập và số hiệp theo trình độ, mục tiêu và số ngày bạn có thể tập.'],
-    ['play',     'Thư viện bài tập có ảnh, video', 'Xem kỹ thuật qua video, đọc hướng dẫn từng bước, lọc theo nhóm cơ, loại và độ khó.'],
-    ['flame',    'Tính TDEE và macro', 'Tính nhu cầu năng lượng và lượng đạm, tinh bột, béo theo chỉ số và mục tiêu của bạn.'],
-    ['meal',     'Lịch ăn gợi ý', 'Gợi ý chia bữa trong ngày theo mục tiêu dinh dưỡng và kiểu ăn bạn chọn.'],
-    ['chart',    'Nhật ký và biểu đồ', 'Ghi lại buổi tập, cân nặng, số đo và xem biểu đồ thay đổi theo thời gian.'],
-    ['book',     'Bài viết có dẫn nghiên cứu', 'Kiến thức về dinh dưỡng, sức khỏe và tập luyện, có trích nguồn để bạn tự kiểm tra.'],
-    ['chat',     'Chatbot AI', 'Hỏi nhanh về bài tập và tập luyện, có thể dựa trên hồ sơ của bạn nếu bạn cho phép.'],
-];
+// Các ô tính năng ở trang khách (lưới bento) viết thẳng trong includes/home-guest.php vì mỗi ô có minh họa riêng
 
 $muscleLabels = [
     'CHEST' => 'Ngực', 'BACK' => 'Lưng', 'SHOULDERS' => 'Vai', 'LEGS' => 'Chân',
