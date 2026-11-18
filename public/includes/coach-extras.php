@@ -330,6 +330,8 @@ function coachPublishDraft(PDO $pdo, int $coachId, int $clientId): int
         $name = preg_replace('/^Bản nháp: /u', '', $draft['name']);
         $pdo->prepare("UPDATE workout_plans SET status = 'ACTIVE', name = ?, days_per_week = ? WHERE id = ?")
             ->execute([$name, count($draft['days']), $draft['id']]);
+        notify($pdo, $clientId, 'coach.plan', 'HLV đã giao lịch tập mới',
+            'HLV ' . notifName($pdo, $coachId) . ' vừa giao lịch "' . notifExcerpt((string)$name, 60) . '" (' . count($draft['days']) . ' buổi/tuần).', '/workout-plan.php', true);
         return (int)$draft['id'];
     });
 }

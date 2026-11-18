@@ -125,6 +125,14 @@ if (!extension_loaded('pdo_sqlite')) {
     $pdo->exec("CREATE TABLE coach_change_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, coach_client_id INT REFERENCES coach_clients(id) ON DELETE CASCADE,
         area TEXT, reason TEXT, status TEXT DEFAULT 'PENDING', coach_reply TEXT DEFAULT '', unlock_until TEXT, created_at TEXT, resolved_at TEXT,
         open_key TEXT GENERATED ALWAYS AS (CASE WHEN status = 'PENDING' THEN coach_client_id || '-' || area END) STORED UNIQUE)");
+    $pdo->exec("CREATE TABLE notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INT, type TEXT, title TEXT, body TEXT DEFAULT '',
+        link TEXT DEFAULT '', read_at TEXT, created_at TEXT)");
+    // Thông báo chưa đọc của một người theo loại (A-44)
+    $notif = function (int $userId, string $type) use ($pdo): array {
+        $s = $pdo->prepare('SELECT title, body, link FROM notifications WHERE user_id = ? AND type = ? AND read_at IS NULL ORDER BY id DESC');
+        $s->execute([$userId, $type]);
+        return $s->fetchAll(PDO::FETCH_ASSOC);
+    };
 
     // 1 admin (1), 2 người sẽ làm HLV (2, 3), 3 học viên (4, 5, 6)
     $ins = $pdo->prepare('INSERT INTO users (id, full_name, email, role, weight_kg, goal) VALUES (?, ?, ?, ?, ?, ?)');
@@ -147,6 +155,8 @@ if (!extension_loaded('pdo_sqlite')) {
     check('Duyệt đơn: vai trò thành COACH', coachUserRole($pdo, 2) === 'COACH');
     check('Duyệt đơn: tạo hồ sơ HLV', coachProfile($pdo, 2) !== null);
     check('Duyệt lại đơn đã duyệt bị chặn', coachErr(fn() => coachApproveApplication($pdo, $app2, 1, '')) !== null);
+    check('Thông báo: ADMIN nhận "Đơn đăng ký HLV mới"', count($notif(1, 'admin.coach_application')) === 1);
+    check('Thông báo: người nộp nhận "đã được duyệt" kèm link khu HLV', ($notif(2, 'coach.application_approved')[0]['link'] ?? '') === '/coach/dashboard.php');
     $app3 = coachSubmitApplication($pdo, 3, $appData);
     coachApproveApplication($pdo, $app3, 1, '');
     check('COACH không nộp đơn lần nữa', coachErr(fn() => coachSubmitApplication($pdo, 2, $appData)) !== null);
@@ -154,6 +164,8 @@ if (!extension_loaded('pdo_sqlite')) {
     // --- Học viên chọn HLV ---
     $rel = coachRequest($pdo, 4, 2, 'Em muốn giảm mỡ');
     check('Học viên gửi yêu cầu được', $rel > 0);
+    check('Thông báo: HLV nhận yêu cầu học viên mới kèm lời nhắn', str_contains($notif(2, 'coach.request')[0]['body'] ?? '', 'Học Viên A muốn tập với bạn: Em muốn giảm mỡ'));
+    check('Thông báo: yêu cầu bị chặn thì không có thông báo thừa', count($notif(3, 'coach.request')) === 0);
     check('Mỗi học viên chỉ 1 HLV: gửi tiếp HLV khác bị chặn', coachErr(fn() => coachRequest($pdo, 4, 3, '')) !== null);
     check('Đang chờ HLV thì không nộp đơn làm HLV', coachErr(fn() => coachSubmitApplication($pdo, 4, $appData)) !== null);
     check('HLV không chọn chính mình', coachErr(fn() => coachRequest($pdo, 2, 2, '')) !== null);
@@ -170,6 +182,7 @@ if (!extension_loaded('pdo_sqlite')) {
 
     coachChangeRelation($pdo, 'coach', 2, $rel, 'accept');
     check('HLV duyệt: xem được học viên', canCoachAccessClient($pdo, 2, 4));
+    check('Thông báo: học viên biết HLV đã nhận', ($notif(4, 'coach.relation')[0]['title'] ?? '') === 'HLV đã nhận bạn làm học viên');
     check('HLV khác không xem được học viên đó', !canCoachAccessClient($pdo, 3, 4));
     check('HLV không xem được học viên chưa từng đăng ký', !canCoachAccessClient($pdo, 2, 5));
     check('Id rác không lọt qua', !canCoachAccessClient($pdo, 2, 0) && !canCoachAccessClient($pdo, 2, 2));
@@ -222,15 +235,20 @@ if (!extension_loaded('pdo_sqlite')) {
     check('Nhận xét buổi có tập được', coachAddFeedback($pdo, $rel, 4, $today, 'Squat sâu hơn tuần trước') > 0);
     check('Nhận xét quá 1000 ký tự bị chặn', coachErr(fn() => coachAddFeedback($pdo, $rel, 4, null, str_repeat('a', 1001))) !== null);
     check('Học viên thấy 1 nhận xét chưa đọc', coachClientNotice($pdo, 4)['feedback'] === 1);
+    check('Thông báo: nhận xét mới có trích nội dung', str_contains($notif(4, 'coach.feedback')[0]['body'] ?? '', 'Squat sâu hơn tuần trước'));
     coachMarkFeedbackRead($pdo, $rel);
     check('Đọc rồi thì hết thông báo', coachClientNotice($pdo, 4)['feedback'] === 0);
+    check('Thông báo: mở trang HLV của tôi thì chuông về đã đọc', count($notif(4, 'coach.feedback')) === 0);
 
     $msg = coachSendMessage($pdo, $rel, 4, 'Chào thầy');
     check('Gửi tin được', $msg['id'] > 0);
     check('Gửi tin liên tục quá nhanh bị chặn', coachErr(fn() => coachSendMessage($pdo, $rel, 4, 'Tin 2')) !== null);
     check('Tin rỗng bị chặn', coachErr(fn() => coachSendMessage($pdo, $rel, 2, '')) !== null);
     check('HLV thấy 1 tin chưa đọc', coachDashboardCounts($pdo, 2, $today)['unread'] === 1);
+    check('Thông báo: HLV nhận tin nhắn mới, link tới đúng khung chat', ($notif(2, 'coach.message')[0]['link'] ?? '') === '/coach/messages.php?id=4');
+    check('Thông báo: tin rỗng bị chặn thì học viên không nhận gì', count($notif(4, 'coach.message')) === 0);
     coachMarkMessagesRead($pdo, $rel, 2);
+    check('Thông báo: HLV mở khung chat thì thông báo tin nhắn thành đã đọc', count($notif(2, 'coach.message')) === 0);
     check('HLV mở khung chat: hết chưa đọc', coachDashboardCounts($pdo, 2, $today)['unread'] === 0);
     check('Học viên tập hôm nay: không tính "chưa tập 7 ngày"', coachDashboardCounts($pdo, 2, $today)['inactive7'] === 0);
     check('Tin mới sau id lấy đúng', count(coachMessages($pdo, $rel, $msg['id'])) === 0 && count(coachMessages($pdo, $rel, 0)) === 1);
@@ -246,6 +264,10 @@ if (!extension_loaded('pdo_sqlite')) {
     coachChangeRelation($pdo, 'coach', 3, $r6, 'accept');
     $r5 = coachRequest($pdo, 5, 3, '');
     $res = coachRevoke($pdo, 3, 1);
+    check('Thông báo: thu hồi HLV báo cả học viên đang tập và đang chờ',
+        in_array('Quan hệ huấn luyện đã kết thúc', array_column($notif(6, 'coach.relation'), 'title'), true)
+        && in_array('Yêu cầu tới HLV không còn hiệu lực', array_column($notif(5, 'coach.relation'), 'title'), true));
+    check('Thông báo: HLV bị thu hồi cũng được báo', count($notif(3, 'coach.revoked')) === 1);
     check('Thu hồi: báo 1 học viên bị kết thúc, 1 yêu cầu bị từ chối', $res['ended'] === 1 && $res['rejected'] === 1);
     check('Thu hồi: vai trò về USER', coachUserRole($pdo, 3) === 'USER');
     check('Thu hồi: mất quyền xem ngay', !canCoachAccessClient($pdo, 3, 6));
