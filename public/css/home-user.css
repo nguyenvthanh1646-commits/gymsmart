@@ -315,3 +315,9 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
 /* Thông báo từ HLV (includes/dash-coach.php): cùng kiểu du-notice, liên kết cam nhạt đủ tương phản trên nền tối */
 .du-notice--coach a { color: var(--accent-2); font-weight: 600; }
 .du-notice--coach a:hover { color: #fff; }
+
+/* Thẻ Hôm nay: nút mở chế độ Đang tập (B1) đặt cạnh liên kết lịch đầy đủ */
+.du-links { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin-top: auto; padding-top: 8px; }
+.du-links .du-link { margin-top: 0; padding-top: 0; }
+.du-link--solid { border-color: transparent; background: linear-gradient(135deg, #ff8a3d, #ff5a1f); color: var(--gs-ink); }
+.du-link--solid:hover { color: var(--gs-ink); filter: brightness(1.06); }

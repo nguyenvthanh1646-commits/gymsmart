@@ -137,10 +137,10 @@ function dashPrimaryAction(int $missingProfile, string $planStatus, int $todayTo
         return ['label' => 'Mở lịch tập', 'href' => '/workout-plan.php'];
     }
     if ($todayTotal > 0 && $todayLogged === 0) {
-        return ['label' => 'Bắt đầu buổi tập hôm nay', 'href' => '#hom-nay'];
+        return ['label' => 'Bắt đầu buổi tập hôm nay', 'href' => '/workout-session.php'];   // chế độ Đang tập (B1)
     }
     if ($todayTotal > 0 && $todayLogged < $todayTotal) {
-        return ['label' => 'Tiếp tục buổi tập hôm nay', 'href' => '#hom-nay'];
+        return ['label' => 'Tiếp tục buổi tập hôm nay', 'href' => '/workout-session.php'];
     }
     return ['label' => 'Xem tiến trình', 'href' => '/progress.php'];
 }

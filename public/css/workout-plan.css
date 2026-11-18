@@ -85,7 +85,7 @@
 /* ===== Một ngày ===== */
 .wp-panel { display: none; }
 .wp-panel.is-active { display: block; }
-.wp-panel__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 14px; margin-bottom: 4px; border-bottom: 1px solid var(--ui-line); }
+.wp-panel__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 14px; margin-bottom: 4px; border-bottom: 1px solid var(--ui-line); }
 .wp-panel__title { margin: 0; font-size: 1.2rem; }
 .wp-panel__meta { margin: 4px 0 0; font-size: .88rem; color: var(--color-text-muted); }
 .wp-rest { padding: 36px 8px; text-align: center; }
@@ -194,3 +194,4 @@
     .wp-edit select { flex: 1 1 100%; }
     .wp-create__foot .btn { width: 100%; }
 }
+.wp-start { flex: none; min-height: 44px; }   /* nút Bắt đầu tập: mở chế độ Đang tập của ngày này */

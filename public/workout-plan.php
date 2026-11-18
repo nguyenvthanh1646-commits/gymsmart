@@ -8,6 +8,7 @@ requireLogin();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/workout-plan-db.php';
 require_once __DIR__ . '/includes/coach.php';
+require_once __DIR__ . '/includes/progression.php';
 
 $userId = (int)$_SESSION['user_id'];
 $goal   = fetchUserGoal($pdo, $userId);
@@ -18,7 +19,9 @@ $planBy   = coachPlanAssigner($pdo, $userId);
 $canEdit  = !$planLock['locked'];
 
 $libraryByGroup = [];
+$recentLogs = [];   // nhật ký gần đây theo bài (một truy vấn cho cả lịch), dùng cho gợi ý tăng tạ
 if ($plan !== null) {
+    $recentLogs = fetchRecentLogsByExercise($pdo, $userId, array_column(array_merge(...array_values($plan['days'])), 'exercise_id'));
     foreach (fetchExerciseLibrary($pdo) as $lib) {
         $libraryByGroup[$lib['muscle_group']][] = $lib;
     }
@@ -215,17 +218,17 @@ include __DIR__ . '/includes/header.php';
         <section class="wp-stats" aria-label="Tổng quan tuần">
             <div class="wp-stat wp-stat--main">
                 <span class="wp-stat__label">Buổi tập / tuần</span>
-                <span class="wp-stat__value"><?= $trainingDays ?><small> buổi</small></span>
+                <span class="wp-stat__value"><?= (int)$trainingDays ?><small> buổi</small></span>
                 <span class="wp-stat__sub"><?= 7 - $trainingDays ?> ngày nghỉ để phục hồi</span>
             </div>
             <div class="wp-stat">
                 <span class="wp-stat__label">Bài tập</span>
-                <span class="wp-stat__value"><?= $totalExercises ?></span>
+                <span class="wp-stat__value"><?= (int)$totalExercises ?></span>
                 <span class="wp-stat__sub">trong cả tuần</span>
             </div>
             <div class="wp-stat">
                 <span class="wp-stat__label">Tổng set</span>
-                <span class="wp-stat__value"><?= $totalSets ?></span>
+                <span class="wp-stat__value"><?= (int)$totalSets ?></span>
                 <span class="wp-stat__sub">≈ <?= (int)round($totalSets * $minutesPerSet / max(1, $trainingDays)) ?> phút mỗi buổi</span>
             </div>
             <div class="wp-stat">
@@ -243,9 +246,9 @@ include __DIR__ . '/includes/header.php';
             ?>
                 <button type="button" class="wp-day<?= $count === 0 ? ' wp-day--rest' : '' ?><?= $i === $firstActiveDay ? ' is-active' : '' ?>"
                         data-day="<?= $i ?>" aria-pressed="<?= $i === $firstActiveDay ? 'true' : 'false' ?>">
-                    <span class="wp-day__name"><?= $dayShort[$i] ?></span>
+                    <span class="wp-day__name"><?= htmlspecialchars($dayShort[$i]) ?></span>
                     <span class="wp-day__session"><?= htmlspecialchars($label) ?></span>
-                    <span class="wp-day__count"><?= $count > 0 ? $count . ' bài' : '—' ?></span>
+                    <span class="wp-day__count"><?= $count > 0 ? (int)$count . ' bài' : '—' ?></span>
                 </button>
             <?php endfor; ?>
         </nav>
@@ -268,6 +271,7 @@ include __DIR__ . '/includes/header.php';
                                     <h2 class="wp-panel__title"><?= htmlspecialchars($dayNames[$i]) ?> · <?= htmlspecialchars($sessionLabels[$i] ?? 'Buổi tập') ?></h2>
                                     <p class="wp-panel__meta"><?= $count ?> bài · <?= $daySets ?> set · ≈ <?= (int)round($daySets * $minutesPerSet) ?> phút</p>
                                 </div>
+                                <a class="btn wp-start" href="/workout-session.php?day=<?= (int)$i ?>">Bắt đầu tập</a>
                             </div>
                             <ol class="wp-list">
                                 <?php
@@ -275,11 +279,13 @@ include __DIR__ . '/includes/header.php';
                                 foreach ($plan['days'][$i] as $row):
                                     $role      = WORKOUT_EXERCISE_ROLES[$row['exercise_id']] ?? null;
                                     $roleLabel = $role !== null ? WORKOUT_ROLE_LABELS[$role] : (WORKOUT_MUSCLE_LABELS[$row['muscle_group']] ?? $row['muscle_group']);
-                                    $lastLog   = fetchLastWorkoutLog($pdo, $userId, $row['exercise_id']);
+                                    $exLogs    = $recentLogs[(int)$row['exercise_id']] ?? [];
+                                    $lastLog   = $exLogs[0] ?? null;
+                                    $tip       = suggestProgression($exLogs, (int)$row['sets'], WORKOUT_REP_RANGE[0], WORKOUT_REP_RANGE[1], (string)$row['muscle_group']);
                                 ?>
                                     <li class="wp-ex" data-row-id="<?= (int)$row['row_id'] ?>">
                                         <div class="wp-ex__row">
-                                            <span class="wp-ex__num"><?= $index++ ?></span>
+                                            <span class="wp-ex__num"><?= (int)$index++ ?></span>
                                             <div class="wp-ex__info">
                                                 <a href="exercise-detail.php?id=<?= (int)$row['exercise_id'] ?>" class="wp-ex__name"><?= htmlspecialchars($row['name']) ?></a>
                                                 <span class="wp-ex__role"><?= htmlspecialchars($roleLabel) ?></span>
@@ -298,21 +304,22 @@ include __DIR__ . '/includes/header.php';
                                             <p class="wp-log__last">
                                                 <?php if ($lastLog): ?>
                                                     <span class="wp-log__badge">Lần trước</span>
-                                                    <?= date('d/m', strtotime($lastLog['log_date'])) ?>:
-                                                    <strong><?= htmlspecialchars((string)$lastLog['weight_kg_used']) ?> kg</strong>
-                                                    × <?= (int)$lastLog['sets_completed'] ?> set × <?= (int)$lastLog['reps_completed'] ?> lặp
-                                                    <?php if ((int)$lastLog['reps_completed'] >= WORKOUT_REP_RANGE[1]): ?>
-                                                        <span class="wp-log__up">Đạt <?= WORKOUT_REP_RANGE[1] ?> lặp: lần này tăng tạ</span>
+                                                    <?= date('d/m', strtotime($lastLog['date'])) ?>:
+                                                    <strong><?= htmlspecialchars((string)$lastLog['weight']) ?> kg</strong>
+                                                    × <?= (int)$lastLog['sets'] ?> set × <?= (int)$lastLog['reps'] ?> lặp
+                                                    <?php if ($tip['action'] === 'increase'): ?>
+                                                        <span class="wp-log__up">Tăng lên <?= htmlspecialchars((string)$tip['weight']) ?> kg</span>
                                                     <?php endif; ?>
+                                                    <br><?= htmlspecialchars($tip['text']) ?>
                                                 <?php else: ?>
-                                                    Chưa có lần tập nào. Chọn mức tạ làm được <?= WORKOUT_REP_RANGE[0] ?>-<?= WORKOUT_REP_RANGE[1] ?> lặp.
+                                                    <?= htmlspecialchars($tip['text']) ?>
                                                 <?php endif; ?>
                                             </p>
                                             <form class="wp-log__form" data-log-form>
                                                 <input type="hidden" name="row_id" value="<?= (int)$row['row_id'] ?>">
                                                 <input type="hidden" name="exercise_id" value="<?= (int)$row['exercise_id'] ?>">
                                                 <label class="wp-log__field">Mức tạ (kg)
-                                                    <input type="number" name="weight" step="0.5" min="0" placeholder="VD: 50" value="<?= $lastLog ? htmlspecialchars((string)$lastLog['weight_kg_used']) : '' ?>" required>
+                                                    <input type="number" name="weight" step="0.5" min="0" placeholder="VD: 50" value="<?= $tip['weight'] !== null ? htmlspecialchars((string)$tip['weight']) : '' ?>" required>
                                                 </label>
                                                 <label class="wp-log__field">Set
                                                     <input type="number" name="sets" min="1" value="<?= (int)$row['sets'] ?>" required>
@@ -375,7 +382,7 @@ include __DIR__ . '/includes/header.php';
             <aside class="wp-side">
                 <section class="wp-card">
                     <h2 class="wp-card__title">Khối lượng tuần</h2>
-                    <p class="wp-card__sub">Số set mỗi cơ. Vạch dọc là mốc khoảng <?= $volumeTarget ?> set/tuần để tăng cơ.</p>
+                    <p class="wp-card__sub">Số set mỗi cơ. Vạch dọc là mốc khoảng <?= (int)$volumeTarget ?> set/tuần để tăng cơ.</p>
                     <ul class="wp-vol">
                         <?php foreach (WORKOUT_MUSCLE_DETAIL_LABELS as $key => $label):
                             $sets = $setsByMuscle[$key] ?? 0;
@@ -384,7 +391,7 @@ include __DIR__ . '/includes/header.php';
                             <li class="wp-vol__item">
                                 <span class="wp-vol__label"><?= htmlspecialchars($label) ?></span>
                                 <span class="wp-vol__bar" style="--fill: <?= min(100, round($sets / $volumeMax * 100)) ?>%; --mark: <?= round($volumeTarget / $volumeMax * 100) ?>%;"></span>
-                                <span class="wp-vol__value"><?= $sets ?></span>
+                                <span class="wp-vol__value"><?= (int)$sets ?></span>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -396,7 +403,7 @@ include __DIR__ . '/includes/header.php';
                         <li>Khởi động 1-2 set nhẹ trước bài đầu tiên.</li>
                         <li>Chọn mức tạ chỉ làm được <?= WORKOUT_REP_RANGE[0] ?>-<?= WORKOUT_REP_RANGE[1] ?> reps, set cuối gần hết sức.</li>
                         <li>Nghỉ đủ <?= WORKOUT_REST_MINUTES[0] ?>-<?= WORKOUT_REST_MINUTES[1] ?> phút để set sau vẫn nặng.</li>
-                        <li>Làm được <?= WORKOUT_REP_RANGE[1] ?> reps ở mọi set thì buổi sau tăng tạ.</li>
+                        <li>Làm được <?= WORKOUT_REP_RANGE[1] ?> reps ở mọi set trong 2 buổi liên tiếp (cùng mức tạ) thì tăng tạ; 2 buổi liền dưới <?= WORKOUT_REP_RANGE[0] ?> reps thì giảm khoảng 10%. Ô "Ghi log" và chế độ Đang tập tự gợi ý mức tạ.</li>
                     </ul>
                 </section>
             </aside>

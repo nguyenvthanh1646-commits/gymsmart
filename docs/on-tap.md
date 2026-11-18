@@ -336,7 +336,7 @@ Người dùng chọn số buổi/tuần (2–6), trình độ và kiểu chia l
    WHERE wpe.id = ? AND wp.user_id = ? AND wp.status = 'ACTIVE'
    ```
    Set 1–10, lặp 1–50 (`PLAN_EDIT_MAX_SETS`, `PLAN_EDIT_MAX_REPS`). Bài mới phải là bài kháng lực có thật, không trùng bài trong cùng ngày.
-5. Ghi log: nút "Ghi log" → `api/log-workout.php` → `saveWorkoutLog()` `INSERT workout_logs (..., log_date = CURDATE())`. Trang hiện "Lần trước" nhờ `fetchLastWorkoutLog()`.
+5. Ghi log: nút "Ghi log" → `api/log-workout.php` → `saveWorkoutLog()` `INSERT workout_logs (..., log_date = CURDATE())`. Trang hiện "Lần trước" và gợi ý mức tạ nhờ `fetchRecentLogsByExercise()` (một truy vấn cho cả lịch) + `suggestProgression()` trong `includes/progression.php`. Chế độ "Đang tập" (`workout-session.php`) ghi cả buổi một lần qua `api/log-session.php`.
 6. Xuất CSV: `api/export-workout-plan.php` → BOM UTF-8, `csvSafe()` chống CSV injection.
 
 ### 5.3 Bảng DB

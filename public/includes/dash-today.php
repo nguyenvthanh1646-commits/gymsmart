@@ -96,6 +96,9 @@ function duExerciseThumb(?string $imageFile): void
                 </li>
             <?php endforeach; ?>
         </ul>
-        <a class="du-link" href="/workout-plan.php">Mở lịch tập đầy đủ</a>
+        <div class="du-links">
+            <a class="du-link du-link--button du-link--solid" href="/workout-session.php">Mở chế độ Đang tập</a>
+            <a class="du-link" href="/workout-plan.php">Mở lịch tập đầy đủ</a>
+        </div>
     <?php endif; ?>
 </section>
