@@ -359,3 +359,16 @@ CREATE TABLE IF NOT EXISTS coach_change_requests (
     FOREIGN KEY (coach_client_id) REFERENCES coach_clients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Thông báo trong ứng dụng (A-44, sql/notifications.sql)
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type VARCHAR(40) NOT NULL,                -- mã sự kiện viết sẵn trong code, vd coach.message
+    title VARCHAR(160) NOT NULL,
+    body VARCHAR(300) NOT NULL DEFAULT '',
+    link VARCHAR(255) NOT NULL DEFAULT '',     -- đường dẫn nội bộ bắt đầu bằng /
+    read_at DATETIME NULL,                    -- NULL = chưa đọc
+    created_at DATETIME NOT NULL,
+    INDEX idx_notif_user (user_id, read_at, id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
