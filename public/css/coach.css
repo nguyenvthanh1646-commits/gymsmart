@@ -250,3 +250,16 @@
 /* Thanh bản nháp lịch tập (Giao / Bỏ) */
 .cp-draftbar { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; justify-content: space-between; border-color: var(--warn); background: color-mix(in srgb, var(--warn) 8%, var(--surface)); }
 .cp-draftbar .adm-actions { width: auto; }
+
+/* Mẫu lịch tập của HLV (coach/templates.php, A-48) */
+.tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.tpl-card h2 { margin: 0 0 4px; font-size: 19px; }
+.tpl-days { margin: 12px 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; color: var(--text); }
+.tpl-days b { display: inline-block; min-width: 30px; color: var(--accent-dark); }
+.tpl-apply fieldset { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); }
+.tpl-apply legend { padding: 0 4px; font-weight: 700; font-size: 14px; }
+.tpl-check { display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 15px; cursor: pointer; }
+.tpl-check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.tpl-del { margin-top: 8px; }
+.tpl-empty h2 { margin: 0 0 6px; }
+@media (max-width: 420px) { .tpl-grid { grid-template-columns: 1fr; } }

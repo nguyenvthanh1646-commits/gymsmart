@@ -17,6 +17,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/coach.php';
 require_once __DIR__ . '/../includes/workout-plan-db.php';
 require_once __DIR__ . '/../includes/audit-log.php';
+require_once __DIR__ . '/../includes/coach-templates.php';   // "Lưu làm mẫu" (A-48)
 
 requireCoach();
 [$clientId, $relationId] = requireCoachClient($pdo, $_GET['id'] ?? null);
@@ -77,6 +78,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 coachDraftEdit($pdo, $coachId, $clientId, substr($action, 6), $editParams);
                 coachFlash('ok', 'Đã cập nhật bản nháp (học viên chưa thấy).');
                 $go = $base . '&view=draft';
+                break;
+            case 'save_template':
+                // Lưu lịch đang xem (bản nháp hoặc lịch đang dùng) thành mẫu để giao cho học viên khác ở trang Mẫu lịch
+                coachTemplateSaveFromClient($pdo, $coachId, $clientId, (string)($_POST['template_name'] ?? ''), $view === 'draft');
+                coachFlash('ok', 'Đã lưu làm mẫu. Vào Mẫu lịch để giao cho học viên khác.');
                 break;
             case 'adopt':
                 if (coachMarkPlanAssigned($pdo, $coachId, $clientId) === 0) {
@@ -248,6 +254,18 @@ include __DIR__ . '/../includes/coach-nav.php';
                             <div class="adm-field"><label for="add-reps">Rep</label><input class="adm-input" id="add-reps" type="number" name="reps" min="1" max="<?= PLAN_EDIT_MAX_REPS ?>" value="<?= WORKOUT_TARGET_REPS ?>" inputmode="numeric"></div>
                         </div>
                         <button type="submit" class="adm-btn" style="width:100%">Thêm</button>
+                    </form>
+                </section>
+            <?php endif; ?>
+            <?php if ($plan !== null && coachTemplatesReady($pdo)): ?>
+                <section class="adm-panel adm-card-pad" aria-labelledby="h-tpl">
+                    <h2 id="h-tpl">Lưu làm mẫu</h2>
+                    <p class="adm-sub">Lưu <?= $view === 'draft' ? 'bản nháp' : 'lịch' ?> này để giao nhanh cho học viên khác ở trang <a href="/coach/templates.php">Mẫu lịch</a>.</p>
+                    <form method="post" action="<?= htmlspecialchars($self) ?>">
+                        <?= csrfField() ?><input type="hidden" name="action" value="save_template">
+                        <div class="adm-field"><label for="tpl-name">Tên mẫu</label>
+                            <input class="adm-input" id="tpl-name" name="template_name" required minlength="3" maxlength="80" placeholder="Ví dụ: Toàn thân 3 buổi cho người mới"></div>
+                        <button type="submit" class="adm-btn adm-btn-ghost" style="width:100%">Lưu làm mẫu</button>
                     </form>
                 </section>
             <?php endif; ?>

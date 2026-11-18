@@ -11,6 +11,7 @@ $coachNavItems = [
     'dashboard' => ['/coach/dashboard.php', 'Tổng quan'],
     'clients'   => ['/coach/clients.php', 'Học viên'],
     'messages'  => ['/coach/messages.php', 'Tin nhắn'],
+    'templates' => ['/coach/templates.php', 'Mẫu lịch'],
     'profile'   => ['/coach/profile.php', 'Hồ sơ HLV'],
 ];
 $coachNavInitial = '?';
