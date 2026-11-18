@@ -29,6 +29,7 @@ if ($coachNavParts) {
         </div>
         <div class="adm-nav-right">
             <a class="adm-nav-site" href="/exercises.php">Xem trang người dùng &#8599;</a>
+            <?php include __DIR__ . '/notif-bell.php'; // chuông thông báo (A-44) ?>
             <span class="adm-nav-av" title="<?= htmlspecialchars((string)($_SESSION['full_name'] ?? '')) ?>"><?= htmlspecialchars($coachNavInitial) ?></span>
             <a class="adm-nav-out" href="/api/logout.php">Đăng xuất</a>
         </div>

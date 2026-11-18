@@ -39,6 +39,9 @@ if (!headers_sent()) {
     <link rel="stylesheet" href="/css/fonts.css">
     <link rel="stylesheet" href="/css/brand.css">
     <link rel="stylesheet" href="/css/ui.css">
+    <?php if (function_exists('isLoggedIn') && isLoggedIn()): ?>
+        <link rel="stylesheet" href="/css/notifications.css"><!-- chuông thông báo trên thanh menu (includes/notif-bell.php) -->
+    <?php endif; ?>
     <?php foreach ($pageCss ?? [] as $cssHref): ?>
         <link rel="stylesheet" href="<?= htmlspecialchars($cssHref) ?>">
     <?php endforeach; ?>

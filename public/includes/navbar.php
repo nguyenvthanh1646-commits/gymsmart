@@ -62,6 +62,8 @@ $navAvatar = ($loggedIn && is_string($_SESSION['avatar'] ?? null) && preg_match(
     <div class="nb__in">
         <a href="/index.php" aria-label="GymSmart — trang chủ"><?= gsLogo('dark', false, 36) ?></a>
 
+        <?php if ($loggedIn) { include __DIR__ . '/notif-bell.php'; } // chuông thông báo, nằm ngoài menu gập để luôn thấy trên điện thoại ?>
+
         <button class="nb__toggle" type="button" aria-label="Mở menu" aria-expanded="false" aria-controls="nb-panel">
             <span></span>
         </button>
