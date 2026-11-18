@@ -97,6 +97,11 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - Lịch sử lưu trên máy chủ (bảng `chatbot_*` có sẵn, trước đây chưa dùng): mở máy khác vẫn thấy; nút "Cuộc trò chuyện mới" và "Xóa lịch sử"; giữ 5 cuộc gần nhất
   - Giới hạn 30 câu/giờ theo tài khoản (trước chỉ theo session, đăng nhập lại là hết giới hạn)
   - Chip gợi ý theo trang (Lịch tập, Đang tập, Dinh dưỡng, Tiến trình, chi tiết bài tập); test `test-chat.php` (23 bước)
+- [x] A-43 Thành tích, báo cáo, test TDEE (`a-43-thanh-tich-bao-cao`, đề xuất F1 + G3):
+  - `includes/achievements.php` (thuần): chuỗi tuần tập đủ số buổi theo lịch, 11 huy hiệu cột mốc (buổi tập, chuỗi tuần, lần đo) kèm ngày đạt thật, tóm tắt tháng; test `test-achievements.php` (24 bước)
+  - `report.php`: Báo cáo & thành tích theo tháng (so với tháng trước, khối lượng nâng, bài nhiều set nhất), huy hiệu, in / lưu PDF; `export-my-data.php` tải CSV nhật ký và số đo của chính mình; `includes/csv.php` dùng chung với `admin/export.php`
+  - Trang chủ thêm ô "Chuỗi tuần tập đều", trang Tiến trình có nút sang Báo cáo
+  - `test-tdee.php` (26 bước): BMR Mifflin-St Jeor, TDEE, chia macro bằng số tính tay và các trường hợp dữ liệu sai
 
 ---
 

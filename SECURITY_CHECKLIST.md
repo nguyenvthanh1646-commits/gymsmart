@@ -346,3 +346,13 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | Tài khoản A đọc lịch sử | Chỉ thấy hội thoại của A (user_id lấy từ session) |
 | Gửi hơn 30 câu/giờ, đăng xuất rồi đăng nhập lại gửi tiếp | Vẫn 429 (đếm theo tài khoản trong DB) |
 | Trợ lý quản trị, trợ lý HLV | Không lưu lịch sử vào DB |
+
+### Báo cáo và tải dữ liệu cá nhân (A-43)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Khách mở `report.php` hoặc `export-my-data.php?type=logs` | Chuyển sang đăng nhập |
+| `export-my-data.php?type=users` | 400, không xuất gì |
+| Thêm `&user_id=` khác vào URL tải CSV | Không có tác dụng: chỉ xuất dữ liệu của tài khoản đang đăng nhập |
+| Ghi chú nhật ký bắt đầu bằng `=HYPERLINK(...)` rồi tải CSV, mở bằng Excel | Ô hiện chữ, không chạy công thức (có dấu ' phía trước) |
+| `report.php?month=2099-01`, `?month=abc` | Về tháng hiện tại, không lỗi |

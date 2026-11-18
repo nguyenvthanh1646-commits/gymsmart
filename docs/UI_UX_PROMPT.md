@@ -141,6 +141,7 @@ Quy tắc màu:
 - **Đang tập (`workout-session.php`):** dùng một tay trong phòng gym: ô nhập và nút cao từ 48px, bàn phím số; mỗi set một dòng có nút "Xong"; gợi ý mức tạ có nhãn chữ (Tăng tạ, Giữ mức, Giảm tạ), không chỉ dùng màu; thanh dính đáy chứa đồng hồ nghỉ và nút lưu, chừa chỗ cho nút chatbot.
 - **TDEE/Macro:** số lớn kèm vòng macro, đổi mục tiêu thì tính lại ngay, lịch ăn theo bữa.
 - **Tiến trình:** form số đo ngắn, biểu đồ đường một trục, chọn khoảng 7/30/90 ngày, có trạng thái rỗng.
+- **Báo cáo & thành tích (`report.php`):** 3 ô chuỗi tuần (ô chính nền `--ink`), báo cáo tháng có nút tháng trước/sau, huy hiệu dạng thẻ: đã đạt nền `--accent-soft` kèm ngày đạt, chưa đạt màu xám kèm thanh tiến độ và số (ví dụ 6/10). Chỉ có huy hiệu khi đạt mốc thật. Có bản in (`@media print`) để lưu PDF.
 - **Bài viết:**
   - Khối "Đọc trước khi tập" ở đầu.
   - Thẻ bài có ảnh bìa, chuyên mục, thời gian đọc.
