@@ -109,7 +109,7 @@ include __DIR__ . '/includes/header.php';
         <?php else: ?>
             <dl class="rp-nums">
                 <div><dt>Ngày tập</dt><dd><?= (int)$sum['sessions'] ?>
-                    <?php $d = $sum['sessions'] - $prev['sessions']; if ($month !== $firstMonth): ?><small class="rp-delta"><?= $d === 0 ? 'bằng tháng trước' : ($d > 0 ? '+' : '') . $d . ' so với tháng trước' ?></small><?php endif; ?></dd></div>
+                    <?php $d = $sum['sessions'] - $prev['sessions']; if ($month !== $firstMonth): ?><small class="rp-delta"><?= $d === 0 ? 'bằng tháng trước' : ($d > 0 ? '+' : '') . (int)$d . ' so với tháng trước' ?></small><?php endif; ?></dd></div>
                 <div><dt>Tổng set</dt><dd><?= (int)$sum['sets'] ?></dd></div>
                 <div><dt>Tổng khối lượng nâng</dt><dd><?= htmlspecialchars($num((float)$sum['volume'])) ?> <small>kg</small></dd></div>
                 <div><dt>Cân nặng</dt><dd>
