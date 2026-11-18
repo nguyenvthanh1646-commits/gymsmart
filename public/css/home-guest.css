@@ -99,11 +99,12 @@ body:has(.gh-hero) :is(a, button, input, select):focus-visible { outline: 3px so
 .gh-score dt { font-size: 12px; color: #98a2c0; }
 
 /* Sân khấu bên phải */
-.gh-stage { position: relative; min-height: 600px; perspective: 1200px; }
+/* Hai hàng: ảnh ở trên, bảng điều khiển ở dưới chỉ chồng lên mép dưới ảnh, để không che người trong ảnh */
+.gh-stage { position: relative; display: grid; perspective: 1200px; }
 .gh-stage__word { position: absolute; top: -10px; right: -10px; z-index: 0; font-size: clamp(90px, 13vw, 190px); font-weight: 800; letter-spacing: -.05em; line-height: 1;
     color: transparent; -webkit-text-stroke: 1.5px rgba(255, 255, 255, .14); transform: skewX(-8deg); user-select: none; }
 /* Ảnh cắt hình bình hành, nhuộm hai tông cam/đen, phủ vạch quét kiểu màn hình */
-.gh-stage__photo { position: absolute; top: 24px; right: 0; width: 80%; height: 86%; z-index: 1; overflow: hidden;
+.gh-stage__photo { position: relative; justify-self: end; width: 86%; aspect-ratio: 1 / 1; z-index: 1; overflow: hidden;
     clip-path: polygon(16% 0, 100% 0, 84% 100%, 0 100%); background: linear-gradient(160deg, var(--accent-2), var(--accent) 55%, var(--ink-2)); }
 .gh-stage__photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; filter: saturate(1.05) contrast(1.05); }   /* ảnh đã sẵn tông cam/tối nên giữ màu gốc, không nhuộm */
 .gh-stage__photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(7, 11, 24, .75)); }
@@ -113,7 +114,7 @@ body:has(.gh-hero) :is(a, button, input, select):focus-visible { outline: 3px so
     background: repeating-linear-gradient(-60deg, var(--accent) 0 8px, transparent 8px 18px); -webkit-mask-image: linear-gradient(135deg, #000, transparent); mask-image: linear-gradient(135deg, #000, transparent); }
 
 /* Bảng điều khiển: kính tối, viền phát sáng */
-.gh-dash { position: absolute; left: 0; bottom: 0; z-index: 3; width: min(420px, 92%); padding: 18px; border-radius: 22px; color: #fff;
+.gh-dash { position: relative; margin-top: -64px; justify-self: start; z-index: 3; width: min(420px, 92%); padding: 18px; border-radius: 22px; color: #fff;
     background: linear-gradient(160deg, rgba(23, 31, 58, .82), rgba(11, 16, 32, .9)); border: 1px solid rgba(255, 255, 255, .14);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     box-shadow: 0 30px 70px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 138, 61, .12), inset 0 1px 0 rgba(255, 255, 255, .1);
@@ -288,7 +289,7 @@ body:has(.gh-hero) :is(a, button, input, select):focus-visible { outline: 3px so
 @media (max-width: 960px) {
     :root { --gh-section: 72px; }
     .gh-hero__in { grid-template-columns: 1fr; gap: 36px; padding: 28px 24px 72px; }
-    .gh-stage { min-height: 560px; max-width: 520px; width: 100%; margin: 0 auto; }
+    .gh-stage { max-width: 520px; width: 100%; margin: 0 auto; }
     .gh-calc, .gh-bot { grid-template-columns: 1fr; gap: 28px; }
     .gh-calc__intro { position: static; }
     .gh-articles { grid-template-columns: 1fr 1fr; }
@@ -298,8 +299,8 @@ body:has(.gh-hero) :is(a, button, input, select):focus-visible { outline: 3px so
     .gh-hero__in { padding: 20px 16px 64px; }
     .gh-hero__lead { font-size: 16px; }
     .gh-hero__cta .gh-btn { flex: 1 1 100%; }
-    .gh-stage { min-height: 520px; }
-    .gh-stage__photo { width: 92%; height: 70%; top: 10px; }
+    .gh-stage__photo { width: 100%; }
+    .gh-dash { margin-top: -40px; }
     .gh-stage__stripes { width: 80px; height: 80px; left: 0; top: 2%; }
     .gh-hero__title > span { transform: skewX(-6deg); }
     .gh-hero__title > span:nth-child(2) { -webkit-text-stroke-width: 1.5px; }
