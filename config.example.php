@@ -8,5 +8,8 @@ define('DB_NAME', 'gymsmart');
 define('DB_USER', 'root');
 define('DB_PASS', ''); // XAMPP/MAMP mặc định thường để trống
 
+// (Tùy chọn) Múi giờ của ứng dụng, dùng chung cho PHP và MySQL. Bỏ trống thì mặc định Asia/Ho_Chi_Minh.
+// define('APP_TIMEZONE', 'Asia/Ho_Chi_Minh');
+
 // API key cho Chatbot AI (chỉ cần khi làm tới phần chatbot, để trống cũng được)
 define('AI_API_KEY', '');
