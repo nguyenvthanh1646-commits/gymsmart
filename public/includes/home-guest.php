@@ -1,6 +1,6 @@
 <?php
 /**
- * home-guest.php — trang chủ khi chưa đăng nhập (index.php include file này). Hướng thiết kế "Fresh energetic".
+ * home-guest.php — trang chủ khi chưa đăng nhập (index.php include file này). Hướng "Future sport": hero tối công nghệ + thể thao, các khối dưới nền sáng.
  *
  * Cần các biến index.php đã chuẩn bị: $guestStats (số liệu THẬT đếm từ DB/bài viết), $previewExercises, $articleTeasers,
  * $muscleLabels, $levelLabels và hàm hmIcon(). Không có con số viết tay: thiếu dữ liệu thì câu đó bị ẩn.
@@ -12,35 +12,46 @@ $ghExercises = (int)$guestStats['exercises'];
 $ghArticles  = (int)$guestStats['sourcedArticles'];
 ?>
 <section class="gh-hero" id="gh-hero" aria-labelledby="gh-title">
-    <!-- Lớp trang trí: lưới chấm + 2 đường "dữ liệu" chạy chậm (dừng khi cuộn qua hero, khi tab ẩn, khi giảm chuyển động) -->
-    <div class="gh-hero__dots" aria-hidden="true"></div>
+    <!-- Lớp trang trí (aria-hidden): lưới sàn phối cảnh, quầng sáng neon, 2 đường "dữ liệu" chạy chậm.
+         Hiệu ứng chạy liên tục tự dừng khi cuộn qua hero, khi tab ẩn, và tắt hẳn khi prefers-reduced-motion. -->
+    <div class="gh-hero__floor" aria-hidden="true"></div>
+    <div class="gh-hero__glow" aria-hidden="true"></div>
     <svg class="gh-hero__data" viewBox="0 0 1440 600" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path class="gh-data-base" d="M-20 470 C 220 430, 380 500, 600 420 S 980 330, 1180 360 S 1380 300, 1460 260"/>
+        <path class="gh-data-base" d="M-20 540 C 260 520, 420 560, 700 500 S 1060 440, 1260 460 S 1400 420, 1460 400"/>
         <path class="gh-data gh-data--a" d="M-20 470 C 220 430, 380 500, 600 420 S 980 330, 1180 360 S 1380 300, 1460 260"/>
         <path class="gh-data gh-data--b" d="M-20 540 C 260 520, 420 560, 700 500 S 1060 440, 1260 460 S 1400 420, 1460 400"/>
     </svg>
 
     <div class="gh-wrap gh-hero__in">
         <div class="gh-hero__copy">
-            <p class="gh-badge"><?= hmIcon('bolt', 16) ?>Lịch tập và dinh dưỡng có AI hỗ trợ</p>
+            <p class="gh-badge"><span class="gh-badge__dot" aria-hidden="true"></span>Lịch tập · Dinh dưỡng · Trợ lý AI</p>
             <h1 class="gh-hero__title" id="gh-title"><span>Tập đúng.</span> <span>Ăn đủ.</span> <span><span class="gh-grad">Tiến bộ</span> thật.</span></h1>
             <p class="gh-hero__lead">GymSmart gợi ý lịch tập, tính calo và macro theo cơ thể bạn, rồi ghi lại từng buổi để bạn thấy mình tiến bộ.</p>
             <div class="gh-hero__cta">
                 <a class="gh-btn gh-btn--solid" href="/register.php">Tạo tài khoản miễn phí</a>
-                <a class="gh-btn gh-btn--line" href="#tinh-nang">Xem tính năng</a>
+                <a class="gh-btn gh-btn--glass" href="#tinh-nang">Xem tính năng</a>
             </div>
             <p class="gh-hero__fine">Miễn phí · Đăng ký 3 bước · Không cần thẻ</p>
+            <?php if ($ghExercises > 0): /* số liệu THẬT đếm từ DB và thư mục bài viết, không phải số người dùng */ ?>
+                <dl class="gh-score">
+                    <div><dt>bài tập có video</dt><dd><?= (int)$ghExercises ?></dd></div>
+                    <div><dt>nhóm cơ</dt><dd><?= (int)$guestStats['muscleGroups'] ?></dd></div>
+                    <?php if ($ghArticles > 0): ?><div><dt>bài viết có dẫn chứng</dt><dd><?= (int)$ghArticles ?></dd></div><?php endif; ?>
+                </dl>
+            <?php endif; ?>
         </div>
 
         <div class="gh-stage" id="gh-stage">
-            <div class="gh-stage__halo" aria-hidden="true"></div>
-            <!-- Ảnh trang trí: alt rỗng. Ảnh của màn hình đầu: không lazy-load, tải ưu tiên. Nguồn ảnh: assets/img/CREDITS.md -->
+            <!-- Ảnh trang trí: alt rỗng. Ảnh màn hình đầu: không lazy-load, tải ưu tiên. Nguồn ảnh (Unsplash License): assets/img/CREDITS.md -->
             <div class="gh-stage__photo" aria-hidden="true">
                 <picture>
                     <source type="image/webp" srcset="/assets/img/hero/hero-800.webp" width="800" height="1000">
                     <img src="/assets/img/hero/hero-800.jpg" alt="" width="800" height="1000" fetchpriority="high" decoding="async">
                 </picture>
+                <span class="gh-stage__scan"></span>
             </div>
-            <div class="gh-stage__ring" aria-hidden="true"></div>
+            <span class="gh-stage__stripes" aria-hidden="true"></span>
 
             <!-- MỘT bảng điều khiển mô phỏng, số liệu mẫu để hình dung sản phẩm -->
             <div class="gh-dash" id="gh-dash" role="group" aria-label="Bảng điều khiển ví dụ, không phải dữ liệu của người dùng nào">
