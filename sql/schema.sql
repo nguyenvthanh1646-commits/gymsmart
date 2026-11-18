@@ -372,3 +372,15 @@ CREATE TABLE IF NOT EXISTS notifications (
     INDEX idx_notif_user (user_id, read_at, id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tổng kết tuần do AI viết (A-46, sql/weekly_summaries.sql)
+CREATE TABLE IF NOT EXISTS weekly_summaries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    week_start DATE NOT NULL,                 -- thứ Hai của tuần được tổng kết
+    stats_json TEXT NOT NULL,                 -- số liệu đã gửi cho AI
+    content TEXT NOT NULL,                    -- lời nhận xét AI viết
+    created_at DATETIME NOT NULL,
+    UNIQUE KEY uq_week_user (user_id, week_start),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -25,7 +25,7 @@ require $root . '/config.php';
 const MIGRATIONS = [
     'admin_features.sql', 'article_reads.sql', 'body_metrics.sql', 'body_metrics_fix.sql', 'login_attempts.sql',
     'nutrition_preferences.sql', 'password_resets.sql', 'split_types.sql', 'users_avatar.sql',
-    'coach_features.sql', 'coach_extras.sql', 'notifications.sql',
+    'coach_features.sql', 'coach_extras.sql', 'notifications.sql', 'weekly_summaries.sql',
 ];
 const SEEDS = ['seed_exercises_v2.sql', 'seed_exercise_media.sql'];
 const DEMO_SCRIPTS = ['seed-coach-demo.php', 'seed-demo.php', 'seed-index-states.php'];
