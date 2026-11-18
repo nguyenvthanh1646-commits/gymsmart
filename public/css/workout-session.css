@@ -1,0 +1,94 @@
+/* workout-session.css — chế độ "Đang tập" (workout-session.php). Class bắt đầu bằng "ws-". Chỉ dùng token chuẩn trong ui.css.
+   Viết cho điện thoại trước (người dùng cầm máy trong phòng gym): ô nhập và nút cao từ 44px, thanh lưu + đồng hồ dính đáy. */
+
+.ws { max-width: 760px; margin: 0 auto; padding-bottom: 140px; }   /* chừa đáy cho thanh dính */
+.ws-back { display: inline-flex; align-items: center; min-height: 44px; color: var(--text-muted); font-weight: 600; text-decoration: none; }
+.ws-back:hover { color: var(--accent-dark); }
+.ws-head { display: grid; gap: var(--s-4); margin-bottom: var(--s-4); }
+.ws-eyebrow { margin: 0; color: var(--accent-dark); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.ws-title { margin: 4px 0 6px; font-size: 30px; font-weight: 800; line-height: 1.2; color: var(--text); }
+.ws-sub { margin: 0; color: var(--text-muted); font-size: 14px; }
+.ws-days { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.ws-day { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-pill);
+    background: var(--surface); color: var(--text); font-size: 14px; font-weight: 700; text-decoration: none; }
+.ws-day:hover { border-color: var(--accent); color: var(--accent-dark); }
+.ws-day.is-current { background: var(--text); border-color: var(--text); color: #fff; }
+.ws-day.is-rest { color: var(--text-muted); background: var(--bg); border-style: dashed; }
+
+.ws-progress { margin: 0 0 var(--s-3); font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.ws-note { padding: var(--s-3) var(--s-4); border-radius: var(--r); background: #fffaeb; color: var(--text); }
+
+.ws-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-4); }
+.ws-ex { padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-sm); }
+.ws-ex.is-complete { border-color: color-mix(in srgb, var(--ok) 55%, var(--line)); }
+.ws-ex__head { display: flex; gap: var(--s-3); align-items: flex-start; }
+.ws-ex__num { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-dark); font-weight: 800; }
+.ws-ex.is-complete .ws-ex__num { background: var(--ok); color: #fff; }
+.ws-ex__name { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.35; }
+.ws-ex__name a { color: var(--text); text-decoration: none; }
+.ws-ex__name a:hover { color: var(--accent-dark); text-decoration: underline; }
+.ws-ex__meta { margin: 2px 0 0; color: var(--text-muted); font-size: 14px; }
+.ws-badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: var(--r-pill); font-size: 12px; font-weight: 700; }
+.ws-badge--ok { background: #ecfdf3; color: #067647; }
+
+/* Gợi ý mức tạ: nền nhạt theo loại, luôn kèm chữ (không chỉ dùng màu) */
+.ws-tip { margin: var(--s-3) 0; padding: 10px 12px; border-radius: var(--r); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+.ws-tip b { margin-right: 6px; }
+.ws-tip--increase { background: #ecfdf3; }
+.ws-tip--increase b { color: #067647; }
+.ws-tip--decrease { background: #fffaeb; }
+.ws-tip--decrease b { color: #b54708; }
+.ws-tip--keep b, .ws-tip--reps b, .ws-tip--start b { color: var(--accent-dark); }
+
+.ws-sets { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ws-sets th { padding: 6px 4px; color: var(--text-muted); font-size: 12px; font-weight: 700; letter-spacing: .04em; text-align: left; text-transform: uppercase; }
+.ws-sets td { padding: 4px; }
+.ws-sets th.ws-set__no { width: 40px; padding-left: 8px; color: var(--text); font-size: 16px; letter-spacing: 0; text-transform: none; }
+.ws-in { width: 100%; min-height: 48px; margin: 0; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface);
+    color: var(--text); font: inherit; font-size: 17px; font-weight: 600; text-align: center; box-sizing: border-box; }
+.ws-in:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.ws-done { min-width: 76px; min-height: 48px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface);
+    color: var(--text); font: inherit; font-weight: 700; cursor: pointer; }
+.ws-done:hover { border-color: var(--accent); color: var(--accent-dark); }
+.ws-set.is-done .ws-in { background: #f6fef9; border-color: #abefc6; }
+.ws-set.is-done .ws-done { background: var(--ok); border-color: var(--ok); color: #fff; }
+.ws-add { min-height: 44px; margin-top: var(--s-2); padding: 0 var(--s-3); border: 1px dashed var(--line); border-radius: var(--r); background: transparent;
+    color: var(--text-muted); font: inherit; font-weight: 600; cursor: pointer; }
+.ws-add:hover { border-color: var(--accent); color: var(--accent-dark); }
+.ws-done:focus-visible, .ws-add:focus-visible, .ws-day:focus-visible, .ws-timer__btn:focus-visible, .ws-back:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Thanh dính đáy: đồng hồ nghỉ + nút lưu. Chừa bên phải cho nút chatbot nổi. */
+.ws-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, .97); border-top: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(16, 24, 40, .08); }
+.ws-bar > * { max-width: 760px; margin: 0 auto; }
+body:has(#gc-fab) .ws-bar { padding-right: 80px; }
+.ws-bar__main { display: flex; align-items: center; gap: var(--s-3); }
+.ws-msg { flex: 1; margin: 0; color: var(--text); font-size: 14px; line-height: 1.4; }
+.ws-msg:empty { display: none; }
+.ws-msg a { color: var(--accent-dark); font-weight: 700; }
+.ws-save { flex: none; min-height: 48px; margin-left: auto; }
+.ws-save:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+.ws-timer { display: flex; align-items: center; gap: var(--s-2); margin-bottom: 8px; padding: 6px 6px 6px 14px; border-radius: var(--r); background: var(--ink); color: #fff; }
+.ws-timer[hidden] { display: none; }
+.ws-timer__label { color: var(--text-on-dark); font-size: 14px; }
+.ws-timer__time { flex: 1; font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ws-timer.is-over { background: var(--ok); }
+.ws-timer.is-over .ws-timer__label { color: #fff; }
+.ws-timer.is-over .ws-timer__time { font-size: 16px; }
+.ws-timer__btn { min-width: 52px; min-height: 40px; padding: 0 10px; border: 1px solid rgba(255, 255, 255, .25); border-radius: var(--r-sm); background: transparent;
+    color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.ws-timer__btn:hover { background: rgba(255, 255, 255, .1); }
+
+.ws-state { padding: var(--s-6) var(--s-4); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); text-align: center; }
+.ws-state__title { margin: 0 0 6px; font-size: 19px; font-weight: 700; color: var(--text); }
+.ws-state p { color: var(--text-muted); }
+.ws-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (min-width: 720px) {
+    .ws-head { grid-template-columns: 1fr auto; align-items: end; }
+    .ws-title { font-size: 40px; }
+    .ws-ex { padding: var(--s-5); }
+}
+@media (max-width: 420px) {
+    .ws-timer__btn[data-timer-add="-30"] { display: none; }   /* màn hình rất hẹp: giữ +30s và Bỏ qua */
+}
