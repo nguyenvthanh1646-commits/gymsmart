@@ -122,8 +122,9 @@ Quy tắc màu:
 
 ## 7. Quy định theo trang
 
-- **Trang chủ khách (hướng "Fresh energetic", 11/2026):**
-  - Hero nền sáng: tiêu đề cực lớn có một từ tô gradient (`--accent-dark` → `--accent`, đạt 3:1 cho chữ lớn), bên phải là khối cam bo góc chứa ảnh gym (nguồn ghi trong `public/assets/img/CREDITS.md`) và **một** bảng điều khiển mô phỏng có nhãn "Ví dụ".
+- **Trang chủ khách (hướng "Future sport", 11/2026):**
+  - Hero nền tối `--ink` (ngoại lệ duy nhất): lưới sàn phối cảnh, quầng sáng cam và `--glow-cool`, tiêu đề viết hoa nghiêng từng dòng (dòng giữa chỉ có viền, có dự phòng chữ đặc), dải số liệu THẬT (số bài tập, nhóm cơ, bài viết có dẫn chứng). Bên phải: ảnh gym cắt hình bình hành nhuộm cam/đen có vạch quét (nguồn ghi trong `public/assets/img/CREDITS.md`) và **một** bảng điều khiển kính tối có nhãn "Ví dụ".
+  - Không dùng ảnh người nổi tiếng/influencer: vừa vướng bản quyền, vừa khiến người xem hiểu nhầm là họ quảng cáo cho GymSmart.
   - Nút cam dùng chữ `--ink` (chữ trắng trên `#ff5a1f` chỉ đạt 3,12:1).
   - Bên dưới: dải từ khóa chạy ngang, công cụ tính calo (tính trong trình duyệt), lưới bento, 3 bước, chatbot mẫu, bài viết thật, kêu gọi cuối trang nền cam; mọi khối nền sáng.
   - Chuyển động chỉ chạy khi nhìn thấy và tab đang mở; tắt hết khi `prefers-reduced-motion`.
