@@ -53,6 +53,7 @@ Hiện CSS có nhiều tiền tố biến (`--color-*`, `--ui-*`, `--gc-*`, `--g
 | | `--warn` | `#f79009` |
 | | `--danger` | `#f04438` |
 | | `--info` | `#2e90fa` |
+| Ánh sáng lạnh (**chỉ trang khách**) | `--glow-cool` | `#22d3ee` — chỉ làm quầng sáng/gradient trang trí trong `home-guest.css`; không dùng cho chữ, nút hay trạng thái |
 | Bo góc | `--r-sm` / `--r` / `--r-lg` / `--r-pill` | `8px` / `12px` / `18px` / `999px` |
 | Bóng | `--shadow-sm` | `0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06)` |
 | | `--shadow-md` | `0 8px 24px rgba(16,24,40,.08)` |
@@ -121,9 +122,11 @@ Quy tắc màu:
 
 ## 7. Quy định theo trang
 
-- **Trang chủ khách:**
-  - Ngoại lệ duy nhất được dùng hero nền tối (`--ink`) với ảnh gym có nguồn ghi trong `public/img/CREDITS.md` và lớp phủ gradient.
-  - Các khối bên dưới quay về nền sáng.
+- **Trang chủ khách (hướng "Fresh energetic", 11/2026):**
+  - Hero nền sáng: tiêu đề cực lớn có một từ tô gradient (`--accent-dark` → `--accent`, đạt 3:1 cho chữ lớn), bên phải là khối cam bo góc chứa ảnh gym (nguồn ghi trong `public/assets/img/CREDITS.md`) và **một** bảng điều khiển mô phỏng có nhãn "Ví dụ".
+  - Nút cam dùng chữ `--ink` (chữ trắng trên `#ff5a1f` chỉ đạt 3,12:1).
+  - Bên dưới: dải từ khóa chạy ngang, công cụ tính calo (tính trong trình duyệt), lưới bento, 3 bước, chatbot mẫu, bài viết thật, kêu gọi cuối trang nền cam; mọi khối nền sáng.
+  - Chuyển động chỉ chạy khi nhìn thấy và tab đang mở; tắt hết khi `prefers-reduced-motion`.
 - **Trang chủ đã đăng nhập (bảng điều khiển):**
   - Dùng nền sáng như trang chức năng, không dùng nền xanh đen.
   - Gồm: lời chào và ngày, một nút hành động theo trạng thái (Tạo lịch tập, Bắt đầu buổi tập, Hoàn thiện hồ sơ), thẻ Hôm nay, thẻ Tuần này (dải 7 ngày, có chữ Đã tập, Chưa tập, Nghỉ), thẻ Dinh dưỡng (vòng macro), thẻ Tiến trình (sparkline cân nặng).

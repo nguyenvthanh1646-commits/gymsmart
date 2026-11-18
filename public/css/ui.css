@@ -49,6 +49,9 @@
     --shadow-lg: 0 24px 48px rgba(16, 24, 40, .14);
     --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
     --ease: cubic-bezier(.2, .7, .2, 1);
+    /* Màu lạnh phụ CHỈ dùng cho trang khách (home-guest.css), CHỈ làm quầng sáng/gradient trang trí.
+       Không dùng cho chữ, nút hay trạng thái (UI_UX_PROMPT.md mục 3). */
+    --glow-cool: #22d3ee;
 }
 
 /* ===== Nền tảng ===== */
