@@ -113,6 +113,7 @@ Quy tắc màu:
 - **Thanh và vòng tiến độ:** phần đạt màu cam, phần còn lại `--line`, luôn kèm số hoặc chữ.
 - **Trạng thái rỗng:** biểu tượng tròn nền `--accent-soft`, tiêu đề ngắn, một câu hướng dẫn, một nút hành động. Không để ô trống.
 - **Đang tải:** khung xương (skeleton) xám nhạt. Không dùng vòng quay toàn trang.
+- **Chuông thông báo:** nút tròn 44px trên mọi thanh menu khi đã đăng nhập, số chưa đọc trong huy hiệu đỏ (`--danger`, kèm `aria-label` có số). Bấm mở khung thả xuống nền trắng (điện thoại: gần hết bề ngang), mỗi thông báo có chấm cam + chữ đậm khi chưa đọc, nút "Đánh dấu đã đọc tất cả", liên kết "Xem tất cả". Esc để đóng. Không có JS thì chuông là liên kết tới trang Thông báo.
 - **Chatbot:**
   - Nút nổi góc phải dưới, 56px.
   - Khung chat nền đặc (không trong suốt), z-index cao nhất, nằm trọn trong viewport.

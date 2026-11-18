@@ -102,6 +102,10 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - `report.php`: Báo cáo & thành tích theo tháng (so với tháng trước, khối lượng nâng, bài nhiều set nhất), huy hiệu, in / lưu PDF; `export-my-data.php` tải CSV nhật ký và số đo của chính mình; `includes/csv.php` dùng chung với `admin/export.php`
   - Trang chủ thêm ô "Chuỗi tuần tập đều", trang Tiến trình có nút sang Báo cáo
   - `test-tdee.php` (26 bước): BMR Mifflin-St Jeor, TDEE, chia macro bằng số tính tay và các trường hợp dữ liệu sai
+- [x] A-44 Chuông thông báo (`a-44-thong-bao`, đề xuất A2, cần thêm `sql/notifications.sql`):
+  - Bảng `notifications`; `includes/notifications.php`; 12 loại sự kiện gắn trong `coach-db.php` / `coach-extras.php` (đơn HLV mới cho ADMIN, đơn được duyệt / từ chối, yêu cầu học viên, HLV nhận / từ chối / kết thúc, giao lịch, đặt dinh dưỡng, xin tự sửa và trả lời, nhận xét, tin nhắn, thu hồi HLV)
+  - Chuông trên thanh người dùng, khu HLV, khu admin; trang `notifications.php` chạy được khi tắt JS; mở khung chat hoặc trang HLV của tôi thì thông báo tương ứng tự thành đã đọc
+  - `test-coach.php` thêm 12 bước kiểm tra thông báo (115 bước)
 
 ---
 

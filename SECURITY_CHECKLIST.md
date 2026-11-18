@@ -356,3 +356,14 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | Thêm `&user_id=` khác vào URL tải CSV | Không có tác dụng: chỉ xuất dữ liệu của tài khoản đang đăng nhập |
 | Ghi chú nhật ký bắt đầu bằng `=HYPERLINK(...)` rồi tải CSV, mở bằng Excel | Ô hiện chữ, không chạy công thức (có dấu ' phía trước) |
 | `report.php?month=2099-01`, `?month=abc` | Về tháng hiện tại, không lỗi |
+
+### Thông báo (A-44)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Khách gọi `GET api/notifications.php` | 401 |
+| `POST api/notifications.php action=read&id=<id của người khác>` | 404, không đổi gì |
+| `POST` thiếu `csrf_token` | 403 |
+| HLV nhắn tin chứa `<script>alert(1)</script>` | Học viên thấy đúng chữ đó trong chuông, không chạy script (textContent) |
+| Sửa cột `link` trong DB thành `https://web-la.com` hoặc `javascript:...` | Chuông và trang Thông báo bỏ link đó (`notifSafeLink()`), không chuyển ra ngoài |
+| DB cũ chưa import `sql/notifications.sql` | Mọi trang và thao tác HLV vẫn chạy, chuông không có số |

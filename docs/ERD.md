@@ -19,7 +19,8 @@ erDiagram
     USERS ||--o{ BODY_METRICS : "theo dõi"
     USERS ||--o{ NUTRITION_TARGETS : "sở hữu"
     USERS ||--o| NUTRITION_PREFERENCES : "lưu lựa chọn"
-    USERS ||--o{ CHATBOT_SESSIONS : "trò chuyện (chưa dùng)"
+    USERS ||--o{ CHATBOT_SESSIONS : "trò chuyện với GymSmart AI"
+    USERS ||--o{ NOTIFICATIONS : "nhận thông báo"
     USERS ||--o{ PASSWORD_RESETS : "yêu cầu đặt lại"
 
     EXERCISES ||--o{ WORKOUT_PLAN_EXERCISES : "được dùng trong"
@@ -414,6 +415,11 @@ Tin nhắn trong một quan hệ (không có chat tự do). Tối đa 1000 ký t
 Khi đang có HLV, học viên **không tự sửa** lịch tập và dinh dưỡng. Muốn sửa thì gửi yêu cầu (`area` = `PLAN` hoặc `NUTRITION`, kèm lý do). HLV duyệt thì `unlock_until` = 24 giờ sau, trong thời gian đó học viên được tự sửa phần ấy. `open_key` + UNIQUE: mỗi phần chỉ 1 yêu cầu đang chờ. Quan hệ kết thúc thì yêu cầu đang chờ chuyển `CANCELLED`.
 
 ---
+
+## Thông báo trong ứng dụng (`sql/notifications.sql`, đã gộp vào `schema.sql`, A-44)
+
+### `notifications`
+Mỗi dòng là một thông báo cho MỘT người (`user_id`, xóa người thì xóa theo). `type` là mã sự kiện viết sẵn trong code (`coach.message`, `coach.feedback`, `coach.request`, `coach.relation`, `coach.plan`, `coach.nutrition`, `coach.change_request`, `coach.change_reply`, `coach.application_approved`, `coach.application_rejected`, `coach.revoked`, `admin.coach_application`). `link` là đường dẫn nội bộ bắt đầu bằng `/` do code tạo. `read_at` NULL = chưa đọc. Index `(user_id, read_at, id)` cho việc đếm số chưa đọc và lấy danh sách mới nhất. Tin nhắn, nhận xét, giao lịch, đặt mục tiêu được gộp: đã có thông báo CHƯA ĐỌC cùng `type` + `link` thì cập nhật nội dung thay vì thêm dòng. Thông báo được ghi trong cùng transaction với thao tác gây ra nó (`includes/coach-db.php`).
 
 ## Ghi chú khi triển khai
 

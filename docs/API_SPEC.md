@@ -318,6 +318,17 @@ Khi đang có HLV, `POST /api/workout-plan-generate.php` và `/api/workout-plan-
 
 ---
 
+## 10. Thông báo (A-44) — triển khai thật
+
+| Method | File | Quyền | Mô tả |
+|---|---|---|---|
+| GET | `api/notifications.php` | User | `{ success, data: { unread, items: [{ id, type, title, body, link, read, created_at }] } }`, 15 cái mới nhất; `?count=1` chỉ trả `unread` |
+| POST | `api/notifications.php` | User + `csrf_token` | `action=read&id=` đánh dấu đã đọc 1 thông báo, trả `{ success, link }`; `action=read_all` trả `{ success, updated }` |
+| GET/POST | `notifications.php` (trang) | User | Danh sách đầy đủ 20 cái/trang, dùng được khi tắt JavaScript |
+
+- Chỉ đọc / đánh dấu được thông báo của chính mình (`user_id` từ session). Id của người khác trả 404.
+- Nội dung luôn hiển thị bằng `htmlspecialchars` (PHP) hoặc `textContent` (JS); `link` chỉ nhận đường dẫn nội bộ (`notifSafeLink()`).
+
 ## Mã lỗi chung (HTTP status)
 
 | Status | Khi nào dùng |
