@@ -105,7 +105,7 @@ body:has(.gh-hero) :is(a, button, input, select):focus-visible { outline: 3px so
 /* Ảnh cắt hình bình hành, nhuộm hai tông cam/đen, phủ vạch quét kiểu màn hình */
 .gh-stage__photo { position: absolute; top: 24px; right: 0; width: 80%; height: 86%; z-index: 1; overflow: hidden;
     clip-path: polygon(16% 0, 100% 0, 84% 100%, 0 100%); background: linear-gradient(160deg, var(--accent-2), var(--accent) 55%, var(--ink-2)); }
-.gh-stage__photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 8%; filter: grayscale(1) contrast(1.15); mix-blend-mode: multiply; }
+.gh-stage__photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; filter: saturate(1.05) contrast(1.05); }   /* ảnh đã sẵn tông cam/tối nên giữ màu gốc, không nhuộm */
 .gh-stage__photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(7, 11, 24, .75)); }
 .gh-stage__scan { position: absolute; inset: 0; z-index: 1; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .06) 0 1px, transparent 1px 4px); pointer-events: none; }
 /* Vạch tốc độ chéo */

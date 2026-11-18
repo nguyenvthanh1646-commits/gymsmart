@@ -12,13 +12,11 @@
 | Ngày tải | 01/11/2026 |
 | Đã chỉnh sửa | Lật ngang để người tập nằm bên phải, cắt khung, đổi kích thước và nén sang WebP/JPG |
 
-## `hero/hero-pair-800.webp`, `hero-pair-800.jpg` (ảnh hero trang chủ khách từ 11/2026)
+## `hero/hero-duo.webp`, `hero-duo.jpg` (ảnh hero trang chủ khách từ 18/11/2026)
 
 | | |
 |---|---|
-| Tác giả | Andrej Klintsy ([pexels.com/@andrej-klintsy-3607566](https://www.pexels.com/@andrej-klintsy-3607566/)) |
-| Nguồn | [Pexels: A Man and Woman Standing Together while Looking at their Abs](https://www.pexels.com/photo/a-man-and-woman-standing-together-while-looking-at-their-abs-6392829/) |
-| Giấy phép | [Pexels License](https://www.pexels.com/license/): dùng và chỉnh sửa miễn phí, không bắt buộc ghi công. Không được bán lại ảnh khi chưa chỉnh sửa, không được dùng để gợi ý người trong ảnh ủng hộ sản phẩm |
-| Ngày tải | 18/11/2026 |
-| Đã chỉnh sửa | Cắt khung 4:5, đổi kích thước 800×1000, nén WebP/JPG; trên trang còn được CSS nhuộm hai tông cam/đen |
-| Ghi chú | Người mẫu ảnh stock, không phải người nổi tiếng. Trang không ghi tên hay lời trích nào của người trong ảnh |
+| Nguồn | Ảnh do nhóm cung cấp ngày 18/11/2026 |
+| Loại ảnh | Ảnh **tạo bằng AI** (ảnh gốc có biểu tượng ✦ của công cụ tạo ảnh ở góc phải dưới và chữ neon vô nghĩa trên tường). Người trong ảnh không phải người thật, không phải người nổi tiếng |
+| Đã chỉnh sửa | Cắt khung đứng 450×492 quanh hai người (bỏ phần chữ neon bên trái và góc phải), nén WebP/JPG; giữ màu gốc |
+| Ghi chú | Khi bảo vệ nên nói rõ đây là ảnh minh họa tạo bằng AI. Trang không ghi tên hay lời trích nào của người trong ảnh |

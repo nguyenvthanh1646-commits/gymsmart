@@ -43,11 +43,11 @@ $ghArticles  = (int)$guestStats['sourcedArticles'];
         </div>
 
         <div class="gh-stage" id="gh-stage">
-            <!-- Ảnh trang trí: alt rỗng. Ảnh màn hình đầu: không lazy-load, tải ưu tiên. Nguồn ảnh (Pexels License): assets/img/CREDITS.md -->
+            <!-- Ảnh trang trí: alt rỗng. Ảnh màn hình đầu: không lazy-load, tải ưu tiên. Nguồn ảnh (ảnh nhóm cung cấp): assets/img/CREDITS.md -->
             <div class="gh-stage__photo" aria-hidden="true">
                 <picture>
-                    <source type="image/webp" srcset="/assets/img/hero/hero-pair-800.webp" width="800" height="1000">
-                    <img src="/assets/img/hero/hero-pair-800.jpg" alt="" width="800" height="1000" fetchpriority="high" decoding="async">
+                    <source type="image/webp" srcset="/assets/img/hero/hero-duo.webp" width="450" height="492">
+                    <img src="/assets/img/hero/hero-duo.jpg" alt="" width="450" height="492" fetchpriority="high" decoding="async">
                 </picture>
                 <span class="gh-stage__scan"></span>
             </div>

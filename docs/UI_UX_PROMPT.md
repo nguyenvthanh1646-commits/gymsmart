@@ -123,7 +123,7 @@ Quy tắc màu:
 ## 7. Quy định theo trang
 
 - **Trang chủ khách (hướng "Future sport", 11/2026):**
-  - Hero nền tối `--ink` (ngoại lệ duy nhất): lưới sàn phối cảnh, quầng sáng cam và `--glow-cool`, tiêu đề viết hoa nghiêng từng dòng (dòng giữa chỉ có viền, có dự phòng chữ đặc), dải số liệu THẬT (số bài tập, nhóm cơ, bài viết có dẫn chứng). Bên phải: ảnh gym cắt hình bình hành nhuộm cam/đen có vạch quét (nguồn ghi trong `public/assets/img/CREDITS.md`) và **một** bảng điều khiển kính tối có nhãn "Ví dụ".
+  - Hero nền tối `--ink` (ngoại lệ duy nhất): lưới sàn phối cảnh, quầng sáng cam và `--glow-cool`, tiêu đề viết hoa nghiêng từng dòng (dòng giữa chỉ có viền, có dự phòng chữ đặc), dải số liệu THẬT (số bài tập, nhóm cơ, bài viết có dẫn chứng). Bên phải: ảnh gym tông cam/tối cắt hình bình hành có vạch quét (nguồn ghi trong `public/assets/img/CREDITS.md`) và **một** bảng điều khiển kính tối có nhãn "Ví dụ".
   - Không dùng ảnh người nổi tiếng/influencer: vừa vướng bản quyền, vừa khiến người xem hiểu nhầm là họ quảng cáo cho GymSmart.
   - Nút cam dùng chữ `--ink` (chữ trắng trên `#ff5a1f` chỉ đạt 3,12:1).
   - Bên dưới: dải từ khóa chạy ngang, công cụ tính calo (tính trong trình duyệt), lưới bento, 3 bước, chatbot mẫu, bài viết thật, kêu gọi cuối trang nền cam; mọi khối nền sáng.
