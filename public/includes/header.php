@@ -14,6 +14,13 @@ if (!headers_sent()) {
     header('X-Content-Type-Options: nosniff');            // trình duyệt không tự đoán kiểu file
     header('X-Frame-Options: SAMEORIGIN');                 // không cho trang khác nhúng website trong iframe
     header('Referrer-Policy: strict-origin-when-cross-origin');
+    // Content-Security-Policy: trình duyệt chỉ tải script, CSS, font, dữ liệu fetch() từ chính website; ảnh thêm data:/blob:
+    // (xem trước ảnh đại diện) và ảnh bìa video YouTube; khung nhúng chỉ cho youtube-nocookie.com (video bài tập).
+    // Còn 'unsafe-inline' vì một số trang có <script> và style="..." viết thẳng trong HTML; dù vậy nếu bị chèn mã,
+    // mã đó cũng không tải được script từ nơi khác hay gửi dữ liệu ra ngoài (connect-src 'self').
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
+        . "img-src 'self' data: blob: https://img.youtube.com; font-src 'self'; connect-src 'self'; "
+        . "frame-src https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'");
 }
 ?>
 <!DOCTYPE html>
