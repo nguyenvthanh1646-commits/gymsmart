@@ -39,6 +39,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Logic nghiệp vụ tách khỏi HTML, nằm trong `public/includes/`**, và phần thuật toán được giữ **thuần, không đụng DB** để test được:
   - `workout-plan.php`: thuật toán gợi ý lịch tập thuần (`generateWorkoutPlan()`, các hằng `WORKOUT_SPLITS`, `WORKOUT_GOALS`, `WORKOUT_LEVELS`, `WORKOUT_EXERCISE_ROLES` gắn **id bài tập cố định** theo `seed_exercises_v2.sql`). `workout-plan-db.php` là lớp truy vấn PDO đi kèm.
   - `tdee.php` (BMR Mifflin-St Jeor / TDEE / macro), `meal-plan.php`, `admin-users.php`, `audit-log.php` (ghi `admin_audit_log` cho thao tác admin).
+  - `health.php` (G2): kiểm tra sức khỏe hệ thống cho `admin/health.php` (PHP, extension, bảng thiếu so với `schema.sql` kèm tên file bổ sung cần chạy, múi giờ PHP/MySQL, khóa Gemini chỉ báo đã/chưa cấu hình, thư mục ghi file) và sao lưu database `healthWriteBackup()` cho `admin/backup.php` (POST + CSRF + ô xác nhận, ghi nhật ký `system.backup`). Hàm thuần test ở `test-health.php`.
   - `equipment.php` (thuần, test ở `test-equipment.php`): nhãn dụng cụ, `equivalentExercises()` (bài cùng vai trò khác dụng cụ, dễ có dụng cụ trước), `personalRecords()` / `recordsImproved()` (kỷ lục cá nhân). `equipment-db.php` là phần truy vấn, tự bỏ qua khi DB cũ chưa có cột `equipment`.
   - `weekly-summary.php`: tổng kết tuần bằng AI (D2). `weeklyStats()` và `weeklyPrompt()` là hàm thuần (test ở `test-weekly.php`), AI chỉ viết lời từ đúng số liệu đó; lưu ở bảng `weekly_summaries`, hiển thị và tạo (POST + CSRF) ở `report.php`.
   - `achievements.php`: chuỗi tuần tập đều (`achWeeklyStreak()`), huy hiệu cột mốc (`achMilestones()`), tóm tắt tháng (`achMonthSummary()`); thuần, test ở `test-achievements.php`. Trang `report.php` (Báo cáo & thành tích, in / lưu PDF bằng hộp in của trình duyệt), `export-my-data.php` (người dùng tải CSV của chính mình), `includes/csv.php` (BOM UTF-8 + chống CSV injection, dùng chung với `admin/export.php`).
@@ -143,6 +144,7 @@ php test-workout-plan-db.php    # lớp workout-plan-db.php trên SQLite in-memo
 php test-dashboard.php          # hàm thuần và lớp đọc DB của bảng điều khiển (phần DB cần pdo_sqlite)
 php tools/test-coach-http.php   # kịch bản HLV qua HTTP (118 bước): tự tạo DB gymsmart_test_hlv + máy chủ :8099 rồi xóa; cần MySQL đang chạy, không đụng DB thật
 php test-coach.php              # phân hệ HLV: đơn đăng ký, quan hệ, quyền xem, khóa tự sửa, macro, tin nhắn (phần DB cần pdo_sqlite)
+php test-health.php             # trang Sức khỏe hệ thống: đọc bảng từ schema.sql, trạng thái chung, câu INSERT sao lưu (không cần DB)
 php test-nutrition.php          # nhịp mục tiêu, ngày tập/nghỉ, tiến độ cân nặng, loại trừ thực phẩm, lịch 7 ngày (phần lưu lựa chọn cần pdo_sqlite)
 
 # Lint 1 file

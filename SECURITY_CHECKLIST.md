@@ -410,3 +410,15 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | Ngày tương lai, khối lượng 0 hoặc 9999 g, đạm 150 g/100 g | Bị từ chối |
 | Tên thực phẩm chứa thẻ HTML | Hiện đúng chữ (htmlspecialchars) |
 | Gửi kcal tự tính từ trình duyệt | Không có ô đó: máy chủ tự tính từ thực phẩm và gam |
+
+### Sức khỏe hệ thống và sao lưu (A-51)
+
+| Thử | Kết quả đúng |
+|---|---|
+| USER hoặc COACH mở `/admin/health.php` | 403 |
+| Khách gửi POST tới `/admin/backup.php` | Chuyển sang đăng nhập |
+| Mở `/admin/backup.php` bằng GET (link) | Quay về trang Sức khỏe, không tải gì |
+| POST sai `csrf_token` | 403 |
+| POST đúng CSRF nhưng không tick ô xác nhận | Quay lại kèm thông báo, không tải |
+| Xem nguồn trang Sức khỏe | Không có khóa Gemini hay mật khẩu DB, chỉ "Đã cấu hình (n ký tự)" |
+| Tải sao lưu | Có dòng `system.backup` trong Nhật ký hoạt động; file có header `Cache-Control: no-store` |
