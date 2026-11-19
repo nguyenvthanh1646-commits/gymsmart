@@ -25,6 +25,9 @@ erDiagram
     USERS ||--o{ COACH_PLAN_TEMPLATES : "HLV lưu mẫu lịch"
     COACH_PLAN_TEMPLATES ||--o{ COACH_PLAN_TEMPLATE_ITEMS : "gồm"
     COACH_CLIENTS ||--o| COACH_REVIEWS : "học viên đánh giá"
+    USERS ||--o{ MEAL_LOGS : "ghi món đã ăn"
+    USERS ||--o{ USER_FOODS : "thực phẩm tự thêm"
+    USER_FOODS |o--o{ MEAL_LOGS : "được ghi"
     EXERCISES ||--o{ COACH_PLAN_TEMPLATE_ITEMS : "dùng trong mẫu"
     USERS ||--o{ PASSWORD_RESETS : "yêu cầu đặt lại"
 
@@ -442,6 +445,14 @@ Mỗi mẫu thuộc đúng 1 HLV (`coach_id`, xóa HLV thì xóa mẫu), lưu t�
 
 ### `coach_reviews`
 Mỗi quan hệ HLV - học viên tối đa 1 đánh giá (`UNIQUE coach_client_id`), lưu thêm `coach_id`, `client_id` để tổng hợp nhanh. `rating` 1-5, `comment` tối đa 500 ký tự. Điều kiện được viết (kiểm tra ở `includes/coach-reviews.php`): quan hệ đã được duyệt (ACTIVE hoặc ENDED), đủ 14 ngày từ lúc bắt đầu, có ít nhất 1 ngày tập ghi trong thời gian đó. Công khai chỉ hiện "Học viên" + tên, không hiện họ tên đầy đủ. ADMIN xóa được đánh giá vi phạm (ghi `admin_audit_log` mã `coach.review_delete`).
+
+## Nhật ký ăn (`sql/meal_logs.sql`, đã gộp vào `schema.sql`, A-50)
+
+### `user_foods`
+Thực phẩm người dùng tự thêm theo nhãn bao bì: đạm, tinh bột, béo trên 100 g (calo tính bằng 4P + 4C + 9F, không lưu riêng). Mỗi người tối đa 50.
+
+### `meal_logs`
+Mỗi dòng là một món đã ăn: ngày, bữa (`breakfast` / `lunch` / `dinner` / `snack`), khối lượng và **số liệu chụp lại lúc ghi** (`food_name`, `kcal`, `protein_g`, `carbs_g`, `fat_g`), để sửa bảng thực phẩm sau này không làm đổi lịch sử. Nguồn là `food_key` (mã trong `foodCatalog()` của `meal-plan.php`, giá trị xấp xỉ) hoặc `user_food_id` (xóa thực phẩm tự thêm thì `SET NULL`, dòng đã ghi vẫn còn). Index `(user_id, log_date)`.
 
 ## Ghi chú khi triển khai
 

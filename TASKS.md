@@ -114,6 +114,8 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - Lưu buổi tập báo "Kỷ lục mới"; trang Báo cáo có mục Kỷ lục cá nhân; trang chi tiết bài có kỷ lục của chính mình; test `test-equipment.php` (19 bước)
 - [x] A-48 Mẫu lịch tập của HLV (`a-48-mau-lich-hlv`, đề xuất E1, cần thêm `sql/coach_templates.sql`): "Lưu làm mẫu" từ lịch hoặc bản nháp của một học viên, trang `coach/templates.php` xem trước theo ngày và giao cho nhiều học viên một lần (lịch cũ lưu trữ, học viên được báo qua chuông), xóa mẫu; mục "Mẫu lịch" trên menu HLV; test `test-coach-templates.php` (22 bước)
 - [x] A-49 Đánh giá HLV (`a-49-danh-gia-hlv`, đề xuất E2, cần thêm `sql/coach_reviews.sql`): chỉ học viên đã tập với HLV đủ 14 ngày và có ghi buổi tập mới đánh giá được, mỗi quan hệ 1 đánh giá (sửa / xóa được, cả với HLV cũ); điểm trung bình + 3 đánh giá gần nhất ở danh sách HLV (chỉ hiện tên, không họ), ô đánh giá trên bảng điều khiển HLV, HLV nhận thông báo; ADMIN xóa đánh giá vi phạm ở `admin/coach-reviews.php`; test `test-coach-reviews.php` (24 bước)
+- [x] A-50 Nhật ký ăn (`a-50-nhat-ky-an`, đề xuất C1, cần thêm `sql/meal_logs.sql`): trang `food-log.php` ghi món theo bữa và so tổng ngày với mục tiêu dinh dưỡng; "Thực phẩm của tôi" nhập theo nhãn bao bì; số liệu tính và chụp lại ở máy chủ (`includes/meal-log.php`); liên kết từ trang Dinh dưỡng và thẻ Dinh dưỡng ở trang chủ; test `test-meal-log.php` (25 bước)
+  - **Còn thiếu so với đề xuất:** chưa thêm kho món ăn Việt Nam (phở, bún bò, cơm tấm...) vì chưa có nguồn số liệu đã kiểm chứng (ví dụ Bảng thành phần thực phẩm Việt Nam của Viện Dinh dưỡng). Khi có nguồn, thêm vào `foodCatalog()` kèm ghi nguồn
 
 ---
 

@@ -399,3 +399,14 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | Sửa trường `back` thành `https://web-la.com` | Vẫn chỉ quay về `/my-coach.php` |
 | USER mở `/admin/coach-reviews.php`; POST thiếu `csrf_token` | 403; trang báo lỗi mã bảo vệ |
 | Nhận xét chứa thẻ HTML | Hiện đúng chữ ở mọi trang (htmlspecialchars) |
+
+### Nhật ký ăn (A-50)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Khách mở `/food-log.php` | Chuyển sang đăng nhập |
+| Sửa ô thực phẩm thành `u:<id thực phẩm của người khác>` hoặc `c:phobo` (không có trong bảng) | Bị từ chối, không ghi |
+| Gửi `id` món của người khác khi xóa | "Không tìm thấy món này trong nhật ký của bạn" |
+| Ngày tương lai, khối lượng 0 hoặc 9999 g, đạm 150 g/100 g | Bị từ chối |
+| Tên thực phẩm chứa thẻ HTML | Hiện đúng chữ (htmlspecialchars) |
+| Gửi kcal tự tính từ trình duyệt | Không có ô đó: máy chủ tự tính từ thực phẩm và gam |
