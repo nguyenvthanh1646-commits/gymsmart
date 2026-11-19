@@ -33,7 +33,7 @@
 
 ## 3. Design tokens (bắt buộc dùng biến, không viết mã màu trực tiếp)
 
-Hiện CSS có nhiều tiền tố biến (`--color-*`, `--ui-*`, `--gc-*`, `--gs-*`). Từ nay **chỉ dùng bộ dưới đây**, khai báo một lần trong `public/css/ui.css`. Khi sửa trang nào thì chuyển biến cũ của trang đó sang bộ này.
+Bộ dưới đây khai báo **một lần duy nhất** ở `:root` của `public/css/ui.css` (A-52). Các tên cũ `--color-*` và `--ui-*` (cuối `:root` của `ui.css`) và `--gs-*` (`brand.css`) giờ chỉ là tên phụ trỏ về bộ này, không có giá trị riêng; code mới đừng dùng. `style.css` chỉ còn vài biến cũ không có trong bộ chuẩn (`--color-accent-hover`, `--color-accent-soft`, `--color-error*`, `--color-success*`, `--transition`). `--gc-*` (chatbot), `--du-*` (bảng điều khiển), `--gh-*` (trang khách) là biến riêng của một khu, được phép nhưng nên dẫn xuất từ bộ chuẩn. Mã hex trùng đúng giá trị token đã được thay bằng `var(...)` (179 chỗ, so ảnh 80 màn hình trước/sau không đổi điểm ảnh nào ngoài phần nội dung động).
 
 | Nhóm | Biến | Giá trị |
 |---|---|---|
@@ -53,6 +53,10 @@ Hiện CSS có nhiều tiền tố biến (`--color-*`, `--ui-*`, `--gc-*`, `--g
 | | `--warn` | `#f79009` |
 | | `--danger` | `#f04438` |
 | | `--info` | `#2e90fa` |
+| Chữ / nền trạng thái (thông báo, huy hiệu, nút xóa) | `--ok-text` / `--ok-soft` | `#067647` / `#ecfdf3` |
+| | `--warn-text` / `--warn-soft` | `#93370d` / `#fffaeb` |
+| | `--danger-text` / `--danger-soft` | `#b42318` / `#fef3f2` |
+| Chữ phụ đậm (nhãn, tiêu đề cột) | `--text-2` / `--text-3` | `#344054` / `#475467` |
 | Ánh sáng lạnh (**chỉ trang khách**) | `--glow-cool` | `#22d3ee` — chỉ làm quầng sáng/gradient trang trí trong `home-guest.css`; không dùng cho chữ, nút hay trạng thái |
 | Bo góc | `--r-sm` / `--r` / `--r-lg` / `--r-pill` | `8px` / `12px` / `18px` / `999px` |
 | Bóng | `--shadow-sm` | `0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06)` |
