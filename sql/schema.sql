@@ -412,3 +412,20 @@ CREATE TABLE IF NOT EXISTS coach_plan_template_items (
     FOREIGN KEY (template_id) REFERENCES coach_plan_templates(id) ON DELETE CASCADE,
     FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Học viên đánh giá HLV (A-49, sql/coach_reviews.sql)
+CREATE TABLE IF NOT EXISTS coach_reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    coach_client_id INT NOT NULL,
+    coach_id INT NOT NULL,
+    client_id INT NOT NULL,
+    rating TINYINT UNSIGNED NOT NULL,          -- 1 đến 5 sao
+    comment VARCHAR(500) NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    UNIQUE KEY uq_review_relation (coach_client_id),
+    INDEX idx_review_coach (coach_id, created_at),
+    FOREIGN KEY (coach_client_id) REFERENCES coach_clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
