@@ -8,6 +8,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/coach.php';
+require_once __DIR__ . '/../includes/coach-reviews.php';   // ô Đánh giá từ học viên (A-49)
 
 requireCoach();
 coachHandleCoachAction($pdo, '/coach/dashboard.php');
@@ -19,6 +20,9 @@ $profile = coachProfile($pdo, $coachId);
 $counts  = coachDashboardCounts($pdo, $coachId, $today);
 $pending = coachPendingRequests($pdo, $coachId);
 $clients = coachActiveClients($pdo, $coachId);
+$reviewsOn = coachReviewsReady($pdo);
+$myRating = $reviewsOn ? (coachRatingSummary($pdo, [$coachId])[$coachId] ?? null) : null;
+$myReviews = $reviewsOn ? coachReviewsForCoach($pdo, $coachId, 3) : [];
 $seats   = $profile ? coachSeatsLeft((int)$profile['max_clients'], (int)$profile['active_clients']) : 0;
 $since7  = date('Y-m-d', strtotime($today . ' -6 days'));
 $compliance = coachComplianceFor($pdo, array_column($clients, 'client_id'), $today);
@@ -128,6 +132,24 @@ $ico = function (string $inner): string {
             <?php endif; ?>
         </section>
     </div>
+
+    <?php if ($reviewsOn): ?>
+        <section class="adm-panel adm-card-pad" style="margin-top:16px" aria-labelledby="h-reviews">
+            <h2 id="h-reviews">Đánh giá từ học viên</h2>
+            <?php if (!$myRating): ?>
+                <p class="adm-sub">Chưa có đánh giá. Học viên đánh giá được sau khi tập cùng bạn đủ 14 ngày và có ghi buổi tập.</p>
+            <?php else: ?>
+                <p class="ch-rating" style="font-size:16px"><span class="ch-stars" aria-hidden="true">★</span> <b><?= htmlspecialchars(number_format($myRating['avg'], 1, ',', '')) ?></b>/5 · <?= (int)$myRating['count'] ?> đánh giá</p>
+                <ul class="ch-reviews">
+                    <?php foreach ($myReviews as $rv): ?>
+                        <li><span class="ch-stars" aria-label="<?= (int)$rv['rating'] ?> trên 5 sao"><?= str_repeat('★', $rv['rating']) . str_repeat('☆', 5 - $rv['rating']) ?></span>
+                            <b><?= htmlspecialchars($rv['name']) ?></b> <span class="adm-sub"><?= htmlspecialchars(date('d/m/Y', strtotime($rv['date']))) ?></span>
+                            <?php if ($rv['comment'] !== ''): ?><p><?= htmlspecialchars($rv['comment']) ?></p><?php endif; ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
 </div>
 <script src="/js/coach.js"></script>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

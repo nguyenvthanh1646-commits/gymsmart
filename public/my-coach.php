@@ -10,9 +10,33 @@ require_once __DIR__ . '/includes/auth.php';
 requireLogin();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/coach.php';
+require_once __DIR__ . '/includes/coach-reviews.php';   // đánh giá HLV (A-49)
 
 $userId = (int)$_SESSION['user_id'];
 $ready  = coachTablesReady($pdo);
+$reviewsOn = $ready && coachReviewsReady($pdo);
+
+// Đánh giá HLV: xử lý riêng trước bộ xử lý chung của học viên. Post/Redirect/Get, chỉ quay về trang nội bộ my-coach.php.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $reviewsOn && in_array($_POST['action'] ?? '', ['review_save', 'review_delete'], true)) {
+    if (!verifyCsrf()) {
+        showCsrfError();
+    }
+    $relId = coachParseId($_POST['relation_id'] ?? null);
+    try {
+        if ($_POST['action'] === 'review_save') {
+            coachReviewSave($pdo, $userId, $relId, $_POST['rating'] ?? null, (string)($_POST['comment'] ?? ''));
+            coachFlash('ok', 'Đã lưu đánh giá. Cảm ơn bạn!');
+        } else {
+            coachReviewDelete($pdo, $userId, $relId);
+            coachFlash('ok', 'Đã xóa đánh giá.');
+        }
+    } catch (CoachException $e) {
+        coachFlash('error', $e->getMessage());
+    }
+    $back = (string)($_POST['back'] ?? '');
+    header('Location: ' . (preg_match('#^/my-coach\.php(\?history=\d+)?$#', $back) ? $back : '/my-coach.php'));
+    exit;
+}
 coachHandleClientAction($pdo, '/my-coach.php');
 
 $flash  = coachTakeFlash();
@@ -108,6 +132,7 @@ include __DIR__ . '/includes/header.php';
                         <?php endforeach; ?>
                     </ul>
                 </section>
+                <?php if ($reviewsOn) { $reviewState = coachReviewState($pdo, $userId, (int)$hist['id']); $reviewRedirect = '/my-coach.php?history=' . (int)$hist['id']; include __DIR__ . '/includes/coach-review-card.php'; } ?>
             </aside>
         </div>
 
@@ -238,6 +263,7 @@ include __DIR__ . '/includes/header.php';
                     <p class="ch-small ch-muted" style="margin:var(--s-3) 0 0">Tập cùng từ <?= htmlspecialchars(coachDateLabel((string)$rel['accepted_at'])) ?>.</p>
                     <?php if (!empty($coach['availability'])): ?><p class="ch-small" style="margin:6px 0 0"><b>Thời gian hỗ trợ:</b> <?= htmlspecialchars($coach['availability']) ?></p><?php endif; ?>
                 </section>
+                <?php if ($reviewsOn) { $reviewState = coachReviewState($pdo, $userId, (int)$rel['id']); $reviewRedirect = '/my-coach.php'; include __DIR__ . '/includes/coach-review-card.php'; } ?>
                 <section class="card">
                     <h2 class="card__head">Ngừng tập với HLV</h2>
                     <p class="card__sub">HLV sẽ mất quyền xem dữ liệu của bạn ngay. Lịch tập và mục tiêu hiện tại vẫn được giữ và bạn tự sửa được.</p>

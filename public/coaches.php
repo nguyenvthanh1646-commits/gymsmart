@@ -12,6 +12,7 @@ require_once __DIR__ . '/includes/auth.php';
 requireLogin();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/coach.php';
+require_once __DIR__ . '/includes/coach-reviews.php';   // số sao trung bình và đánh giá gần nhất (A-49)
 
 $userId = (int)$_SESSION['user_id'];
 $ready  = coachTablesReady($pdo);
@@ -20,6 +21,8 @@ coachHandleClientAction($pdo, '/coaches.php');
 $role    = coachUserRole($pdo, $userId) ?? 'USER';
 $flash   = coachTakeFlash();
 $coaches = $ready ? coachListPublic($pdo) : [];
+$ratings = ($ready && coachReviewsReady($pdo)) ? coachRatingSummary($pdo, array_column($coaches, 'id')) : [];
+$reviewsOn = $ready && coachReviewsReady($pdo);
 $openRel = ($ready && $role === 'USER') ? coachOpenRelationForClient($pdo, $userId) : null;
 $canAsk  = $ready && $role === 'USER' && $openRel === null;
 $app     = ($ready && $role === 'USER') ? coachLatestApplication($pdo, $userId) : null;
@@ -105,6 +108,10 @@ include __DIR__ . '/includes/header.php';
                             <div>
                                 <h2><?= htmlspecialchars($c['full_name']) ?></h2>
                                 <p><?= htmlspecialchars($c['headline']) ?></p>
+                                <?php if ($reviewsOn): ?>
+                                    <?php $rt = $ratings[(int)$c['id']] ?? null; ?>
+                                    <p class="ch-rating"><?php if ($rt): ?><span class="ch-stars" aria-hidden="true">★</span> <b><?= htmlspecialchars(number_format($rt['avg'], 1, ',', '')) ?></b>/5 · <?= (int)$rt['count'] ?> đánh giá từ học viên đã tập<?php else: ?>Chưa có đánh giá<?php endif; ?></p>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="ch-tags">
@@ -124,6 +131,18 @@ include __DIR__ . '/includes/header.php';
                             <p><b>Chứng chỉ:</b> <?= htmlspecialchars($c['certifications'] !== '' ? $c['certifications'] : 'Không ghi chứng chỉ.') ?></p>
                             <?php if ($c['availability'] !== ''): ?><p><b>Thời gian hỗ trợ:</b> <?= htmlspecialchars($c['availability']) ?></p><?php endif; ?>
                         </details>
+                        <?php if ($reviewsOn && !empty($ratings[(int)$c['id']])): ?>
+                            <details>
+                                <summary>Đánh giá gần đây</summary>
+                                <ul class="ch-reviews">
+                                    <?php foreach (coachReviewsForCoach($pdo, (int)$c['id'], 3) as $rv): ?>
+                                        <li><span class="ch-stars" aria-label="<?= (int)$rv['rating'] ?> trên 5 sao"><?= str_repeat('★', $rv['rating']) . str_repeat('☆', 5 - $rv['rating']) ?></span>
+                                            <b><?= htmlspecialchars($rv['name']) ?></b> <span class="ch-muted ch-small"><?= htmlspecialchars(date('d/m/Y', strtotime($rv['date']))) ?></span>
+                                            <?php if ($rv['comment'] !== ''): ?><p><?= htmlspecialchars($rv['comment']) ?></p><?php endif; ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </details>
+                        <?php endif; ?>
                         <div class="ch-coach__act">
                             <?php if ($isMine): ?>
                                 <span class="ch-badge ch-badge--accent" style="justify-self:start"><?= $openRel['status'] === 'ACTIVE' ? 'HLV của bạn' : 'Đã gửi yêu cầu' ?></span>

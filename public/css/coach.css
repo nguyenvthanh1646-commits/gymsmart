@@ -263,3 +263,19 @@
 .tpl-del { margin-top: 8px; }
 .tpl-empty h2 { margin: 0 0 6px; }
 @media (max-width: 420px) { .tpl-grid { grid-template-columns: 1fr; } }
+
+/* Đánh giá HLV (A-49) */
+.ch-stars { color: #f79009; letter-spacing: 1px; }
+.ch-rating { margin: 4px 0 0; font-size: 14px; color: var(--text-muted); }
+.ch-rating b { color: var(--text); }
+.ch-reviews { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.ch-reviews li { padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); }
+.ch-reviews p { margin: 4px 0 0; font-size: 14px; }
+.ch-review__mine { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 18px; }
+.ch-review__form { display: grid; gap: 8px; margin-top: 10px; }
+.ch-review__form textarea { width: 100%; box-sizing: border-box; }
+.ch-rate { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0; padding: 0; border: 0; }
+.ch-rate legend { margin-bottom: 4px; font-size: 14px; font-weight: 600; }
+.ch-rate label { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; cursor: pointer; }
+.ch-rate input { width: 18px; height: 18px; accent-color: var(--accent); }
+.ch-review__del { margin-top: 8px; }
