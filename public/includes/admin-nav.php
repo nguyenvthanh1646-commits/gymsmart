@@ -15,6 +15,7 @@ $admNavItems = [
     'articles'  => ['/admin/articles.php', 'Bài viết'],
     'stats'     => ['/admin/stats.php', 'Thống kê'],
     'audit'     => ['/admin/audit-log.php', 'Nhật ký'],
+    'health'    => ['/admin/health.php', 'Hệ thống'],
 ];
 ?>
 <?php

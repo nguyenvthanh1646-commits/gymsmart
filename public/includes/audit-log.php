@@ -33,6 +33,7 @@ function auditActions(): array
         'coach.assign_plan'    => 'HLV giao lịch tập',
         'coach.set_macros'     => 'HLV đặt mục tiêu dinh dưỡng',
         'coach.change_request' => 'HLV trả lời yêu cầu sửa',
+        'system.backup'        => 'Tải bản sao lưu database',
     ];
 }
 
