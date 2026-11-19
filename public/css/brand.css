@@ -3,12 +3,13 @@
    Mọi class bắt đầu bằng "gs-" (thương hiệu) hoặc "nb-" (navbar) để không đụng class của người khác. */
 
 :root {
-    --gs-ink: #0b1020;          /* nền tối chính */
-    --gs-ink-2: #111a33;        /* nền tối phụ */
+    /* Tên riêng của thanh điều hướng, trỏ về bộ token chuẩn trong ui.css */
+    --gs-ink: var(--ink);              /* nền tối chính */
+    --gs-ink-2: var(--ink-2);          /* nền tối phụ */
     --gs-line-dark: rgba(255, 255, 255, .10);
-    --gs-text-soft: #c7d0e6;    /* chữ phụ trên nền tối */
-    --gs-accent: var(--color-accent, #ff5a1f);
-    --gs-accent-2: #ff8a3d;
+    --gs-text-soft: var(--text-on-dark); /* chữ phụ trên nền tối */
+    --gs-accent: var(--accent);
+    --gs-accent-2: var(--accent-2);
 }
 
 /* ===== Logo ===== */
