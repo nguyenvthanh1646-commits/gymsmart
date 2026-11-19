@@ -429,3 +429,35 @@ CREATE TABLE IF NOT EXISTS coach_reviews (
     FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Nhật ký ăn và thực phẩm tự thêm (A-50, sql/meal_logs.sql)
+CREATE TABLE IF NOT EXISTS user_foods (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(80) NOT NULL,
+    protein_100g DECIMAL(5,1) NOT NULL,
+    carbs_100g DECIMAL(5,1) NOT NULL,
+    fat_100g DECIMAL(5,1) NOT NULL,
+    created_at DATETIME NOT NULL,
+    INDEX idx_uf_user (user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS meal_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    log_date DATE NOT NULL,
+    meal_kind VARCHAR(12) NOT NULL,           -- breakfast | lunch | dinner | snack
+    food_key VARCHAR(20) NULL,
+    user_food_id INT NULL,
+    food_name VARCHAR(80) NOT NULL,
+    grams DECIMAL(6,1) NOT NULL,
+    kcal DECIMAL(7,1) NOT NULL,
+    protein_g DECIMAL(6,1) NOT NULL,
+    carbs_g DECIMAL(6,1) NOT NULL,
+    fat_g DECIMAL(6,1) NOT NULL,
+    created_at DATETIME NOT NULL,
+    INDEX idx_ml_user_date (user_id, log_date),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_food_id) REFERENCES user_foods(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
