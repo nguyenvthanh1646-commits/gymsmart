@@ -362,7 +362,7 @@ include __DIR__ . '/includes/header.php';
             <h1>Dinh dưỡng</h1>
             <p class="pg-sub">Calo và macro mỗi ngày tính từ hồ sơ của bạn. Đổi mục tiêu hoặc kiểu ăn, kết quả và lịch ăn cập nhật theo.</p>
         </div>
-        <span class="pg-count"><?= date('d/m/Y') ?></span>
+        <a class="btn btn--ghost" href="/food-log.php">Nhật ký ăn hôm nay</a>   <!-- ghi món đã ăn, so với mục tiêu (A-50) -->
     </div>
 
     <?php $ntFlash = coachTakeFlash(); if ($ntFlash): ?>

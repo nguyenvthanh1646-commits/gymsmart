@@ -1,0 +1,61 @@
+/* food-log.css — trang Nhật ký ăn (food-log.php). Class bắt đầu bằng "fl-". Chỉ dùng token chuẩn trong ui.css. */
+
+.fl { max-width: 1100px; margin: 0 auto; }
+.fl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.fl-days { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); margin-bottom: var(--s-4); }
+.fl-days > a { display: inline-grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%;
+    background: var(--surface); color: var(--text); font-weight: 700; text-decoration: none; }
+.fl-days > a:hover { border-color: var(--accent); color: var(--accent-dark); }
+.fl-days > b { min-width: 90px; font-size: 18px; text-align: center; }
+.fl-days__pick { display: flex; gap: var(--s-2); margin-left: auto; }
+.fl-days__pick input { min-height: 44px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r); font: inherit; }
+.fl-days__pick .btn { min-height: 44px; }
+
+.fl-sum { margin-bottom: var(--s-4); }
+.fl-bars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); margin: 0; }
+.fl-bar { padding: var(--s-3) var(--s-4); border-radius: var(--r); background: var(--bg); }
+.fl-bar dt { color: var(--text-muted); font-size: 13px; font-weight: 600; }
+.fl-bar dd { margin: 4px 0 0; color: var(--text); font-variant-numeric: tabular-nums; }
+.fl-bar dd b { font-size: 22px; font-weight: 800; }
+.fl-bar small { display: block; margin-top: 4px; color: var(--text-muted); font-size: 13px; }
+.fl-meter { display: block; height: 8px; margin-top: 6px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
+.fl-meter i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+.fl-meter i.is-over { background: var(--warn); }
+.fl-note { margin: 0 0 var(--s-3); color: var(--text-muted); font-size: 14px; }
+.fl-note a { color: var(--accent-dark); font-weight: 600; }
+
+.fl-grid { display: grid; gap: var(--s-4); grid-template-columns: 1fr; margin-bottom: var(--s-4); }
+.fl-form { display: grid; gap: 6px; }
+.fl-form label { font-size: 14px; font-weight: 600; color: var(--text); }
+.fl-form :is(input, select) { min-height: 48px; margin: 0 0 6px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--text); font: inherit; box-sizing: border-box; width: 100%; }
+.fl-form :is(input, select):focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.fl-form .btn { min-height: 48px; }
+.fl-hint { margin: -2px 0 8px; color: var(--text-muted); font-size: 13px; }
+.fl-form--row { grid-template-columns: 1fr; align-items: end; }
+
+.fl-meal { display: flex; justify-content: space-between; margin: var(--s-4) 0 var(--s-2); font-size: 16px; font-weight: 700; }
+.fl-meal:first-of-type { margin-top: 0; }
+.fl-meal small { color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.fl-items { margin: 0; padding: 0; list-style: none; }
+.fl-items li { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: 10px 0; border-top: 1px solid var(--line); }
+.fl-items li > div { min-width: 0; }
+.fl-items b { font-weight: 600; }
+.fl-items span { color: var(--text-muted); margin-left: 4px; }
+.fl-items small { display: block; color: var(--text-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.fl-items--foods { margin-top: var(--s-3); }
+/* Nút Xóa dạng chữ: style.css tô cam mọi button[type=submit] không có .btn nên cần bộ chọn 0,3,1 */
+.fl-items form button[type="submit"].fl-del { flex: none; min-height: 40px; padding: 0 12px; border: 0; border-radius: var(--r-sm); background: transparent;
+    color: #b42318; font: inherit; font-size: 14px; font-weight: 600; box-shadow: none; cursor: pointer; transform: none; }
+.fl-items form button[type="submit"].fl-del:hover { background: #fef3f2; }
+.fl-empty { padding: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); text-align: center; color: var(--text-muted); }
+.fl-empty--inline { border: 0; padding: var(--s-4) 0; }
+.fl-empty__title { margin: 0 0 4px; font-size: 17px; font-weight: 700; color: var(--text); }
+.fl-foods { margin-bottom: var(--s-4); }
+
+@media (min-width: 760px) {
+    .fl-bars { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .fl-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
+    .fl-form--row { grid-template-columns: 2fr repeat(3, 1fr) auto; gap: var(--s-2); }
+    .fl-form--row :is(input) { margin: 0; }
+}
+.fl-grid > .card, .fl > .card { margin-top: 0; }   /* bỏ khoảng cách .card + .card của ui.css để 2 thẻ trong lưới thẳng hàng */

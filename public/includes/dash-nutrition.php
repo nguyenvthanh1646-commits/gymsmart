@@ -42,6 +42,9 @@ $nutrition = $dash['nutrition'];
         <p class="du-note">
             TDEE <b><?= htmlspecialchars(dashNumber((float)$nutrition['tdee_kcal'], 0)) ?> kcal</b>. % là tỉ lệ calo của mục tiêu mỗi ngày, tính ngày <?= htmlspecialchars((new DateTimeImmutable($nutrition['calculated_date']))->format('d/m/Y')) ?>.
         </p>
-        <a class="du-link" href="/nutrition.php#lich-an">Xem lịch ăn gợi ý</a>
+        <div class="du-links">
+            <a class="du-link" href="/food-log.php">Ghi món đã ăn</a>
+            <a class="du-link" href="/nutrition.php#lich-an">Xem lịch ăn gợi ý</a>
+        </div>
     <?php endif; ?>
 </section>
