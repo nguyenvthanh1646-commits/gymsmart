@@ -157,6 +157,7 @@ Quy tắc màu:
   - Cùng phong cách khu quản trị.
   - Bảng điều khiển gồm học viên, yêu cầu chờ duyệt, học viên chưa tập 7 ngày, tin nhắn chưa đọc.
   - Lịch hoặc mục tiêu do HLV giao có nhãn "Do HLV … giao" ở phía học viên.
+  - Đánh giá HLV: sao màu `--warn` luôn kèm số ("5,0/5 · 3 đánh giá") và `aria-label`; chưa có thì ghi "Chưa có đánh giá", không hiện 0 sao. Chỉ học viên đã tập đủ điều kiện mới thấy form, người khác thấy câu giải thích vì sao chưa được.
 
 ## 8. Khả năng tiếp cận (bắt buộc)
 

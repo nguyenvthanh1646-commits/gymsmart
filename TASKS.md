@@ -113,6 +113,7 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - `includes/equipment.php`: bài tương đương cùng vai trò khác dụng cụ, kỷ lục cá nhân; hiện ở trang chi tiết bài tập, chế độ Đang tập ("Thiếu dụng cụ? Thay bằng"), ô đổi bài của Lịch tập (nhóm "Tương đương" lên đầu)
   - Lưu buổi tập báo "Kỷ lục mới"; trang Báo cáo có mục Kỷ lục cá nhân; trang chi tiết bài có kỷ lục của chính mình; test `test-equipment.php` (19 bước)
 - [x] A-48 Mẫu lịch tập của HLV (`a-48-mau-lich-hlv`, đề xuất E1, cần thêm `sql/coach_templates.sql`): "Lưu làm mẫu" từ lịch hoặc bản nháp của một học viên, trang `coach/templates.php` xem trước theo ngày và giao cho nhiều học viên một lần (lịch cũ lưu trữ, học viên được báo qua chuông), xóa mẫu; mục "Mẫu lịch" trên menu HLV; test `test-coach-templates.php` (22 bước)
+- [x] A-49 Đánh giá HLV (`a-49-danh-gia-hlv`, đề xuất E2, cần thêm `sql/coach_reviews.sql`): chỉ học viên đã tập với HLV đủ 14 ngày và có ghi buổi tập mới đánh giá được, mỗi quan hệ 1 đánh giá (sửa / xóa được, cả với HLV cũ); điểm trung bình + 3 đánh giá gần nhất ở danh sách HLV (chỉ hiện tên, không họ), ô đánh giá trên bảng điều khiển HLV, HLV nhận thông báo; ADMIN xóa đánh giá vi phạm ở `admin/coach-reviews.php`; test `test-coach-reviews.php` (24 bước)
 
 ---
 

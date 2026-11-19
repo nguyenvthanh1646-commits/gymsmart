@@ -388,3 +388,14 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | HLV B gửi `template_id` của HLV A (apply / delete) | Báo "Không tìm thấy mẫu", không đổi gì |
 | Sửa form, thêm `clients[]` là id học viên của HLV khác hoặc đã kết thúc | Người đó bị bỏ qua ("Bỏ qua ... người không còn tập với bạn"), lịch của họ không đổi |
 | Gửi form thiếu `csrf_token` | Trang báo lỗi mã bảo vệ |
+
+### Đánh giá HLV (A-49)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Học viên mới tập 3 ngày, hoặc chưa ghi buổi nào, gửi form đánh giá (sửa HTML để hiện form) | Bị từ chối kèm lý do, không lưu |
+| Gửi `relation_id` của học viên khác | "Không tìm thấy quan hệ huấn luyện này", không lưu |
+| `rating=9` hoặc nhận xét 501 ký tự | Bị từ chối |
+| Sửa trường `back` thành `https://web-la.com` | Vẫn chỉ quay về `/my-coach.php` |
+| USER mở `/admin/coach-reviews.php`; POST thiếu `csrf_token` | 403; trang báo lỗi mã bảo vệ |
+| Nhận xét chứa thẻ HTML | Hiện đúng chữ ở mọi trang (htmlspecialchars) |

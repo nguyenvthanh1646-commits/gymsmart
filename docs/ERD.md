@@ -24,6 +24,7 @@ erDiagram
     USERS ||--o{ WEEKLY_SUMMARIES : "tổng kết tuần (AI)"
     USERS ||--o{ COACH_PLAN_TEMPLATES : "HLV lưu mẫu lịch"
     COACH_PLAN_TEMPLATES ||--o{ COACH_PLAN_TEMPLATE_ITEMS : "gồm"
+    COACH_CLIENTS ||--o| COACH_REVIEWS : "học viên đánh giá"
     EXERCISES ||--o{ COACH_PLAN_TEMPLATE_ITEMS : "dùng trong mẫu"
     USERS ||--o{ PASSWORD_RESETS : "yêu cầu đặt lại"
 
@@ -436,6 +437,11 @@ Mỗi người tối đa 1 bản cho mỗi tuần (`UNIQUE (user_id, week_start)
 
 ### `coach_plan_templates`, `coach_plan_template_items`
 Mỗi mẫu thuộc đúng 1 HLV (`coach_id`, xóa HLV thì xóa mẫu), lưu tên, kiểu chia, số buổi. Các bài của mẫu nằm ở bảng con: bài nào (`exercise_id`, xóa bài khỏi thư viện thì tự mất khỏi mẫu), thứ mấy, set, lặp, thứ tự. Giao mẫu thì mỗi học viên được thêm một lịch mới vào `workout_plans` (`assigned_by` = HLV, lịch cũ → `ARCHIVED`); mẫu và lịch đã giao độc lập nhau, xóa mẫu không ảnh hưởng lịch đã giao.
+
+## Đánh giá HLV (`sql/coach_reviews.sql`, đã gộp vào `schema.sql`, A-49)
+
+### `coach_reviews`
+Mỗi quan hệ HLV - học viên tối đa 1 đánh giá (`UNIQUE coach_client_id`), lưu thêm `coach_id`, `client_id` để tổng hợp nhanh. `rating` 1-5, `comment` tối đa 500 ký tự. Điều kiện được viết (kiểm tra ở `includes/coach-reviews.php`): quan hệ đã được duyệt (ACTIVE hoặc ENDED), đủ 14 ngày từ lúc bắt đầu, có ít nhất 1 ngày tập ghi trong thời gian đó. Công khai chỉ hiện "Học viên" + tên, không hiện họ tên đầy đủ. ADMIN xóa được đánh giá vi phạm (ghi `admin_audit_log` mã `coach.review_delete`).
 
 ## Ghi chú khi triển khai
 
