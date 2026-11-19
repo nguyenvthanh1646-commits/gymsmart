@@ -16,7 +16,7 @@
 .ws-day.is-rest { color: var(--text-muted); background: var(--bg); border-style: dashed; }
 
 .ws-progress { margin: 0 0 var(--s-3); font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
-.ws-note { padding: var(--s-3) var(--s-4); border-radius: var(--r); background: #fffaeb; color: var(--text); }
+.ws-note { padding: var(--s-3) var(--s-4); border-radius: var(--r); background: var(--warn-soft); color: var(--text); }
 
 .ws-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-4); }
 .ws-ex { padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-sm); }
@@ -29,14 +29,14 @@
 .ws-ex__name a:hover { color: var(--accent-dark); text-decoration: underline; }
 .ws-ex__meta { margin: 2px 0 0; color: var(--text-muted); font-size: 14px; }
 .ws-badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: var(--r-pill); font-size: 12px; font-weight: 700; }
-.ws-badge--ok { background: #ecfdf3; color: #067647; }
+.ws-badge--ok { background: var(--ok-soft); color: var(--ok-text); }
 
 /* Gợi ý mức tạ: nền nhạt theo loại, luôn kèm chữ (không chỉ dùng màu) */
 .ws-tip { margin: var(--s-3) 0; padding: 10px 12px; border-radius: var(--r); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
 .ws-tip b { margin-right: 6px; }
-.ws-tip--increase { background: #ecfdf3; }
-.ws-tip--increase b { color: #067647; }
-.ws-tip--decrease { background: #fffaeb; }
+.ws-tip--increase { background: var(--ok-soft); }
+.ws-tip--increase b { color: var(--ok-text); }
+.ws-tip--decrease { background: var(--warn-soft); }
 .ws-tip--decrease b { color: #b54708; }
 .ws-tip--keep b, .ws-tip--reps b, .ws-tip--start b { color: var(--accent-dark); }
 
@@ -97,5 +97,5 @@ body:has(#gc-fab) .ws-bar { padding-right: 80px; }
 .ws-alt { margin: 0 0 var(--s-3); color: var(--text-muted); font-size: 13px; line-height: 1.6; }
 .ws-alt a { color: var(--accent-dark); font-weight: 600; }
 .ws-alt span { color: var(--text-muted); }
-.ws-pr { display: inline-block; margin-right: 6px; color: #067647; }
+.ws-pr { display: inline-block; margin-right: 6px; color: var(--ok-text); }
 body:has(.ws-bar) .gc-nudge { display: none; }   /* bóng thoại nhắc của chatbot sẽ đè lên thanh lưu, nên ẩn ở trang này */

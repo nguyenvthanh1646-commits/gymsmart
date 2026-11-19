@@ -45,8 +45,8 @@
 .fl-items--foods { margin-top: var(--s-3); }
 /* Nút Xóa dạng chữ: style.css tô cam mọi button[type=submit] không có .btn nên cần bộ chọn 0,3,1 */
 .fl-items form button[type="submit"].fl-del { flex: none; min-height: 40px; padding: 0 12px; border: 0; border-radius: var(--r-sm); background: transparent;
-    color: #b42318; font: inherit; font-size: 14px; font-weight: 600; box-shadow: none; cursor: pointer; transform: none; }
-.fl-items form button[type="submit"].fl-del:hover { background: #fef3f2; }
+    color: var(--danger-text); font: inherit; font-size: 14px; font-weight: 600; box-shadow: none; cursor: pointer; transform: none; }
+.fl-items form button[type="submit"].fl-del:hover { background: var(--danger-soft); }
 .fl-empty { padding: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); text-align: center; color: var(--text-muted); }
 .fl-empty--inline { border: 0; padding: var(--s-4) 0; }
 .fl-empty__title { margin: 0 0 4px; font-size: 17px; font-weight: 700; color: var(--text); }

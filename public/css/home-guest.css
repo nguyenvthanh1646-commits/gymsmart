@@ -1,7 +1,7 @@
 /* home-guest.css — trang chủ khi chưa đăng nhập, hướng "Future sport" (hero tối công nghệ + thể thao, các khối dưới nền sáng). Chỉ nạp cho khách (index.php), người đã đăng nhập không bị ảnh hưởng.
    Class bắt đầu bằng "gh-". Màu lấy từ token chung trong ui.css (--accent, --ink, --line...), màu lạnh --glow-cool chỉ làm quầng sáng.
    Tương phản:
-   - Nút cam dùng chữ --ink (#0b1020 trên #ff5a1f ≈ 6:1); chữ trắng trên cam chỉ đạt 3,12:1 nên không dùng cho chữ thường.
+   - Nút cam dùng chữ --ink (var(--ink) trên var(--accent) ≈ 6:1); chữ trắng trên cam chỉ đạt 3,12:1 nên không dùng cho chữ thường.
    - Từ tô gradient trong tiêu đề đi từ --accent-dark tới --accent (≥ 3:1, đạt mức cho chữ lớn trên nền trắng).
    - Chữ cam cỡ nhỏ (nhãn, liên kết) pha tối bằng color-mix để đạt ≥ 4.5:1.
    Chuyển động: chỉ chạy khi nhìn thấy (home-guest.js thêm .is-paused khi cuộn qua hoặc tab ẩn), tắt hết khi prefers-reduced-motion. */
@@ -245,7 +245,7 @@ body:has(.gh-hero) :is(a, button, input, select):focus-visible { outline: 3px so
 .gh-checks { list-style: none; margin: 18px 0; padding: 0; display: grid; gap: 12px; }
 .gh-checks li { display: flex; gap: 10px; align-items: flex-start; color: var(--text); line-height: 1.5; }
 .gh-checks svg { flex: none; margin-top: 3px; color: var(--gh-orange-text); }
-.gh-warn { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px 14px; border-radius: var(--r); background: #fffaeb; border: 1px solid #fedf89; color: #93370d; font-size: 14px; line-height: 1.5; }
+.gh-warn { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 12px 14px; border-radius: var(--r); background: var(--warn-soft); border: 1px solid #fedf89; color: var(--warn-text); font-size: 14px; line-height: 1.5; }
 .gh-warn svg { flex: none; margin-top: 2px; }
 .gh-chat { display: grid; gap: 10px; padding: 20px; border-radius: 28px; background: var(--ink); box-shadow: var(--shadow-lg); position: relative; overflow: hidden; }
 .gh-chat::before { content: ""; position: absolute; left: -80px; top: -80px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--glow-cool) 30%, transparent), transparent 70%); }

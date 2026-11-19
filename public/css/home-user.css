@@ -1,10 +1,10 @@
 /* home-user.css — trang chủ sau đăng nhập. Chỉ nạp cho người đã đăng nhập, class bắt đầu bằng "du-".
    Viết cho điện thoại trước, màn hình rộng ghi đè bằng min-width. Màu nền lấy từ biến trong brand.css.
-   Nút cam dùng chữ tối (#0b1020 trên nền cam đạt từ 6:1), vì chữ trắng trên #ff5a1f chỉ đạt 3,12:1. */
+   Nút cam dùng chữ tối (var(--ink) trên nền cam đạt từ 6:1), vì chữ trắng trên var(--accent) chỉ đạt 3,12:1. */
 
 :root {
     --du-gap: 16px;
-    --du-card-bg: linear-gradient(165deg, #182347 0%, #111a33 62%);
+    --du-card-bg: linear-gradient(165deg, #182347 0%, var(--ink-2) 62%);
     --du-text: #eef1fa;
     --du-text-soft: #dbe1f1;
     --du-text-muted: #b4bfda;
@@ -74,14 +74,14 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
 .du-hero__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gs-accent); box-shadow: 0 0 0 4px rgba(255, 90, 31, .2), 0 0 12px var(--gs-accent); }
 /* Tiêu đề viết hoa nghiêng kiểu áo đấu; line-height đủ cho dấu tiếng Việt chồng trên chữ hoa */
 .du-hero__title { margin: 0; color: #fff; font-size: clamp(2.2rem, 8vw, 3.6rem); font-weight: 800; line-height: 1.16; letter-spacing: -.03em; text-transform: uppercase; transform: skewX(-8deg); transform-origin: left bottom; }
-.du-hero__title em { font-style: normal; background: linear-gradient(100deg, #ff8a3d, #ff5a1f 60%, #ffb38a); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 20px rgba(255, 90, 31, .35)); }
+.du-hero__title em { font-style: normal; background: linear-gradient(100deg, var(--accent-2), var(--accent) 60%, #ffb38a); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 20px rgba(255, 90, 31, .35)); }
 @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
     .du-hero__title em { background: none; color: #ffb27a; filter: none; }
 }
 .du-hero__lead { margin: 8px 0 18px; max-width: 34em; color: var(--du-text-soft); font-size: 1.05rem; line-height: 1.55; }
 .du-btn {
     display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 28px; border-radius: 999px;
-    background: linear-gradient(135deg, #ff8a3d, #ff5a1f); color: var(--gs-ink); font-size: 1rem; font-weight: 800; text-align: center;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: var(--gs-ink); font-size: 1rem; font-weight: 800; text-align: center;
     box-shadow: 0 10px 28px rgba(255, 90, 31, .35); transition: filter var(--transition), transform var(--transition);
 }
 .du-btn:hover { color: var(--gs-ink); filter: brightness(1.08); text-decoration: none; transform: translateY(-1px); }
@@ -96,7 +96,7 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
 
 /* Ảnh cắt hình bình hành có vạch quét và vạch tốc độ chéo; ẩn ở màn hình hẹp để số liệu lên sớm */
 .du-hero__art { display: none; }
-.du-hero__frame { position: absolute; inset: 0 0 0 10%; overflow: hidden; clip-path: polygon(16% 0, 100% 0, 84% 100%, 0 100%); background: #111a33; }
+.du-hero__frame { position: absolute; inset: 0 0 0 10%; overflow: hidden; clip-path: polygon(16% 0, 100% 0, 84% 100%, 0 100%); background: var(--ink-2); }
 .du-hero__frame img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; filter: saturate(1.05) contrast(1.05); }
 .du-hero__frame::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(11, 16, 32, .7)); }
 .du-hero__scan { position: absolute; inset: 0; z-index: 1; background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .06) 0 1px, transparent 1px 4px); pointer-events: none; }
@@ -130,7 +130,7 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
 .du-day__label { display: none; color: var(--du-text-muted); font-size: .76rem; text-align: center; line-height: 1.25; }
 .du-day.is-current { border-color: var(--gs-accent-2); background: rgba(255, 138, 61, .1); }
 .du-day.is-done { background: rgba(255, 138, 61, .14); }
-.is-done .du-day__mark { background: linear-gradient(135deg, #ff8a3d, #ff5a1f); color: var(--gs-ink); }
+.is-done .du-day__mark { background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: var(--gs-ink); }
 .is-done .du-day__label { color: #ffc196; }
 .is-today-pending .du-day__mark { background: rgba(255, 138, 61, .24); color: #ffc196; }
 .is-today-pending .du-day__label { color: #ffc196; }
@@ -191,7 +191,7 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
 .du-log { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, .05); }
 .du-log[hidden] { display: none; }
 .du-log label { margin: 0; color: var(--du-text-muted); font-size: .82rem; font-weight: 600; }
-.du-log input[type="number"] { min-height: 44px; margin: 4px 0 0; padding: 0 10px; border-color: rgba(255, 255, 255, .24); background: #0b1020; color: #fff; box-shadow: none; }
+.du-log input[type="number"] { min-height: 44px; margin: 4px 0 0; padding: 0 10px; border-color: rgba(255, 255, 255, .24); background: var(--ink); color: #fff; box-shadow: none; }
 .du-log__save { grid-column: 1 / -1; min-height: 44px; border: 0; border-radius: 999px; background: var(--gs-accent); color: var(--gs-ink); font: inherit; font-weight: 700; cursor: pointer; }
 .du-log__save:hover { background: var(--gs-accent-2); }
 .du-log__save:disabled { opacity: .7; cursor: wait; }
@@ -246,7 +246,7 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
     display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 12px; border: 1px solid var(--du-line); border-radius: 14px;
     background: rgba(255, 255, 255, .04); color: #fff; font: inherit; text-align: left; cursor: pointer; transition: border-color var(--transition), background var(--transition);
 }
-.du-shortcuts__icon { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #ff8a3d, #ff5a1f); color: var(--gs-ink); }
+.du-shortcuts__icon { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: var(--gs-ink); }
 .du-shortcuts b { display: block; font-size: .95rem; font-weight: 700; line-height: 1.3; }
 .du-shortcuts small { display: block; color: var(--du-text-muted); font-size: .8rem; }
 .du-shortcuts a:hover, .du-shortcuts button:hover { border-color: var(--gs-accent-2); background: rgba(255, 138, 61, .08); color: #fff; text-decoration: none; }
@@ -319,5 +319,5 @@ body:has(.du) .ft__links a { display: inline-flex; align-items: center; justify-
 /* Thẻ Hôm nay: nút mở chế độ Đang tập (B1) đặt cạnh liên kết lịch đầy đủ */
 .du-links { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin-top: auto; padding-top: 8px; }
 .du-links .du-link { margin-top: 0; padding-top: 0; }
-.du-link--solid { border-color: transparent; background: linear-gradient(135deg, #ff8a3d, #ff5a1f); color: var(--gs-ink); }
+.du-link--solid { border-color: transparent; background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: var(--gs-ink); }
 .du-link--solid:hover { color: var(--gs-ink); filter: brightness(1.06); }

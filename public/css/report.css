@@ -77,8 +77,8 @@
 
 /* Tổng kết tuần bằng AI (A-46) */
 .rp-flash { margin: 0 0 var(--s-3); padding: 10px 14px; border-radius: var(--r); font-weight: 600; }
-.rp-flash--ok { background: #ecfdf3; color: #067647; }
-.rp-flash--error { background: #fef3f2; color: #b42318; }
+.rp-flash--ok { background: var(--ok-soft); color: var(--ok-text); }
+.rp-flash--error { background: var(--danger-soft); color: var(--danger-text); }
 .rp-ai__text { padding: var(--s-4); border-left: 3px solid var(--accent); border-radius: var(--r); background: var(--bg); }
 .rp-ai__text p { margin: 0; line-height: 1.6; color: var(--text); }
 .rp-ai__text p + p { margin-top: 8px; }

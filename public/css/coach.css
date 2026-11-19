@@ -265,7 +265,7 @@
 @media (max-width: 420px) { .tpl-grid { grid-template-columns: 1fr; } }
 
 /* Đánh giá HLV (A-49) */
-.ch-stars { color: #f79009; letter-spacing: 1px; }
+.ch-stars { color: var(--warn); letter-spacing: 1px; }
 .ch-rating { margin: 4px 0 0; font-size: 14px; color: var(--text-muted); }
 .ch-rating b { color: var(--text); }
 .ch-reviews { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }

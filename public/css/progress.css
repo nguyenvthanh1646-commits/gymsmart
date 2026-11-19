@@ -1,7 +1,7 @@
 /* progress.css — trang Tiến trình (progress.php). Class bắt đầu bằng "pr-".
    Màu theo mục tiêu: xanh lá = đi đúng hướng, hổ phách = lệch hướng (chỉ là nhắc nhẹ, không phải lỗi), xám = trung tính. */
 
-.pr { --pr-good: #067647; --pr-good-bg: #ecfdf3; --pr-bad: #b54708; --pr-bad-bg: #fffaeb; --pr-flat: #475467; --pr-flat-bg: #f2f4f7; max-width: 1180px; margin: 0 auto; }
+.pr { --pr-good: var(--ok-text); --pr-good-bg: var(--ok-soft); --pr-bad: #b54708; --pr-bad-bg: var(--warn-soft); --pr-flat: var(--text-3); --pr-flat-bg: #f2f4f7; max-width: 1180px; margin: 0 auto; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* ===== Thống kê ===== */
@@ -15,9 +15,9 @@
 .pr-stat__value small { font-size: .9rem; font-weight: 600; color: var(--color-text-muted); letter-spacing: 0; }
 .pr-stat__sub { font-size: .84rem; color: var(--color-text-muted); }
 .pr-stat__sub a { font-weight: 600; }
-.pr-stat--main { color: #fff; border: 0; background: linear-gradient(135deg, #0b1020, #1d2748); box-shadow: 0 14px 30px rgba(11, 16, 32, .22); }
+.pr-stat--main { color: #fff; border: 0; background: linear-gradient(135deg, var(--ink), #1d2748); box-shadow: 0 14px 30px rgba(11, 16, 32, .22); }
 .pr-stat--main .pr-stat__label, .pr-stat--main .pr-stat__sub, .pr-stat--main .pr-stat__value small { color: rgba(255, 255, 255, .72); }
-.pr-spark { position: absolute; right: 14px; bottom: 14px; width: 42%; height: 34px; color: #ff8a3d; opacity: .95; }
+.pr-spark { position: absolute; right: 14px; bottom: 14px; width: 42%; height: 34px; color: var(--accent-2); opacity: .95; }
 .pr-tone--good { color: var(--pr-good); }
 .pr-tone--bad { color: var(--pr-bad); }
 .pr-tone--flat { color: var(--pr-flat); }
@@ -58,12 +58,12 @@
     font: inherit; font-size: .86rem; font-weight: 600; color: var(--ui-accent-dark); text-decoration: none; box-shadow: none; transition: background .15s;
 }
 .pr-link:hover, button.pr-link:hover { background: var(--ui-accent-soft); }
-button.pr-link--danger { color: #b42318; }
-button.pr-link--danger:hover { background: #fef3f2; }
+button.pr-link--danger { color: var(--danger-text); }
+button.pr-link--danger:hover { background: var(--danger-soft); }
 /* style.css tô cam mọi button[type=submit] không có .btn (độ ưu tiên 0,2,1): nút Xóa dạng liên kết phải thắng bằng 0,3,1 */
 .pr-actions button[type="submit"].pr-link { padding: 5px 10px; border-radius: 8px; background: transparent; box-shadow: none; transform: none; font-size: .86rem; }
-.pr-actions button[type="submit"].pr-link--danger { color: #b42318; }
-.pr-actions button[type="submit"].pr-link--danger:hover { background: #fef3f2; }
+.pr-actions button[type="submit"].pr-link--danger { color: var(--danger-text); }
+.pr-actions button[type="submit"].pr-link--danger:hover { background: var(--danger-soft); }
 .pr-more-link { margin: 14px 0 0; text-align: center; font-weight: 600; }
 
 /* ===== Chưa có dữ liệu ===== */
