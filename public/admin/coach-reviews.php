@@ -18,7 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $ready) {
         showCsrfError();
     }
     try {
-        $desc = coachReviewAdminDelete($pdo, coachParseId($_POST['review_id'] ?? null));
+        $reviewId = coachParseId($_POST['review_id'] ?? null);   // số nguyên dương, 0 nếu sai
+        $desc = coachReviewAdminDelete($pdo, $reviewId);
         auditLog($pdo, 'coach.review_delete', 'coach', null, 'Xóa đánh giá ' . $desc);
         $_SESSION['flash'] = ['ok', 'Đã xóa đánh giá.'];
     } catch (CoachException $e) {

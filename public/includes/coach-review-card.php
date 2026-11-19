@@ -11,8 +11,8 @@ if (empty($reviewState)) {
 $rv = $reviewState['review'];
 $rvRel = (int)$reviewState['rel']['id'];
 ?>
-<section class="card ch-review" aria-labelledby="h-review-<?= $rvRel ?>">
-    <h2 class="card__head" id="h-review-<?= $rvRel ?>">Đánh giá HLV</h2>
+<section class="card ch-review" aria-labelledby="h-review-<?= (int)$rvRel ?>">
+    <h2 class="card__head" id="h-review-<?= (int)$rvRel ?>">Đánh giá HLV</h2>
     <?php if (!$reviewState['eligible'] && !$rv): ?>
         <p class="ch-muted ch-small" style="margin:0"><?= htmlspecialchars($reviewState['reason']) ?></p>
     <?php else: ?>
@@ -29,16 +29,16 @@ $rvRel = (int)$reviewState['rel']['id'];
                 <form method="post" action="/my-coach.php" class="ch-review__form">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="review_save">
-                    <input type="hidden" name="relation_id" value="<?= $rvRel ?>">
+                    <input type="hidden" name="relation_id" value="<?= (int)$rvRel ?>">
                     <input type="hidden" name="back" value="<?= htmlspecialchars($reviewRedirect) ?>">
                     <fieldset class="ch-rate">
                         <legend>Số sao</legend>
                         <?php for ($s = 1; $s <= 5; $s++): ?>
-                            <label><input type="radio" name="rating" value="<?= $s ?>" required<?= (int)($rv['rating'] ?? 0) === $s ? ' checked' : '' ?>> <?= $s ?> ★</label>
+                            <label><input type="radio" name="rating" value="<?= (int)$s ?>" required<?= (int)($rv['rating'] ?? 0) === $s ? ' checked' : '' ?>> <?= (int)$s ?> ★</label>
                         <?php endfor; ?>
                     </fieldset>
-                    <label for="rv-comment-<?= $rvRel ?>" class="ch-small">Nhận xét (không bắt buộc, tối đa <?= COACH_REVIEW_MAX_LEN ?> ký tự)</label>
-                    <textarea id="rv-comment-<?= $rvRel ?>" name="comment" rows="3" maxlength="<?= COACH_REVIEW_MAX_LEN ?>"><?= htmlspecialchars((string)($rv['comment'] ?? '')) ?></textarea>
+                    <label for="rv-comment-<?= (int)$rvRel ?>" class="ch-small">Nhận xét (không bắt buộc, tối đa <?= COACH_REVIEW_MAX_LEN ?> ký tự)</label>
+                    <textarea id="rv-comment-<?= (int)$rvRel ?>" name="comment" rows="3" maxlength="<?= COACH_REVIEW_MAX_LEN ?>"><?= htmlspecialchars((string)($rv['comment'] ?? '')) ?></textarea>
                     <button type="submit" class="btn" data-busy-text="Đang lưu…"><?= $rv ? 'Lưu đánh giá' : 'Gửi đánh giá' ?></button>
                 </form>
             </details>
@@ -47,7 +47,7 @@ $rvRel = (int)$reviewState['rel']['id'];
             <form method="post" action="/my-coach.php" data-confirm="Xóa đánh giá của bạn?">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="review_delete">
-                <input type="hidden" name="relation_id" value="<?= $rvRel ?>">
+                <input type="hidden" name="relation_id" value="<?= (int)$rvRel ?>">
                 <input type="hidden" name="back" value="<?= htmlspecialchars($reviewRedirect) ?>">
                 <button type="submit" class="btn btn--ghost ch-review__del">Xóa đánh giá</button>
             </form>
