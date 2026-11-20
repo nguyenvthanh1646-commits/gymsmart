@@ -19,6 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $v = validateCoachApplication($_POST, false);
     $errors = $v['errors'];
+    $fullName = coachNormalizeName($_POST['full_name'] ?? '');
+    if ($e = coachNameError($fullName)) {
+        $errors['full_name'] = $e;
+    }
     $active = (int)($profile['active_clients'] ?? 0);
     if (!isset($errors['max_clients']) && $v['data']['max_clients'] < $active) {
         $errors['max_clients'] = 'Bạn đang có ' . $active . ' học viên, số tối đa không thể nhỏ hơn.';
@@ -27,13 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['_form'] = 'Không tìm thấy hồ sơ HLV. Hãy báo quản trị viên.';
     }
     if (!$errors) {
-        coachSaveProfile($pdo, $coachId, $v['data'], ($_POST['accepting'] ?? '') === '1');
+        coachSaveProfile($pdo, $coachId, $v['data'], ($_POST['accepting'] ?? '') === '1', $fullName);
+        $_SESSION['full_name'] = $fullName;   // thanh menu và các trang khác hiện tên mới ngay
         coachFlash('ok', 'Đã lưu hồ sơ HLV.');
         header('Location: /coach/profile.php');
         exit;
     }
     // Có lỗi: điền lại đúng những gì vừa gửi
-    $profile = array_merge($profile ?? [], $v['data'], ['accepting' => ($_POST['accepting'] ?? '') === '1' ? 1 : 0]);
+    $profile = array_merge($profile ?? [], $v['data'], ['accepting' => ($_POST['accepting'] ?? '') === '1' ? 1 : 0, 'full_name' => $fullName]);
 }
 $flash = coachTakeFlash();
 $picked = explode(',', (string)($profile['specialties'] ?? ''));
@@ -98,6 +103,12 @@ include __DIR__ . '/../includes/coach-nav.php';
         </div>
         <div class="adm-form-section">
             <h2>Giới thiệu</h2>
+            <div class="adm-field">
+                <label for="full_name">Họ và tên hiển thị</label>
+                <input class="adm-input" id="full_name" name="full_name" maxlength="100" autocomplete="name" required value="<?= htmlspecialchars((string)($profile['full_name'] ?? '')) ?>"<?= isset($errors['full_name']) ? ' aria-invalid="true" aria-describedby="err-full_name"' : '' ?>>
+                <p class="adm-hint">Học viên thấy tên này ở trang Huấn luyện viên, trong tin nhắn và nhận xét.</p>
+                <?= fe($errors, 'full_name') ?>
+            </div>
             <div class="adm-field">
                 <label for="headline">Chức danh</label>
                 <input class="adm-input" id="headline" name="headline" maxlength="120" value="<?= htmlspecialchars((string)$profile['headline']) ?>">

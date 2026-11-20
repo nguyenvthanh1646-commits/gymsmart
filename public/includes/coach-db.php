@@ -390,15 +390,30 @@ function coachProfile(PDO $pdo, int $coachId): ?array
 }
 
 /** HLV tự sửa hồ sơ ($data đã qua validateCoachApplication($in, false)). */
-function coachSaveProfile(PDO $pdo, int $coachId, array $data, bool $accepting): void
+/**
+ * Lưu hồ sơ HLV. $fullName (đã chuẩn hóa và kiểm tra bằng coachNormalizeName/coachNameError) khác null thì đổi luôn
+ * tên hiển thị trong bảng users, cùng một transaction: hoặc lưu cả hai, hoặc không lưu gì.
+ * Chỉ đổi tên khi tài khoản vẫn là COACH (đề phòng vừa bị thu hồi vai trò).
+ */
+function coachSaveProfile(PDO $pdo, int $coachId, array $data, bool $accepting, ?string $fullName = null): void
 {
-    $stmt = $pdo->prepare(
-        'UPDATE coach_profiles SET headline = ?, specialties = ?, experience_years = ?, certifications = ?, bio = ?,
-                approach = ?, max_clients = ?, availability = ?, accepting = ?, updated_at = ?
-         WHERE user_id = ?'
-    );
-    $stmt->execute([$data['headline'], $data['specialties'], $data['experience_years'], $data['certifications'], $data['bio'],
-                    $data['approach'], $data['max_clients'], $data['availability'], $accepting ? 1 : 0, coachNow(), $coachId]);
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare(
+            'UPDATE coach_profiles SET headline = ?, specialties = ?, experience_years = ?, certifications = ?, bio = ?,
+                    approach = ?, max_clients = ?, availability = ?, accepting = ?, updated_at = ?
+             WHERE user_id = ?'
+        );
+        $stmt->execute([$data['headline'], $data['specialties'], $data['experience_years'], $data['certifications'], $data['bio'],
+                        $data['approach'], $data['max_clients'], $data['availability'], $accepting ? 1 : 0, coachNow(), $coachId]);
+        if ($fullName !== null) {
+            $pdo->prepare('UPDATE users SET full_name = ? WHERE id = ? AND role = ?')->execute([$fullName, $coachId, 'COACH']);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
 }
 
 /** HLV cho học viên chọn: mọi tài khoản COACH có hồ sơ, kèm số chỗ còn. HLV không nhận học viên vẫn hiện (nút bị khóa). */

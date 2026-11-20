@@ -79,6 +79,21 @@ function coachTextError(string $value, string $label, int $min, int $max): ?stri
     return null;
 }
 
+/**
+ * Họ và tên hiển thị của HLV (học viên thấy ở trang Huấn luyện viên): làm sạch như coachCleanText rồi
+ * gộp mọi khoảng trắng / xuống dòng thành một dấu cách, vì tên chỉ có một dòng.
+ */
+function coachNormalizeName($raw): string
+{
+    return trim(preg_replace('/\s+/u', ' ', coachCleanText($raw)) ?? '');
+}
+
+/** Lỗi của họ và tên đã chuẩn hóa, hoặc null. Tối đa 100 ký tự như trang đăng ký và trang Hồ sơ. */
+function coachNameError(string $name): ?string
+{
+    return coachTextError($name, 'Họ và tên', 2, 100);
+}
+
 /** Đổi chuỗi mã chuyên môn trong DB ("FAT_LOSS,STRENGTH") thành danh sách nhãn; mã lạ bị bỏ qua. */
 function coachSpecialtyLabels(string $csv): array
 {

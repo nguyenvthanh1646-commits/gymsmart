@@ -57,6 +57,11 @@ check('coachCleanText: bỏ ký tự điều khiển, đổi \r\n', coachCleanTe
 check('coachCleanText: mảng → chuỗi rỗng', coachCleanText(['x']) === '');
 check('coachTextError: vượt độ dài', coachTextError(str_repeat('a', 1001), 'Tin nhắn', 1, 1000) !== null);
 check('coachTextError: tiếng Việt đếm theo ký tự, không theo byte', coachTextError(str_repeat('ệ', 1000), 'Tin nhắn', 1, 1000) === null);
+check('Tên HLV: gộp khoảng trắng và xuống dòng thành 1 dấu cách', coachNormalizeName("  Nguyễn 
+	 Văn   An ") === 'Nguyễn Văn An');
+check('Tên HLV: ô gửi lên dạng mảng coi như trống', coachNormalizeName(['x']) === '');
+check('Tên HLV: trống hoặc 1 ký tự bị chặn, quá 100 ký tự bị chặn', coachNameError('') !== null && coachNameError('A') !== null && coachNameError(str_repeat('ê', 101)) !== null);
+check('Tên HLV: tên tiếng Việt 100 ký tự hợp lệ', coachNameError(str_repeat('ệ', 100)) === null);
 
 check('Máy trạng thái: HLV duyệt PENDING → ACTIVE', coachNextStatus('PENDING', 'coach', 'accept') === 'ACTIVE');
 check('Máy trạng thái: HLV từ chối PENDING → REJECTED', coachNextStatus('PENDING', 'coach', 'reject') === 'REJECTED');
@@ -154,6 +159,14 @@ if (!extension_loaded('pdo_sqlite')) {
     coachApproveApplication($pdo, $app2, 1, 'Đủ điều kiện');
     check('Duyệt đơn: vai trò thành COACH', coachUserRole($pdo, 2) === 'COACH');
     check('Duyệt đơn: tạo hồ sơ HLV', coachProfile($pdo, 2) !== null);
+    $prof = coachProfile($pdo, 2);
+    $profData = ['headline' => (string)$prof['headline'], 'specialties' => (string)$prof['specialties'], 'experience_years' => (int)$prof['experience_years'],
+        'certifications' => (string)$prof['certifications'], 'bio' => (string)$prof['bio'], 'approach' => (string)$prof['approach'],
+        'max_clients' => (int)$prof['max_clients'], 'availability' => (string)$prof['availability']];
+    coachSaveProfile($pdo, 2, $profData, true, 'HLV Đổi Tên');
+    check('HLV đổi tên hiển thị ở trang Hồ sơ HLV', coachProfile($pdo, 2)['full_name'] === 'HLV Đổi Tên');
+    coachSaveProfile($pdo, 1, $profData, true, 'Không Được Đổi');
+    check('Đổi tên chỉ áp dụng cho tài khoản COACH (ADMIN id 1 không bị đổi)', $pdo->query('SELECT full_name FROM users WHERE id = 1')->fetchColumn() !== 'Không Được Đổi');
     check('Duyệt lại đơn đã duyệt bị chặn', coachErr(fn() => coachApproveApplication($pdo, $app2, 1, '')) !== null);
     check('Thông báo: ADMIN nhận "Đơn đăng ký HLV mới"', count($notif(1, 'admin.coach_application')) === 1);
     check('Thông báo: người nộp nhận "đã được duyệt" kèm link khu HLV', ($notif(2, 'coach.application_approved')[0]['link'] ?? '') === '/coach/dashboard.php');
