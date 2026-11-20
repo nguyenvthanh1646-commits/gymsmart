@@ -422,3 +422,12 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | POST đúng CSRF nhưng không tick ô xác nhận | Quay lại kèm thông báo, không tải |
 | Xem nguồn trang Sức khỏe | Không có khóa Gemini hay mật khẩu DB, chỉ "Đã cấu hình (n ký tự)" |
 | Tải sao lưu | Có dòng `system.backup` trong Nhật ký hoạt động; file có header `Cache-Control: no-store` |
+
+### HLV đổi tên (A-53)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Gửi tên rỗng, 1 ký tự, hơn 100 ký tự hoặc dạng mảng `full_name[]=x` | Báo lỗi ở ô tên, không lưu gì (cả hồ sơ lẫn tên) |
+| Tên chứa `<script>` | Hiện đúng chữ ở trang Huấn luyện viên, tin nhắn, nhận xét (htmlspecialchars) |
+| Tài khoản vừa bị thu hồi vai trò HLV gửi form | `requireCoach()` chặn; câu UPDATE tên còn kèm điều kiện `role = 'COACH'` |
+| Gửi kèm `user_id` của người khác | Không có tác dụng: id luôn lấy từ session |
