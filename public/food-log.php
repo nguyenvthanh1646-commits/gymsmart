@@ -29,7 +29,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $ready) {
     try {
         switch ($_POST['action'] ?? '') {
             case 'add':
-                mealLogAdd($pdo, $userId, $postDate, (string)($_POST['meal_kind'] ?? ''), (string)($_POST['food'] ?? ''), str_replace(',', '.', (string)($_POST['grams'] ?? '')));
+                $kind = (string)($_POST['meal_kind'] ?? '');
+                $food = (string)($_POST['food'] ?? '');
+                $grams = str_replace(',', '.', (string)($_POST['grams'] ?? ''));
+                // Nhớ bữa vừa chọn cho ngày này: tải lại trang vẫn chọn đúng bữa đó (xem mealDefaultKind)
+                if (isset(MEAL_KINDS[$kind])) {
+                    $_SESSION['food_last_kind'] = ['date' => $postDate, 'kind' => $kind];
+                }
+                try {
+                    mealLogAdd($pdo, $userId, $postDate, $kind, $food, $grams);
+                } catch (InvalidArgumentException $e) {
+                    // Ghi lỗi: giữ lại thực phẩm và số gam vừa nhập để người dùng chỉ cần sửa chỗ sai
+                    $_SESSION['food_draft'] = ['food' => mb_substr($food, 0, 30), 'grams' => mb_substr($grams, 0, 10)];
+                    throw $e;
+                }
                 $flash = ['ok', 'Đã ghi món.'];
                 break;
             case 'delete':
@@ -59,7 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $ready) {
     exit;
 }
 $flash = $_SESSION['food_flash'] ?? null;
-unset($_SESSION['food_flash']);
+$draft = $_SESSION['food_draft'] ?? ['food' => '', 'grams' => ''];
+unset($_SESSION['food_flash'], $_SESSION['food_draft']);
+$defaultKind = mealDefaultKind($_SESSION['food_last_kind'] ?? null, $date, (int)date('G'));
 
 $rows = $ready ? mealLogDay($pdo, $userId, $date) : [];
 $target = mealTarget($pdo, $userId);
@@ -133,25 +148,24 @@ include __DIR__ . '/includes/header.php';
                 <input type="hidden" name="date" value="<?= htmlspecialchars($date) ?>">
                 <label for="fl-kind">Bữa</label>
                 <select id="fl-kind" name="meal_kind" required>
-                    <?php $h = (int)date('G'); $guess = $h < 10 ? 'breakfast' : ($h < 15 ? 'lunch' : ($h < 21 ? 'dinner' : 'snack')); ?>
-                    <?php foreach (MEAL_KINDS as $k => $label): ?><option value="<?= htmlspecialchars($k) ?>"<?= $k === $guess ? ' selected' : '' ?>><?= htmlspecialchars($label) ?></option><?php endforeach; ?>
+                    <?php foreach (MEAL_KINDS as $k => $label): ?><option value="<?= htmlspecialchars($k) ?>"<?= $k === $defaultKind ? ' selected' : '' ?>><?= htmlspecialchars($label) ?></option><?php endforeach; ?>
                 </select>
                 <label for="fl-food">Thực phẩm</label>
                 <select id="fl-food" name="food" required>
                     <option value="">Chọn thực phẩm…</option>
                     <?php if ($myFoods): ?>
                         <optgroup label="Thực phẩm của tôi">
-                            <?php foreach ($myFoods as $f): ?><option value="u:<?= (int)$f['id'] ?>"><?= htmlspecialchars($f['name']) ?></option><?php endforeach; ?>
+                            <?php foreach ($myFoods as $f): ?><option value="u:<?= (int)$f['id'] ?>"<?= $draft['food'] === 'u:' . (int)$f['id'] ? ' selected' : '' ?>><?= htmlspecialchars($f['name']) ?></option><?php endforeach; ?>
                         </optgroup>
                     <?php endif; ?>
                     <optgroup label="Thực phẩm thường dùng (giá trị xấp xỉ)">
                         <?php foreach ($catalog as $key => $f): ?>
-                            <option value="c:<?= htmlspecialchars($key) ?>"<?= isset($f['unit']) ? ' data-unit="' . htmlspecialchars($f['unit'][0]) . '" data-unit-g="' . (int)$f['unit'][1] . '"' : '' ?>><?= htmlspecialchars($f['name']) ?></option>
+                            <option value="c:<?= htmlspecialchars($key) ?>"<?= $draft['food'] === 'c:' . $key ? ' selected' : '' ?><?= isset($f['unit']) ? ' data-unit="' . htmlspecialchars($f['unit'][0]) . '" data-unit-g="' . (int)$f['unit'][1] . '"' : '' ?>><?= htmlspecialchars($f['name']) ?></option>
                         <?php endforeach; ?>
                     </optgroup>
                 </select>
                 <label for="fl-grams">Khối lượng (g)</label>
-                <input type="number" id="fl-grams" name="grams" min="1" max="<?= MEAL_MAX_GRAMS ?>" step="1" inputmode="numeric" required placeholder="Ví dụ: 150">
+                <input type="number" id="fl-grams" name="grams" min="1" max="<?= MEAL_MAX_GRAMS ?>" step="1" inputmode="numeric" required placeholder="Ví dụ: 150" value="<?= htmlspecialchars($draft['grams']) ?>">
                 <p class="fl-hint" data-fl-hint>Cân sau khi nấu chín (trừ yến mạch tính khô).</p>
                 <button type="submit" class="btn">Ghi món</button>
             </form>

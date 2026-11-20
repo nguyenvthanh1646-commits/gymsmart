@@ -45,6 +45,10 @@ check('Theo bữa: trưa 800 kcal, tối 0', $s['byMeal']['lunch'] == 800 && $s[
 check('Còn lại 700 kcal, 60 g đạm; đạt 65% calo', $s['left']['kcal'] == 700 && $s['left']['protein'] == 60 && $s['percent']['kcal'] === 65);
 $s = mealDaySummary($rows, null);
 check('Chưa có mục tiêu: không tính phần còn lại', $s['left'] === null && $s['percent'] === null);
+check('Bữa chọn sẵn: vừa ghi bữa trưa lúc 8h sáng thì vẫn chọn bữa trưa (không nhảy về bữa sáng)', mealDefaultKind(['date' => '2026-11-20', 'kind' => 'lunch'], '2026-11-20', 8) === 'lunch');
+check('Bữa chọn sẵn: bữa đã nhớ của ngày khác thì đoán theo giờ', mealDefaultKind(['date' => '2026-11-19', 'kind' => 'dinner'], '2026-11-20', 8) === 'breakfast');
+check('Bữa chọn sẵn: chưa nhớ gì thì đoán theo giờ (12h trưa, 18h tối, 22h bữa phụ)', mealDefaultKind(null, '2026-11-20', 12) === 'lunch' && mealDefaultKind(null, '2026-11-20', 18) === 'dinner' && mealDefaultKind(null, '2026-11-20', 22) === 'snack');
+check('Bữa chọn sẵn: giá trị lạ trong session bị bỏ qua', mealDefaultKind(['date' => '2026-11-20', 'kind' => 'brunch'], '2026-11-20', 12) === 'lunch');
 
 // ===== Luồng DB =====
 if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {

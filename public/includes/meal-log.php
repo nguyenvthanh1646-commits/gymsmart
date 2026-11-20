@@ -14,6 +14,20 @@ const MEAL_KINDS = ['breakfast' => 'Bữa sáng', 'lunch' => 'Bữa trưa', 'din
 const MEAL_MAX_GRAMS = 3000;
 const USER_FOODS_MAX = 50;
 
+/**
+ * Hàm thuần: bữa được chọn sẵn trong form Ghi món.
+ * Ưu tiên bữa người dùng vừa ghi cho CÙNG ngày đang xem ($remembered = ['date' => ..., 'kind' => ...] lưu trong session),
+ * để ghi nhiều món của bữa trưa liên tiếp không bị nhảy về bữa khác sau mỗi lần tải lại trang.
+ * Chưa có thì đoán theo giờ: trước 10h bữa sáng, trước 15h bữa trưa, trước 21h bữa tối, còn lại bữa phụ.
+ */
+function mealDefaultKind(?array $remembered, string $viewDate, int $hour): string
+{
+    if ($remembered !== null && ($remembered['date'] ?? '') === $viewDate && isset(MEAL_KINDS[$remembered['kind'] ?? ''])) {
+        return $remembered['kind'];
+    }
+    return $hour < 10 ? 'breakfast' : ($hour < 15 ? 'lunch' : ($hour < 21 ? 'dinner' : 'snack'));
+}
+
 /** DB đã có bảng nhật ký ăn chưa. */
 function mealLogReady(PDO $pdo): bool
 {
