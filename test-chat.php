@@ -85,5 +85,22 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     echo "[BỎ QUA] Không có pdo_sqlite nên không chạy phần DB\n";
 }
 
+// ===== Trợ lý HLV: coach-ai.php phải tự nạp đủ hằng nó dùng =====
+// api/chatbot.php chỉ nạp auth/csrf/ai rồi coach-ai.php (không nạp coach.php như các trang /coach/).
+// Lỗi cũ: thiếu COACH_GOAL_LABELS nên mọi câu hỏi tới Trợ lý HLV đều báo "GymSmart AI gặp sự cố".
+// Chạy trong tiến trình PHP riêng để không bị các file test khác nạp sẵn hằng.
+$coachAi = __DIR__ . '/public/includes/coach-ai.php';
+preg_match_all('/\bCOACH_[A-Z_]+\b/', (string)file_get_contents($coachAi), $m);
+$consts = array_values(array_unique($m[0]));
+$probe = tempnam(sys_get_temp_dir(), 'gsai') . '.php';
+file_put_contents($probe, '<?php require ' . var_export($coachAi, true) . '; $miss = []; foreach (' . var_export($consts, true)
+    . ' as $c) { if (!defined($c)) { $miss[] = $c; } } echo implode(",", $miss);');
+$out = trim((string)shell_exec(escapeshellarg(PHP_BINARY) . ' -d display_errors=1 ' . escapeshellarg($probe) . ' 2>&1'));
+@unlink($probe);
+check('Trợ lý HLV: nạp riêng coach-ai.php (như api/chatbot.php) thì đủ ' . count($consts) . ' hằng COACH_* nó dùng', $out === '' || $out === null);
+if ($out) {
+    echo "       Thiếu hoặc lỗi: $out\n";
+}
+
 echo $fails === 0 ? "TẤT CẢ ĐỀU PASS\n" : "CÓ $fails TEST SAI\n";
 exit($fails === 0 ? 0 : 1);

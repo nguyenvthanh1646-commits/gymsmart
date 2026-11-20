@@ -10,6 +10,7 @@
  *     cân nặng gần đây, mục tiêu dinh dưỡng, tỉ lệ tập đúng lịch tuần này.
  */
 require_once __DIR__ . '/coach-db.php';
+require_once __DIR__ . '/coach.php';            // nhãn COACH_GOAL_LABELS, COACH_LEVEL_LABELS...: api/chatbot.php không nạp file này
 require_once __DIR__ . '/workout-plan-db.php';
 
 /** Chỉ lấy TÊN (từ cuối trong họ tên Việt Nam) để AI xưng hô, không gửi họ tên đầy đủ. */

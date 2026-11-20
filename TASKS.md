@@ -123,6 +123,7 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - HLV đổi "Họ và tên hiển thị" ở `coach/profile.php`: chuẩn hóa bằng `coachNormalizeName()` (gộp khoảng trắng, bỏ ký tự điều khiển), kiểm tra `coachNameError()` (2 đến 100 ký tự); `coachSaveProfile()` lưu hồ sơ và tên trong cùng transaction, chỉ đổi khi tài khoản vẫn là COACH; cập nhật `$_SESSION['full_name']` để thanh menu đổi ngay
   - Lỗi: ghi món bữa trưa xong, trang tải lại thì ô "Bữa" nhảy về bữa sáng (form luôn đoán bữa theo giờ). Sửa: nhớ bữa vừa ghi cho đúng ngày đó trong session, `mealDefaultKind()` ưu tiên bữa đã nhớ rồi mới đoán theo giờ; ghi lỗi thì giữ lại thực phẩm và số gam vừa nhập
   - Test thêm: 6 bước ở `test-coach.php`, 4 bước ở `test-meal-log.php`
+  - Lỗi: Trợ lý HLV (chatbot khu /coach/) câu nào cũng báo "GymSmart AI gặp sự cố". Nguyên nhân: `includes/coach-ai.php` dùng `COACH_GOAL_LABELS`, `COACH_LEVEL_LABELS`... định nghĩa trong `includes/coach.php`, mà `api/chatbot.php` không nạp file đó (lỗi có từ lúc thêm trợ lý HLV). Sửa: `coach-ai.php` tự nạp `coach.php`; test ở `test-chat.php` nạp riêng `coach-ai.php` trong tiến trình PHP khác và kiểm tra đủ hằng
 
 ---
 
