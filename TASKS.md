@@ -124,6 +124,21 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - Lỗi: ghi món bữa trưa xong, trang tải lại thì ô "Bữa" nhảy về bữa sáng (form luôn đoán bữa theo giờ). Sửa: nhớ bữa vừa ghi cho đúng ngày đó trong session, `mealDefaultKind()` ưu tiên bữa đã nhớ rồi mới đoán theo giờ; ghi lỗi thì giữ lại thực phẩm và số gam vừa nhập
   - Test thêm: 6 bước ở `test-coach.php`, 4 bước ở `test-meal-log.php`
   - Lỗi: Trợ lý HLV (chatbot khu /coach/) câu nào cũng báo "GymSmart AI gặp sự cố". Nguyên nhân: `includes/coach-ai.php` dùng `COACH_GOAL_LABELS`, `COACH_LEVEL_LABELS`... định nghĩa trong `includes/coach.php`, mà `api/chatbot.php` không nạp file đó (lỗi có từ lúc thêm trợ lý HLV). Sửa: `coach-ai.php` tự nạp `coach.php`; test ở `test-chat.php` nạp riêng `coach-ai.php` trong tiến trình PHP khác và kiểm tra đủ hằng
+- [x] A-54 Giá tập với HLV, buổi tập thử miễn phí, lịch hẹn và gói (`a-54-gia-tap-hlv`, cần thêm `sql/coach_billing.sql`)
+  - HLV đặt giá 1 buổi và/hoặc 1 tháng, 1-3 buổi tập thử miễn phí, hướng dẫn thanh toán (chỉ học viên đang tập thấy) ở `coach/profile.php`; danh sách HLV hiện giá và số buổi thử. Số buổi thử chụp lại lúc học viên gửi yêu cầu
+  - Lịch hẹn từng buổi 60 phút: học viên đặt (05:00-21:00, trước ít nhất 2 giờ, tối đa 30 ngày), HLV xác nhận / từ chối, sau giờ tập đánh dấu Đã tập hoặc Vắng mặt (vắng vẫn trừ buổi); hủy trước giờ không trừ; buổi chờ quá giờ tự hết hạn; chặn trùng giờ của HLV (khóa dòng trong transaction)
+  - Mỗi buổi tính vào gói tháng còn hạn → buổi thử → gói buổi. Gói buổi 1/4/8/12 buổi, gói tháng 1/3 tháng (nối tiếp gói cũ). Không có cổng thanh toán: học viên chọn gói, trả trực tiếp cho HLV, HLV bấm "Đã nhận tiền"
+  - Hết buổi thử, hết gói, không có gói tháng → HLV tạm không giao lịch, đặt dinh dưỡng, nhận xét được (chặn ở máy chủ, giao mẫu lịch thì bỏ qua học viên đó); tin nhắn vẫn dùng được; học viên được báo mua gói
+  - Trang mới `coach/sessions.php` (mục "Lịch hẹn"), tab "Buổi tập & gói" ở `my-coach.php`, thẻ quyền tập ở hồ sơ học viên phía HLV, nhắc việc ở bảng điều khiển HLV; thông báo `coach.session`, `coach.order`, `coach.billing`; nhật ký `coach.pricing`, `coach.order_paid`, `coach.order_cancel`, `coach.session_done`, `coach.session_absent`
+  - Test: `test-coach-billing.php` (100 bước, quy tắc thuần + SQLite), thêm phần D vào kịch bản HTTP (37 bước, tổng 155). Đã thử DB cũ chưa chạy file SQL: mọi trang HLV vẫn mở được, sau `--upgrade` thì phần giá hiện ra
+  - **Còn để ngỏ:** học viên không đặt buổi nào thì buổi thử không bao giờ hết, nên phần kèm online (giao lịch, nhận xét) vẫn miễn phí mãi. Nếu cần, thêm hạn dùng thử theo ngày. Hoàn tiền gói chưa dùng khi ngừng tập do hai bên tự thỏa thuận (ứng dụng chỉ hủy buổi sắp tới và đơn đang chờ)
+- [x] A-55 Tư vấn sức khỏe từ chuyên gia (`a-54-gia-tap-hlv`, cần thêm `sql/health_experts.sql`)
+  - Vai trò mới `EXPERT` (bác sĩ, chuyên gia dinh dưỡng, vật lý trị liệu): nộp đơn ở `expert-apply.php` (bắt buộc số chứng chỉ hành nghề + file chứng chỉ, cam kết không chẩn đoán xác định / không kê đơn), ADMIN duyệt ở `admin/expert-applications.php`, thu hồi ở `admin/experts.php` (câu đang trao đổi trả về hàng chờ)
+  - Người dùng (USER, COACH) hỏi riêng theo 6 chủ đề ở `consult-ask.php`, miễn phí, tối đa 3 câu chưa đóng / 5 câu mỗi 24 giờ; tùy chọn gửi kèm số liệu hồ sơ (mặc định tắt). Câu có dấu hiệu cấp cứu (đau ngực, khó thở, ngất, dấu hiệu đột quỵ, chảy máu, ý nghĩ tự hại...) thì nhắc gọi 115 và phải xác nhận không khẩn cấp mới gửi
+  - Chuyên gia đúng chủ đề thấy câu đang chờ ở `/expert/dashboard.php`, nhận (chỉ 1 người nhận được), trả lời, trả lại hàng chờ khi chưa trả lời, đóng câu hỏi; người hỏi đóng kèm đánh giá hữu ích. Chuyên gia chỉ thấy tên người hỏi, không thấy email; ADMIN không đọc câu hỏi
+  - Thanh menu thêm mục "Tư vấn", nút "Khu chuyên gia"; khu quản trị thêm mục "Chuyên gia"; `tools/audit.php` thêm luật trang `/expert/` phải có `requireExpert()`
+  - Test: `test-expert.php` (66 bước), thêm phần E vào kịch bản HTTP (30 bước, tổng 185). Đã thử DB cũ chưa chạy file SQL: các trang báo "chưa bật", không lỗi
+  - 3 chuyên gia mẫu (`tools/seed-experts.php`): không có file chứng chỉ nên hiện nhãn "Hồ sơ mẫu, chưa kiểm tra chứng chỉ", nơi công tác và số chứng chỉ ghi rõ là mẫu
 
 ---
 

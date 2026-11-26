@@ -7,6 +7,7 @@
  *   - HLV tạm ngừng nhận hoặc đã đủ học viên thì không gửi được.
  *   - HLV và ADMIN xem được danh sách nhưng không gửi yêu cầu.
  * Danh sách HLV chỉ hiện thông tin công khai trong hồ sơ HLV, không có email.
+ * Giá tập và số buổi thử miễn phí (A-54) hiện trên từng thẻ khi DB đã chạy sql/coach_billing.sql. Hướng dẫn thanh toán KHÔNG hiện ở đây.
  */
 require_once __DIR__ . '/includes/auth.php';
 requireLogin();
@@ -26,6 +27,7 @@ $reviewsOn = $ready && coachReviewsReady($pdo);
 $openRel = ($ready && $role === 'USER') ? coachOpenRelationForClient($pdo, $userId) : null;
 $canAsk  = $ready && $role === 'USER' && $openRel === null;
 $app     = ($ready && $role === 'USER') ? coachLatestApplication($pdo, $userId) : null;
+$prices  = ($ready && coachBillingReady($pdo)) ? coachPricingMap($pdo, array_column($coaches, 'id')) : null;
 
 $pageTitle = 'Huấn luyện viên';
 $pageCss = ['/css/coach.css'];
@@ -124,6 +126,13 @@ include __DIR__ . '/includes/header.php';
                             <div><dt>học viên</dt><dd><?= (int)$c['active_clients'] ?></dd></div>
                             <div><dt>chỗ còn</dt><dd><?= (int)$c['seats_left'] ?></dd></div>
                         </dl>
+                        <?php if ($prices !== null): $pr = $prices[(int)$c['id']] ?? null; ?>
+                            <p class="ch-price">
+                                <?php if ($pr): ?><span class="ch-badge ch-badge--ok">Tập thử miễn phí <?= (int)$pr['trial_sessions'] ?> buổi đầu</span><?php endif; ?>
+                                <?php $line = $pr ? coachPriceLine($pr['price_per_session'], $pr['price_per_month']) : ''; ?>
+                                <?= $line !== '' ? '<b>' . htmlspecialchars($line) . '</b>' : '<span class="ch-muted ch-small">HLV chưa đặt giá gói</span>' ?>
+                            </p>
+                        <?php endif; ?>
                         <p class="ch-coach__bio"><?= htmlspecialchars($c['bio']) ?></p>
                         <details>
                             <summary>Phương pháp, chứng chỉ, thời gian</summary>
@@ -159,6 +168,9 @@ include __DIR__ . '/includes/header.php';
                                               placeholder="Mục tiêu, lịch rảnh, chấn thương nếu có…"></textarea>
                                     <span class="ch-count" data-count="note-<?= (int)$c['id'] ?>"></span>
                                     <p class="ch-muted ch-small" style="margin:6px 0 0">HLV sẽ xem được hồ sơ tập luyện, lịch tập, nhật ký và số đo của bạn (không xem email). Mỗi người chỉ đăng ký 1 HLV.</p>
+                                    <?php if (!empty($prices[(int)$c['id']])): ?>
+                                        <p class="ch-muted ch-small" style="margin:6px 0 0">Khi HLV nhận, bạn được tập thử miễn phí <?= (int)$prices[(int)$c['id']]['trial_sessions'] ?> buổi đầu. Sau đó mua gói buổi hoặc gói tháng, trả trực tiếp cho HLV.</p>
+                                    <?php endif; ?>
                                     <div class="ch-req__row">
                                         <button type="submit" class="btn" data-busy-text="Đang gửi…">Gửi yêu cầu</button>
                                     </div>

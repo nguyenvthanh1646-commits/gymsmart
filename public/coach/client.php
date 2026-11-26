@@ -72,6 +72,7 @@ $feedbackByDate = [];
 foreach (coachFeedbackList($pdo, $relationId, 100) as $f) {
     $feedbackByDate[$f['log_date'] ?? 'general'][] = $f;
 }
+$bill = coachBillingReady($pdo) ? coachBillingState($pdo, $relationId) : null;   // buổi thử, gói (A-54)
 $st = $pdo->prepare('SELECT accepted_at FROM coach_clients WHERE id = ?');
 $st->execute([$relationId]);
 $acceptedAt = (string)$st->fetchColumn();
@@ -124,6 +125,7 @@ include __DIR__ . '/../includes/coach-nav.php';
     <?php if ($flash): ?>
         <div class="adm-toast adm-toast-<?= $flash[0] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($flash[1]) ?></div>
     <?php endif; ?>
+    <?= coachBillingBanner($pdo, $relationId) ?>
 
     <?php if ($requests): ?>
         <section class="adm-panel adm-card-pad" style="margin-bottom:16px;border-color:var(--accent)" aria-labelledby="h-req">
@@ -218,6 +220,18 @@ include __DIR__ . '/../includes/coach-nav.php';
         </div>
 
         <div class="adm-side" style="display:grid;gap:16px">
+            <?php if ($bill !== null): ?>
+            <section class="adm-panel adm-card-pad" aria-labelledby="h-bill">
+                <h2 id="h-bill">Buổi tập và gói</h2>
+                <dl class="adm-kv">
+                    <div><dt>Buổi thử</dt><dd>còn <?= (int)$bill['trial_left'] ?>/<?= (int)$bill['trial'] ?></dd></div>
+                    <div><dt>Gói buổi</dt><dd><?= $bill['pack_units'] > 0 ? 'còn ' . (int)$bill['pack_left'] . '/' . (int)$bill['pack_units'] : 'Chưa mua' ?></dd></div>
+                    <div><dt>Gói tháng</dt><dd><?= $bill['month_until'] !== null ? 'tới ' . htmlspecialchars(date('d/m/Y', strtotime($bill['month_until']))) : 'Không có' ?></dd></div>
+                    <div><dt>Buổi đang hẹn</dt><dd><?= (int)$bill['holding'] ?></dd></div>
+                </dl>
+                <a class="adm-btn adm-btn-ghost adm-btn-sm" href="/coach/sessions.php">Lịch hẹn và gói</a>
+            </section>
+            <?php endif; ?>
             <section class="adm-panel adm-card-pad" aria-labelledby="h-body">
                 <h2 id="h-body">Chỉ số cơ thể</h2>
                 <dl class="adm-kv">

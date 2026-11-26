@@ -293,3 +293,204 @@ foreach (glob($root . '/storage/certificates/c' . $u3 . '-*') as $f) {
     @unlink($f);
 }
 @unlink($png); @unlink($fake); @unlink($big);
+
+// =====================================================================
+section('D. Giá tập, buổi thử, lịch hẹn, gói (A-54): hết buổi bị khóa → mua gói → HLV xác nhận tiền → mở khóa');
+// =====================================================================
+// Dữ liệu thử: HLV 1 bán 300.000đ/buổi, 2.400.000đ/tháng, 2 buổi thử; học viên 1 đã tập 1 buổi thử, còn 1 buổi thử đã xác nhận ngày mai.
+reseed();
+$u1 = uid('hlv.user1@gymsmart.test');
+$c1 = uid('hlv.coach1@gymsmart.test');
+$rel1 = (int)q("SELECT id FROM coach_clients WHERE client_id = ? AND status = 'ACTIVE'", [$u1]);
+$coach1 = (new Web('d-c1'))->login('hlv.coach1@gymsmart.test');
+$coach2 = (new Web('d-c2'))->login('hlv.coach2@gymsmart.test');
+$u1web = (new Web('d-u1'))->login('hlv.user1@gymsmart.test');
+$u3web = (new Web('d-u3'))->login('hlv.user3@gymsmart.test');
+
+$u3web->get('/coaches.php');
+check('Danh sách HLV hiện số buổi thử và giá', $u3web->has('Tập thử miễn phí 2 buổi đầu') && $u3web->has('300.000đ/buổi · 2.400.000đ/tháng'));
+check('Hướng dẫn thanh toán KHÔNG hiện ở danh sách công khai', !$u3web->has('ngân hàng ABC'));
+
+$coach1->get('/coach/profile.php');
+check('Hồ sơ HLV có form giá', $coach1->has('Giá và buổi tập thử') && $coach1->has('name="trial_sessions"'));
+$priceForm = ['action' => 'pricing', 'price_per_session' => '20.000', 'price_per_month' => '2.400.000', 'trial_sessions' => '3', 'payment_note' => 'Chuyển khoản thử 0000'];
+$coach1->post('/coach/profile.php', ['csrf_token' => $coach1->csrf()] + $priceForm);
+check('Giá dưới mức tối thiểu: báo lỗi, không lưu', $coach1->code === 200 && $coach1->has('Giá 1 buổi phải từ') && (int)q('SELECT price_per_session FROM coach_profiles WHERE user_id = ?', [$c1]) === 300000);
+$coach1->get('/coach/profile.php');
+$coach1->postFollow('/coach/profile.php', ['csrf_token' => $coach1->csrf(), 'price_per_session' => '350.000'] + $priceForm);
+check('Lưu giá 350.000đ/buổi, 3 buổi thử', (int)q('SELECT price_per_session FROM coach_profiles WHERE user_id = ?', [$c1]) === 350000
+    && (int)q('SELECT trial_sessions FROM coach_profiles WHERE user_id = ?', [$c1]) === 3 && $coach1->has('Đã lưu giá'));
+check('Học viên cũ giữ số buổi thử đã chụp (2), không thành 3', (int)q('SELECT trial_sessions FROM coach_clients WHERE id = ?', [$rel1]) === 2);
+check('Nhật ký hoạt động ghi coach.pricing', (int)q("SELECT COUNT(*) FROM admin_audit_log WHERE action = 'coach.pricing' AND admin_id = ?", [$c1]) === 1);
+
+$u1web->get('/my-coach.php?tab=sessions');
+check('Học viên mở tab Buổi tập & gói: thấy quyền tập và buổi sắp tới', $u1web->code === 200 && $u1web->has('Quyền tập của bạn') && $u1web->has('còn 0/2') && $u1web->has('Đã xác nhận'));
+check('Hết suất thử (1 buổi đang giữ chỗ): không hiện form đặt buổi', $u1web->has('Bạn chưa còn buổi nào để đặt'));
+$later = date('Y-m-d', strtotime('+2 days'));
+$u1web->postFollow('/my-coach.php?tab=sessions', ['csrf_token' => $u1web->csrf(), 'action' => 'book', 'date' => $later, 'time' => '08:00', 'note' => '']);
+check('Cố gửi form đặt buổi khi hết suất: máy chủ chặn', $u1web->has('mua gói') && (int)q("SELECT COUNT(*) FROM coach_sessions WHERE coach_client_id = ? AND status = 'REQUESTED'", [$rel1]) === 0);
+check('Gửi form không có CSRF: 403', $u1web->post('/my-coach.php?tab=sessions', ['action' => 'book', 'date' => $later, 'time' => '08:00'])->code === 403);
+
+$sid = (int)q("SELECT id FROM coach_sessions WHERE coach_client_id = ? AND status = 'CONFIRMED'", [$rel1]);
+$u3web->get('/my-coach.php');
+$u3web->post('/my-coach.php', ['csrf_token' => $u3web->csrf(), 'action' => 'session_cancel', 'session_id' => $sid]);
+check('Người khác gửi id buổi của học viên 1 để hủy: không được', q('SELECT status FROM coach_sessions WHERE id = ?', [$sid]) === 'CONFIRMED');
+$coach2->get('/coach/sessions.php');
+$coach2->post('/coach/sessions.php', ['csrf_token' => $coach2->csrf(), 'action' => 'cancel', 'session_id' => $sid]);
+check('HLV khác hủy buổi của HLV 1: không được', q('SELECT status FROM coach_sessions WHERE id = ?', [$sid]) === 'CONFIRMED');
+check('Học viên mở /coach/sessions.php: 403', $u1web->get('/coach/sessions.php')->code === 403);
+
+// Buổi thử cuối đã qua giờ → HLV ghi vắng → hết buổi
+db()->prepare('UPDATE coach_sessions SET starts_at = ? WHERE id = ?')->execute([date('Y-m-d H:i:s', time() - 3 * 3600), $sid]);
+$coach1->get('/coach/sessions.php');
+check('HLV thấy buổi cần đánh dấu', $coach1->has('Cần đánh dấu') && $coach1->has('Vắng mặt'));
+$coach1->postFollow('/coach/sessions.php', ['csrf_token' => $coach1->csrf(), 'action' => 'no_show', 'session_id' => $sid]);
+check('HLV ghi vắng: báo học viên vừa hết buổi', q('SELECT status FROM coach_sessions WHERE id = ?', [$sid]) === 'NO_SHOW' && $coach1->has('vừa dùng hết buổi'));
+check('Nhật ký ghi coach.session_absent', (int)q("SELECT COUNT(*) FROM admin_audit_log WHERE action = 'coach.session_absent'") === 1);
+check('Bảng quyền tập: học viên 1 "Hết buổi"', $coach1->has('Hết buổi'));
+
+$coach1->get('/coach/client.php?id=' . $u1);
+check('Hồ sơ học viên: dải cảnh báo hết buổi', $coach1->has('Học viên đã hết buổi tập'));
+$fbBefore = (int)q('SELECT COUNT(*) FROM coach_feedback WHERE coach_client_id = ?', [$rel1]);
+$coach1->postFollow('/coach/client.php?id=' . $u1, ['csrf_token' => $coach1->csrf(), 'action' => 'feedback', 'log_date' => '', 'content' => 'Nhận xét khi đã khóa']);
+check('Khóa: gửi nhận xét bị chặn ở máy chủ', (int)q('SELECT COUNT(*) FROM coach_feedback WHERE coach_client_id = ?', [$rel1]) === $fbBefore && $coach1->has('hết buổi'));
+$nutBefore = (int)q('SELECT COUNT(*) FROM nutrition_targets WHERE user_id = ?', [$u1]);
+$coach1->get('/coach/client-nutrition.php?id=' . $u1);
+$coach1->postFollow('/coach/client-nutrition.php?id=' . $u1, ['csrf_token' => $coach1->csrf(), 'protein_g' => '140', 'carbs_g' => '200', 'fat_g' => '60']);
+check('Khóa: đặt dinh dưỡng bị chặn', (int)q('SELECT COUNT(*) FROM nutrition_targets WHERE user_id = ?', [$u1]) === $nutBefore && $coach1->has('hết buổi'));
+$coach1->get('/coach/client-plan.php?id=' . $u1);
+$coach1->postFollow('/coach/client-plan.php?id=' . $u1, ['csrf_token' => $coach1->csrf(), 'action' => 'adopt']);
+check('Khóa: tiếp quản / sửa lịch đang dùng bị chặn', $coach1->has('hết buổi'));
+check('Học viên thấy thông báo đã dùng hết buổi', (int)q("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND type = 'coach.billing'", [$u1]) === 1
+    && $u1web->get('/my-coach.php')->has('Bạn đã dùng hết buổi tập'));
+
+// Mua gói
+$u1web->get('/my-coach.php?tab=sessions');
+check('Tab gói hiện giá mới của HLV (gói 4 buổi = 1.400.000đ)', $u1web->has('1.400.000đ'));
+$u1web->postFollow('/my-coach.php?tab=sessions', ['csrf_token' => $u1web->csrf(), 'action' => 'order_create', 'pack' => 'SESSIONS:5']);
+check('Gói 5 buổi (không có trong danh sách) bị chặn', $u1web->has('Số lượng không hợp lệ') && (int)q('SELECT COUNT(*) FROM coach_orders') === 0);
+$u1web->postFollow('/my-coach.php?tab=sessions', ['csrf_token' => $u1web->csrf(), 'action' => 'order_create', 'pack' => 'SESSIONS:4']);
+$oid = (int)q("SELECT id FROM coach_orders WHERE coach_client_id = ? AND status = 'PENDING'", [$rel1]);
+check('Học viên chọn gói 4 buổi: đơn chờ 1.400.000đ, thấy hướng dẫn thanh toán', $oid > 0 && (int)q('SELECT amount FROM coach_orders WHERE id = ?', [$oid]) === 1400000
+    && $u1web->has('Chuyển khoản thử 0000'));
+$u1web->postFollow('/my-coach.php?tab=sessions', ['csrf_token' => $u1web->csrf(), 'action' => 'order_create', 'pack' => 'MONTH:1']);
+check('Đơn thứ hai khi đang chờ: bị chặn', $u1web->has('đơn chờ') && (int)q('SELECT COUNT(*) FROM coach_orders') === 1);
+$coach2->get('/coach/sessions.php');
+$coach2->post('/coach/sessions.php', ['csrf_token' => $coach2->csrf(), 'action' => 'order_paid', 'order_id' => $oid]);
+check('HLV khác xác nhận tiền đơn của HLV 1: không được', q('SELECT status FROM coach_orders WHERE id = ?', [$oid]) === 'PENDING');
+check('Bảng điều khiển HLV 1 nhắc đơn chờ xác nhận tiền', $coach1->get('/coach/dashboard.php')->has('1 đơn chờ xác nhận tiền'));
+$coach1->get('/coach/sessions.php');
+$coach1->postFollow('/coach/sessions.php', ['csrf_token' => $coach1->csrf(), 'action' => 'order_paid', 'order_id' => $oid]);
+check('HLV 1 bấm "Đã nhận tiền": đơn PAID, ghi nhật ký', q('SELECT status FROM coach_orders WHERE id = ?', [$oid]) === 'PAID'
+    && (int)q("SELECT COUNT(*) FROM admin_audit_log WHERE action = 'coach.order_paid'") === 1);
+
+// Mở khóa: đặt buổi bằng gói, HLV xác nhận, nhận xét lại được
+$u1web->get('/my-coach.php?tab=sessions');
+check('Học viên thấy gói 4 buổi và form đặt buổi', $u1web->has('còn 4/4 buổi') && $u1web->has('name="time"'));
+$u1web->postFollow('/my-coach.php?tab=sessions', ['csrf_token' => $u1web->csrf(), 'action' => 'book', 'date' => date('Y-m-d', strtotime('-1 day')), 'time' => '18:00', 'note' => '']);
+check('Đặt buổi ngày đã qua: bị chặn', $u1web->has('ít nhất 2 giờ'));
+$u1web->postFollow('/my-coach.php?tab=sessions', ['csrf_token' => $u1web->csrf(), 'action' => 'book', 'date' => $later, 'time' => '08:00', 'note' => '<script>alert(1)</script>']);
+$newSid = (int)q("SELECT id FROM coach_sessions WHERE coach_client_id = ? AND status = 'REQUESTED'", [$rel1]);
+check('Đặt buổi sau khi mua gói: tính vào gói buổi', $newSid > 0 && q('SELECT billing FROM coach_sessions WHERE id = ?', [$newSid]) === 'PACK');
+$coach1->get('/coach/sessions.php');
+check('Lời nhắn của học viên được escape trên trang HLV', $coach1->has('&lt;script&gt;alert(1)&lt;/script&gt;') && !$coach1->has('<script>alert(1)</script>'));
+$coach1->postFollow('/coach/sessions.php', ['csrf_token' => $coach1->csrf(), 'action' => 'confirm', 'session_id' => $newSid]);
+check('HLV xác nhận buổi mới', q('SELECT status FROM coach_sessions WHERE id = ?', [$newSid]) === 'CONFIRMED');
+$coach1->get('/coach/client.php?id=' . $u1);
+$coach1->postFollow('/coach/client.php?id=' . $u1, ['csrf_token' => $coach1->csrf(), 'action' => 'feedback', 'log_date' => '', 'content' => 'Nhận xét sau khi mua gói']);
+check('Hết khóa: HLV nhận xét lại được', (int)q('SELECT COUNT(*) FROM coach_feedback WHERE coach_client_id = ?', [$rel1]) === $fbBefore + 1 && !$coach1->has('Học viên đã hết buổi tập'));
+
+// Ngừng tập: buổi sắp tới bị hủy
+$u1web->get('/my-coach.php');
+$u1web->postFollow('/my-coach.php', ['csrf_token' => $u1web->csrf(), 'action' => 'end', 'relation_id' => $rel1]);
+check('Học viên ngừng tập: buổi đã xác nhận chuyển Đã hủy', q('SELECT status FROM coach_sessions WHERE id = ?', [$newSid]) === 'CANCELLED');
+
+// =====================================================================
+section('E. Tư vấn sức khỏe (A-55): đơn chuyên gia → duyệt → hỏi riêng → nhận → trả lời → đóng → thu hồi');
+// =====================================================================
+reseed();
+$u1 = uid('hlv.user1@gymsmart.test'); $u2 = uid('hlv.user2@gymsmart.test'); $u3 = uid('hlv.user3@gymsmart.test');
+$guest = new Web('e-guest');
+$admin = (new Web('e-admin'))->login('hlv.admin@gymsmart.test');
+$coach1 = (new Web('e-c1'))->login('hlv.coach1@gymsmart.test');
+$u1web = (new Web('e-u1'))->login('hlv.user1@gymsmart.test');
+$u2web = (new Web('e-u2'))->login('hlv.user2@gymsmart.test');
+$u3web = (new Web('e-u3'))->login('hlv.user3@gymsmart.test');
+check('Khách mở /consult.php bị chuyển về đăng nhập', $guest->get('/consult.php')->location === '/login.php');
+check('Người dùng mở Tư vấn sức khỏe: có khung nhắc gọi 115', $u2web->get('/consult.php')->code === 200 && $u2web->has('gọi ngay 115'));
+
+$png = sys_get_temp_dir() . '/gs-exp-cert.png';
+file_put_contents($png, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='));
+$expForm = ['action' => 'submit', 'profession' => 'PHYSIO', 'title' => 'Kỹ thuật viên vật lý trị liệu thử', 'workplace' => 'Nơi công tác thử',
+    'license_no' => 'TEST-12345', 'experience_years' => '5', 'topics[0]' => 'INJURY',
+    'bio' => str_repeat('Hồ sơ chuyên gia do kịch bản tự động tạo để kiểm tra. ', 2), 'agree_truth' => '1', 'agree_rules' => '1'];
+$u3web->get('/expert-apply.php');
+check('Mẫu đơn chuyên gia có ô số chứng chỉ và file', $u3web->has('name="license_no"') && $u3web->has('name="certificate_file"'));
+$u3web->upload('/expert-apply.php', ['csrf_token' => $u3web->csrf()] + $expForm);
+check('Đơn không có file chứng chỉ: báo lỗi, chưa có đơn', $u3web->has('chứng chỉ hành nghề') && (int)q('SELECT COUNT(*) FROM expert_applications WHERE user_id = ?', [$u3]) === 0);
+$u3web->get('/expert-apply.php');
+$u3web->upload('/expert-apply.php', ['csrf_token' => $u3web->csrf(), 'certificate_file' => new CURLFile($png, 'image/png', 'cchn.png')] + $expForm)->follow();
+$expApp = (int)q('SELECT id FROM expert_applications WHERE user_id = ? AND status = ?', [$u3, 'PENDING']);
+check('Nộp đơn kèm file: đơn đang chờ', $expApp > 0 && $u3web->has('Đang chờ duyệt'));
+check('Người nộp không mở được file chứng chỉ của trang admin (403)', $u3web->get('/admin/expert-certificate.php?id=' . $expApp)->code === 403);
+$admin->get('/admin/expert-applications.php?id=' . $expApp);
+check('Admin thấy số chứng chỉ trong đơn', $admin->has('TEST-12345'));
+check('Admin mở được file chứng chỉ (image/png)', $admin->get('/admin/expert-certificate.php?id=' . $expApp)->code === 200 && strpos($admin->type, 'image/png') === 0);
+$admin->get('/admin/expert-applications.php?id=' . $expApp);
+$admin->postFollow('/admin/expert-applications.php', ['csrf_token' => $admin->csrf(), 'id' => $expApp, 'action' => 'approve', 'note' => '']);
+check('Admin duyệt: vai trò EXPERT, ghi nhật ký', q('SELECT role FROM users WHERE id = ?', [$u3]) === 'EXPERT' && (int)q("SELECT COUNT(*) FROM admin_audit_log WHERE action = 'expert.approve'") === 1);
+check('Bấm thông báo duyệt vào khu chuyên gia được (vai trò đọc lại từ DB)', $u3web->get('/expert/dashboard.php')->code === 200);
+check('Sau đó mở trang chủ được chuyển tới khu chuyên gia', $u3web->get('/index.php')->location === '/expert/dashboard.php');
+check('Danh sách công khai: có nhãn đã kiểm tra, KHÔNG lộ số chứng chỉ', $u2web->get('/consult.php')->has('đã kiểm tra chứng chỉ hành nghề') && !$u2web->has('TEST-12345'));
+check('HLV mở khu chuyên gia: 403', $coach1->get('/expert/dashboard.php')->code === 403);
+
+// Hỏi riêng
+$askForm = ['topic' => 'INJURY', 'title' => 'Đau ngực khi chạy bộ dốc', 'body' => 'Mỗi lần chạy dốc khoảng 10 phút thì bị đau ngực nhẹ, nghỉ là hết. <script>alert(1)</script>'];
+$u2web->get('/consult-ask.php');
+$u2web->post('/consult-ask.php', ['csrf_token' => $u2web->csrf()] + $askForm);
+check('Câu hỏi có dấu hiệu cấp cứu mà chưa xác nhận: nhắc gọi 115, chưa lưu', $u2web->code === 200 && $u2web->has('Có thể cần cấp cứu')
+    && (int)q('SELECT COUNT(*) FROM health_questions WHERE user_id = ?', [$u2]) === 0);
+check('Gửi câu hỏi không có CSRF: 403', $u2web->post('/consult-ask.php', $askForm + ['emergency_ack' => '1'])->code === 403);
+$u2web->get('/consult-ask.php');
+$u2web->postFollow('/consult-ask.php', ['csrf_token' => $u2web->csrf(), 'emergency_ack' => '1'] + $askForm);
+$hq = (int)q('SELECT id FROM health_questions WHERE user_id = ?', [$u2]);
+check('Đã xác nhận không khẩn cấp: câu hỏi được lưu, không tick chia sẻ thì không có số liệu', $hq > 0 && q('SELECT profile_snapshot FROM health_questions WHERE id = ?', [$hq]) === null
+    && q('SELECT red_flags FROM health_questions WHERE id = ?', [$hq]) === 'Đau hoặc tức ngực');
+check('Nội dung câu hỏi được escape', $u2web->has('&lt;script&gt;alert(1)&lt;/script&gt;') && !$u2web->has('<script>alert(1)</script>'));
+check('Người dùng khác mở câu hỏi của người ta: 404', $u1web->get('/consult-question.php?id=' . $hq)->code === 404);
+check('Admin cũng không đọc được câu hỏi (404 ở trang người hỏi, 403 ở khu chuyên gia)', $admin->get('/consult-question.php?id=' . $hq)->code === 404
+    && $admin->get('/expert/question.php?id=' . $hq)->code === 403);
+check('Chuyên gia được báo câu hỏi mới đúng chủ đề', (int)q("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND type = 'expert.question_new'", [$u3]) === 1);
+
+$u3web->get('/expert/dashboard.php');
+check('Chuyên gia thấy câu hỏi trong hàng chờ kèm cảnh báo dấu hiệu, chỉ thấy tên người hỏi', $u3web->has('Đau ngực khi chạy bộ dốc') && $u3web->has('Có dấu hiệu cần lưu ý')
+    && !$u3web->has('[Thử] Học Viên Bình') && !$u3web->has('hlv.user2@'));
+$u3web->postFollow('/expert/dashboard.php', ['csrf_token' => $u3web->csrf(), 'action' => 'claim', 'question_id' => $hq]);
+check('Chuyên gia nhận câu hỏi', (int)q('SELECT expert_id FROM health_questions WHERE id = ?', [$hq]) === $u3 && $u3web->has('Gửi câu trả lời'));
+$u3web->postFollow('/expert/question.php?id=' . $hq, ['csrf_token' => $u3web->csrf(), 'action' => 'message', 'body' => 'Đau ngực khi gắng sức cần đi khám tim mạch sớm. Tạm dừng chạy dốc cho tới khi khám.']);
+check('Chuyên gia trả lời, người hỏi được báo', (int)q('SELECT COUNT(*) FROM health_messages WHERE question_id = ? AND sender_id = ?', [$hq, $u3]) === 1
+    && (int)q("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND type = 'expert.reply'", [$u2]) === 1);
+$u2web->get('/consult-question.php?id=' . $hq);
+check('Người hỏi thấy câu trả lời', $u2web->has('đi khám tim mạch sớm') && $u2web->has('Đóng câu hỏi'));
+$u2web->postFollow('/consult-question.php?id=' . $hq, ['csrf_token' => $u2web->csrf(), 'action' => 'close', 'helpful' => '1']);
+check('Người hỏi đóng kèm "hữu ích"', q('SELECT status FROM health_questions WHERE id = ?', [$hq]) === 'CLOSED' && (int)q('SELECT helpful FROM health_questions WHERE id = ?', [$hq]) === 1);
+
+// Câu sai chủ đề: chuyên gia chấn thương không xem được
+$u1web->get('/consult-ask.php');
+$u1web->postFollow('/consult-ask.php', ['csrf_token' => $u1web->csrf(), 'topic' => 'NUTRITION', 'title' => 'Ăn gì trước buổi tập sáng', 'body' => 'Em tập lúc 6 giờ sáng, nên ăn gì trước khi tập để không bị mệt ạ?', 'share_profile' => '1']);
+$hq2 = (int)q('SELECT id FROM health_questions WHERE user_id = ?', [$u1]);
+check('Tick chia sẻ: câu hỏi có số liệu hồ sơ', $hq2 > 0 && str_contains((string)q('SELECT profile_snapshot FROM health_questions WHERE id = ?', [$hq2]), 'Tuổi'));
+check('Chuyên gia chấn thương mở câu dinh dưỡng: 404', $u3web->get('/expert/question.php?id=' . $hq2)->code === 404);
+$u3web->get('/expert/dashboard.php');
+$u3web->post('/expert/dashboard.php', ['csrf_token' => $u3web->csrf(), 'action' => 'claim', 'question_id' => $hq2]);
+check('Chuyên gia chấn thương gửi form nhận câu dinh dưỡng: không được', q('SELECT status FROM health_questions WHERE id = ?', [$hq2]) === 'OPEN');
+
+// Thu hồi
+$admin->get('/admin/experts.php');
+$admin->postFollow('/admin/experts.php', ['csrf_token' => $admin->csrf(), 'action' => 'revoke', 'expert_id' => $u3]);
+check('Admin thu hồi: vai trò về USER, ghi nhật ký', q('SELECT role FROM users WHERE id = ?', [$u3]) === 'USER' && (int)q("SELECT COUNT(*) FROM admin_audit_log WHERE action = 'expert.revoke'") === 1);
+check('Đã bị thu hồi: khu chuyên gia 403', $u3web->get('/expert/dashboard.php')->code === 403);
+foreach (glob($root . '/storage/certificates/c' . $u3 . '-*') as $f) {
+    @unlink($f);
+}
+@unlink($png);

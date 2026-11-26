@@ -6,6 +6,7 @@
  *   - đã đăng nhập:  menu chức năng + chữ cái đầu tên + Đăng xuất
  *   - ADMIN:         thêm nút "Quản trị"
  *   - COACH:         thêm nút "Khu HLV"
+ *   - EXPERT:        thêm nút "Khu chuyên gia" (A-55)
  * Cần session nên các trang include file này phải require auth.php trước (để có isLoggedIn()).
  * Style nằm trong css/brand.css (class bắt đầu bằng "nb-").
  */
@@ -14,10 +15,13 @@ require_once __DIR__ . '/logo.php';
 $loggedIn = function_exists('isLoggedIn') && isLoggedIn();
 $isAdmin  = $loggedIn && (($_SESSION['role'] ?? '') === 'ADMIN');
 $isCoach  = $loggedIn && (($_SESSION['role'] ?? '') === 'COACH');
+$isExpert = $loggedIn && (($_SESSION['role'] ?? '') === 'EXPERT');
 $navCurrent = basename($_SERVER['SCRIPT_NAME'] ?? '');
 // Trong khu quản trị đã có menu riêng (admin-nav.php) nên ẩn menu người dùng cho gọn
 // Khu HLV (/coach/) cũng có thanh riêng (coach-nav.php)
-$inAdmin  = (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') === 0 || strpos($_SERVER['SCRIPT_NAME'] ?? '', '/coach/') === 0) && !defined('GS_ERROR_PAGE');
+// Khu chuyên gia (/expert/, A-55) cũng vậy (expert-nav.php)
+$navScript = $_SERVER['SCRIPT_NAME'] ?? '';
+$inAdmin  = (strpos($navScript, '/admin/') === 0 || strpos($navScript, '/coach/') === 0 || strpos($navScript, '/expert/') === 0) && !defined('GS_ERROR_PAGE');
 if ($inAdmin) {
     return; // khu quản trị dùng thanh riêng (admin-nav.php), không vẽ navbar người dùng ở đây
 }
@@ -30,6 +34,7 @@ $navItems = [
     ['/progress.php',     'Tiến trình',      ['progress.php']],
     ['/articles.php',     'Bài viết',        ['articles.php', 'article.php']],
     ['/coaches.php',      'HLV',             ['coaches.php', 'my-coach.php', 'coach-apply.php']],
+    ['/consult.php',      'Tư vấn',          ['consult.php', 'consult-ask.php', 'consult-question.php', 'expert-apply.php']],
     ['/profile.php',      'Hồ sơ',           ['profile.php']],
 ];
 $initial = '';
@@ -94,6 +99,9 @@ $navAvatar = ($loggedIn && is_string($_SESSION['avatar'] ?? null) && preg_match(
                     <?php endif; ?>
                     <?php if ($isCoach): ?>
                         <a class="nb__btn nb__btn--admin" href="/coach/dashboard.php">Khu HLV</a>
+                    <?php endif; ?>
+                    <?php if ($isExpert): ?>
+                        <a class="nb__btn nb__btn--admin" href="/expert/dashboard.php">Khu chuyên gia</a>
                     <?php endif; ?>
                     <a class="nb__avatar" href="/profile.php" title="Hồ sơ" aria-label="Hồ sơ"><?php if ($navAvatar): ?><img src="/<?= htmlspecialchars($navAvatar) ?>" alt="" width="38" height="38"><?php else: ?><?= htmlspecialchars($initial) ?><?php endif; ?></a>
                     <a class="nb__btn nb__btn--ghost" href="/api/logout.php">Đăng xuất</a>

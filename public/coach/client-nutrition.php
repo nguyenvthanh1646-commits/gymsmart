@@ -47,7 +47,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['kcal'] = 'Hồ sơ học viên chưa đủ thông tin (tuổi, chiều cao, cân nặng, giới tính, vận động) để tính TDEE tham chiếu.';
     }
     if (!$errors) {
-        coachSaveNutrition($pdo, $coachId, $clientId, round($tdee), $check['kcal'], (int)$input['protein_g'], (int)$input['carbs_g'], (int)$input['fat_g'], date('Y-m-d'));
+        try {
+            coachSaveNutrition($pdo, $coachId, $clientId, round($tdee), $check['kcal'], (int)$input['protein_g'], (int)$input['carbs_g'], (int)$input['fat_g'], date('Y-m-d'));
+        } catch (CoachException $e) {   // A-54: học viên hết buổi
+            coachFlash('error', $e->getMessage());
+            header('Location: ' . $self);
+            exit;
+        }
         auditLog($pdo, 'coach.set_macros', 'client', $clientId, 'Đặt ' . $check['kcal'] . ' kcal (P' . (int)$input['protein_g'] . ' C' . (int)$input['carbs_g'] . ' F' . (int)$input['fat_g'] . ') cho "' . $client['full_name'] . '"');
         coachFlash('ok', 'Đã đặt mục tiêu ' . number_format($check['kcal'], 0, ',', '.') . ' kcal/ngày cho học viên.');
         header('Location: ' . $self);
@@ -90,6 +96,7 @@ include __DIR__ . '/../includes/coach-nav.php';
     <?php if ($flash): ?>
         <div class="adm-toast adm-toast-<?= $flash[0] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($flash[1]) ?></div>
     <?php endif; ?>
+    <?= coachBillingBanner($pdo, $relationId) ?>
 
     <div class="adm-split">
         <form class="adm-panel" method="post" action="<?= htmlspecialchars($self) ?>" id="cn-form" novalidate>

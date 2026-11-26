@@ -26,6 +26,7 @@ $myReviews = $reviewsOn ? coachReviewsForCoach($pdo, $coachId, 3) : [];
 $seats   = $profile ? coachSeatsLeft((int)$profile['max_clients'], (int)$profile['active_clients']) : 0;
 $since7  = date('Y-m-d', strtotime($today . ' -6 days'));
 $compliance = coachComplianceFor($pdo, array_column($clients, 'client_id'), $today);
+$billCounts = coachBillingCounts($pdo, $coachId);   // việc ở trang Lịch hẹn (A-54); DB chưa nâng cấp thì toàn 0
 // Cần chú ý: chưa tập 7 ngày, tập thiếu so với lịch tuần này (dưới 100%), có tin chưa đọc hoặc xin sửa
 $behind = fn($c) => ($compliance[(int)$c['client_id']]['percent'] ?? 100) < 100;
 $attention = array_values(array_filter($clients, fn($c) => $c['last_log'] === null || $c['last_log'] < $since7 || $behind($c) || (int)$c['unread'] > 0 || (int)$c['change_requests'] > 0));
@@ -57,6 +58,18 @@ $ico = function (string $inner): string {
 
     <?php if ($flash): ?>
         <div class="adm-toast adm-toast-<?= $flash[0] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($flash[1]) ?></div>
+    <?php endif; ?>
+
+    <?php if ($billCounts['orders'] + $billCounts['requests'] + $billCounts['to_mark'] > 0): ?>
+        <div class="adm-hint-box" style="margin-bottom:16px" role="status">
+            <b>Lịch hẹn cần bạn xử lý:</b>
+            <?= implode(' · ', array_filter([
+                $billCounts['requests'] ? (int)$billCounts['requests'] . ' buổi chờ xác nhận' : '',
+                $billCounts['to_mark'] ? (int)$billCounts['to_mark'] . ' buổi đã qua chưa đánh dấu' : '',
+                $billCounts['orders'] ? (int)$billCounts['orders'] . ' đơn chờ xác nhận tiền' : '',
+            ])) ?>.
+            <a class="adm-link" href="/coach/sessions.php">Mở Lịch hẹn</a>
+        </div>
     <?php endif; ?>
 
     <div class="adm-stats">

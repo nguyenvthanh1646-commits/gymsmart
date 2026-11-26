@@ -34,6 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $ready) {
             if ($res['skipped']) {
                 $msg .= ' Bỏ qua ' . count($res['skipped']) . ' người không còn tập với bạn.';
             }
+            if (!empty($res['locked'])) {
+                $msg .= ' Bỏ qua ' . count($res['locked']) . ' người đã hết buổi tập (chờ học viên mua gói).';
+            }
             coachFlash($res['applied'] ? 'ok' : 'error', $msg);
         } else {
             coachFlash('error', 'Thao tác không hợp lệ.');

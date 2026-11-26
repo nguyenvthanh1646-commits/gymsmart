@@ -151,7 +151,8 @@ function coachTemplateDelete(PDO $pdo, int $coachId, int $templateId): void
 /**
  * Giao mẫu cho nhiều học viên. Học viên nào không còn ACTIVE với HLV này thì bỏ qua (ghi vào 'skipped'), không dừng cả lượt.
  * Mỗi học viên được lưu trong transaction riêng của saveWorkoutPlan (lịch cũ → ARCHIVED, lịch mẫu → ACTIVE, assigned_by = HLV).
- * @return array ['applied' => [clientId => tên], 'skipped' => [clientId, ...]]
+ * Học viên đã hết buổi tập (A-54) cũng bỏ qua, ghi vào 'locked'.
+ * @return array ['applied' => [clientId => tên], 'skipped' => [clientId, ...], 'locked' => [clientId, ...]]
  */
 function coachTemplateApply(PDO $pdo, int $coachId, int $templateId, array $clientIds): array
 {
@@ -168,10 +169,15 @@ function coachTemplateApply(PDO $pdo, int $coachId, int $templateId, array $clie
     }
     $plan = coachTemplateToPlan($tpl, $tpl['items']);
     $coachName = notifName($pdo, $coachId);
-    $out = ['applied' => [], 'skipped' => []];
+    $out = ['applied' => [], 'skipped' => [], 'locked' => []];
     foreach ($ids as $clientId) {
         if (!canCoachAccessClient($pdo, $coachId, $clientId)) {   // quyền kiểm tra lại ở máy chủ cho TỪNG học viên
             $out['skipped'][] = $clientId;
+            continue;
+        }
+        $relId = coachActiveRelationId($pdo, $coachId, $clientId);
+        if ($relId !== null && coachBillingLocked($pdo, $relId)) {   // A-54: học viên hết buổi thì bỏ qua
+            $out['locked'][] = $clientId;
             continue;
         }
         $planId = saveWorkoutPlan($pdo, $clientId, $plan, $coachId, 'ACTIVE');

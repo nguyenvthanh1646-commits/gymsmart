@@ -83,6 +83,14 @@ foreach ($applications as $uid => $form) {
     coachApproveApplication($pdo, $appId, $adminId, 'Duyệt dữ liệu thử.');
 }
 
+// Giá tập (A-54, chỉ khi DB đã chạy sql/coach_billing.sql). Đặt TRƯỚC khi học viên gửi yêu cầu để quan hệ chụp đúng số buổi thử.
+$billingOn = coachBillingReady($pdo);
+if ($billingOn) {
+    coachSavePricing($pdo, $coach1, ['price_per_session' => 300000, 'price_per_month' => 2400000, 'trial_sessions' => 2,
+        'payment_note' => "Ví dụ (dữ liệu thử, không phải tài khoản thật): chuyển khoản ngân hàng ABC 0000000000, nội dung: tên + gói"]);
+    coachSavePricing($pdo, $coach2, ['price_per_session' => 250000, 'price_per_month' => null, 'trial_sessions' => 3, 'payment_note' => '']);
+}
+
 // Học viên 1 đang tập với HLV 1
 $rel1 = coachRequest($pdo, $user1, $coach1, 'Em mới tập, muốn giảm khoảng 5 kg. (lời nhắn thử)');
 coachChangeRelation($pdo, 'coach', $coach1, $rel1, 'accept');
@@ -135,6 +143,15 @@ $conversation = [
 foreach ($conversation as [$sender, $text, $read, $when]) {
     $at = date('Y-m-d H:i:s', strtotime($when));
     $insertMsg->execute([$rel1, $sender, $text, $read ? $at : null, $at]);
+}
+
+// Lịch hẹn (A-54): 1 buổi thử đã tập tuần trước, 1 buổi thử đã xác nhận ngày mai (chèn thẳng vì buổi đã qua không đặt qua form được)
+if ($billingOn) {
+    $insSess = $pdo->prepare("INSERT INTO coach_sessions (coach_client_id, coach_id, starts_at, billing, status, client_note, created_at, updated_at) VALUES (?, ?, ?, 'TRIAL', ?, ?, ?, ?)");
+    $past = date('Y-m-d 18:00:00', strtotime('-6 days'));
+    $insSess->execute([$rel1, $coach1, $past, 'DONE', 'Buổi đầu, xem kỹ thuật squat (lời nhắn thử)', date('Y-m-d H:i:s', strtotime('-8 days')), $past]);
+    $next = date('Y-m-d 18:00:00', strtotime('+1 day'));
+    $insSess->execute([$rel1, $coach1, $next, 'CONFIRMED', '', date('Y-m-d H:i:s', strtotime('-1 day')), date('Y-m-d H:i:s', strtotime('-1 day'))]);
 }
 
 // Học viên 2 chờ HLV 2 duyệt

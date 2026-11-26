@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('USER', 'ADMIN', 'COACH') NOT NULL DEFAULT 'USER',   -- COACH: chỉ ADMIN cấp, qua đơn đăng ký HLV
+    role ENUM('USER', 'ADMIN', 'COACH', 'EXPERT') NOT NULL DEFAULT 'USER',   -- COACH / EXPERT: chỉ ADMIN cấp, qua đơn đăng ký
     age INT NULL,
     height_cm FLOAT NULL,
     weight_kg FLOAT NULL,
@@ -286,6 +286,10 @@ CREATE TABLE IF NOT EXISTS coach_profiles (
     approach VARCHAR(1000) NOT NULL DEFAULT '',
     max_clients TINYINT UNSIGNED NOT NULL DEFAULT 10,
     availability VARCHAR(255) NOT NULL DEFAULT '',
+    price_per_session INT UNSIGNED NULL,            -- A-54: giá 1 buổi (VNĐ), NULL = không bán theo buổi
+    price_per_month INT UNSIGNED NULL,              -- A-54: giá 1 tháng (VNĐ), NULL = không bán theo tháng
+    trial_sessions TINYINT UNSIGNED NOT NULL DEFAULT 1, -- A-54: số buổi tập thử miễn phí (1-3)
+    payment_note VARCHAR(300) NOT NULL DEFAULT '',  -- A-54: hướng dẫn thanh toán, chỉ học viên đang tập thấy
     accepting TINYINT(1) NOT NULL DEFAULT 1,        -- 1 = đang nhận học viên mới
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -300,6 +304,7 @@ CREATE TABLE IF NOT EXISTS coach_clients (
     client_id INT NOT NULL,
     status ENUM('PENDING', 'ACTIVE', 'ENDED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
     request_note VARCHAR(500) NOT NULL DEFAULT '',  -- lời nhắn của học viên khi gửi yêu cầu
+    trial_sessions TINYINT UNSIGNED NULL,           -- A-54: số buổi thử chụp lại lúc gửi yêu cầu (NULL = quan hệ cũ, lấy theo hồ sơ HLV)
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     accepted_at DATETIME NULL,
     ended_at DATETIME NULL,                         -- lúc kết thúc / từ chối / hủy
@@ -460,4 +465,117 @@ CREATE TABLE IF NOT EXISTS meal_logs (
     INDEX idx_ml_user_date (user_id, log_date),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (user_food_id) REFERENCES user_foods(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Giá tập với HLV: đơn mua gói và lịch hẹn từng buổi (A-54, sql/coach_billing.sql)
+CREATE TABLE IF NOT EXISTS coach_orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    coach_client_id INT NOT NULL,
+    kind ENUM('SESSIONS', 'MONTH') NOT NULL,
+    quantity TINYINT UNSIGNED NOT NULL,
+    unit_price INT UNSIGNED NOT NULL,              -- VNĐ cho 1 buổi hoặc 1 tháng
+    amount INT UNSIGNED NOT NULL,                  -- VNĐ = unit_price × quantity
+    status ENUM('PENDING', 'PAID', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
+    starts_on DATE NULL,
+    ends_on DATE NULL,
+    cancel_note VARCHAR(300) NOT NULL DEFAULT '',  -- lý do HLV hủy đơn (vd chưa nhận được tiền)
+    cancelled_by INT NULL,                         -- không FK, chỉ để biết ai hủy
+    created_at DATETIME NOT NULL,
+    paid_at DATETIME NULL,
+    cancelled_at DATETIME NULL,
+    open_rel INT AS (IF(status = 'PENDING', coach_client_id, NULL)) PERSISTENT,
+    UNIQUE KEY uq_order_open (open_rel),
+    INDEX idx_order_rel (coach_client_id, status),
+    FOREIGN KEY (coach_client_id) REFERENCES coach_clients(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS coach_sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    coach_client_id INT NOT NULL,
+    coach_id INT NOT NULL,
+    starts_at DATETIME NOT NULL,
+    billing ENUM('TRIAL', 'PACK', 'MONTH') NOT NULL,
+    status ENUM('REQUESTED', 'CONFIRMED', 'DONE', 'NO_SHOW', 'CANCELLED', 'DECLINED', 'EXPIRED') NOT NULL DEFAULT 'REQUESTED',
+    client_note VARCHAR(300) NOT NULL DEFAULT '',  -- lời nhắn khi đặt (địa điểm, muốn tập phần nào...)
+    cancelled_by INT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NULL,
+    INDEX idx_cs_rel (coach_client_id, starts_at),
+    INDEX idx_cs_coach (coach_id, status, starts_at),
+    FOREIGN KEY (coach_client_id) REFERENCES coach_clients(id) ON DELETE CASCADE,
+    FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tư vấn sức khỏe từ chuyên gia (A-55, sql/health_experts.sql)
+CREATE TABLE IF NOT EXISTS expert_applications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    profession ENUM('DOCTOR', 'NUTRITIONIST', 'PHYSIO') NOT NULL,
+    title VARCHAR(120) NOT NULL,                    -- chức danh hiển thị, ví dụ "Bác sĩ Y học thể thao"
+    workplace VARCHAR(150) NOT NULL,                -- nơi công tác
+    license_no VARCHAR(50) NOT NULL,                -- số chứng chỉ hành nghề, CHỈ ADMIN thấy
+    experience_years TINYINT UNSIGNED NOT NULL,
+    topics VARCHAR(120) NOT NULL,                   -- mã chủ đề nhận tư vấn, cách nhau bởi dấu phẩy (whitelist ở PHP)
+    bio VARCHAR(1500) NOT NULL,
+    certificate_file VARCHAR(80) NULL,              -- tên file do máy chủ đặt, nằm trong storage/certificates/
+    status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+    admin_note VARCHAR(500) NOT NULL DEFAULT '',
+    reviewed_by INT NULL,
+    reviewed_at DATETIME NULL,
+    created_at DATETIME NOT NULL,
+    open_user_id INT AS (IF(status = 'PENDING', user_id, NULL)) PERSISTENT,
+    UNIQUE KEY uq_exp_app_open (open_user_id),
+    INDEX idx_exp_app_status (status, created_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS expert_profiles (
+    user_id INT NOT NULL PRIMARY KEY,
+    profession ENUM('DOCTOR', 'NUTRITIONIST', 'PHYSIO') NOT NULL,
+    title VARCHAR(120) NOT NULL,
+    workplace VARCHAR(150) NOT NULL,
+    license_no VARCHAR(50) NOT NULL,
+    experience_years TINYINT UNSIGNED NOT NULL,
+    topics VARCHAR(120) NOT NULL,
+    bio VARCHAR(1500) NOT NULL,
+    accepting TINYINT(1) NOT NULL DEFAULT 1,        -- 1 = đang nhận câu hỏi mới
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS health_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    topic ENUM('INJURY', 'CONDITION', 'NUTRITION', 'RECOVERY', 'WOMEN', 'OTHER') NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    body VARCHAR(2000) NOT NULL,
+    profile_snapshot VARCHAR(600) NULL,
+    red_flags VARCHAR(255) NOT NULL DEFAULT '',     -- dấu hiệu cần cấp cứu máy chủ nhận ra trong câu hỏi (người hỏi đã xác nhận không khẩn cấp)
+    status ENUM('OPEN', 'CLAIMED', 'CLOSED', 'CANCELLED') NOT NULL DEFAULT 'OPEN',
+    expert_id INT NULL,
+    helpful TINYINT(1) NULL,
+    created_at DATETIME NOT NULL,
+    claimed_at DATETIME NULL,
+    closed_at DATETIME NULL,
+    closed_by INT NULL,                             -- không FK, chỉ để biết ai đóng
+    INDEX idx_hq_user (user_id, status),
+    INDEX idx_hq_pool (status, topic, created_at),
+    INDEX idx_hq_expert (expert_id, status),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (expert_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS health_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    question_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    body VARCHAR(2000) NOT NULL,
+    read_at DATETIME NULL,
+    created_at DATETIME NOT NULL,
+    INDEX idx_hm_q (question_id, id),
+    INDEX idx_hm_sender (sender_id, created_at),
+    FOREIGN KEY (question_id) REFERENCES health_questions(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

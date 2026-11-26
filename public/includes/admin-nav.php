@@ -3,7 +3,7 @@
  * admin-nav.php — thanh điều hướng riêng của khu quản trị (khác menu của người dùng).
  * Trong khu quản trị, navbar người dùng được ẩn (xem navbar.php) nên thanh này có luôn logo, tên và nút Đăng xuất.
  * Dùng: $admNavActive = 'exercises'; include __DIR__ . '/../includes/admin-nav.php';
- * Giá trị $admNavActive: 'dashboard' | 'exercises' | 'users' | 'coaches' | 'articles' | 'stats' | 'audit'
+ * Giá trị $admNavActive: 'dashboard' | 'exercises' | 'users' | 'coaches' | 'experts' | 'articles' | 'stats' | 'audit' | 'health'
  */
 require_once __DIR__ . '/logo.php';
 $admNavActive = $admNavActive ?? '';
@@ -12,6 +12,7 @@ $admNavItems = [
     'exercises' => ['/admin/exercises.php', 'Bài tập'],
     'users'     => ['/admin/users.php', 'Người dùng'],
     'coaches'   => ['/admin/coaches.php', 'HLV'],
+    'experts'   => ['/admin/experts.php', 'Chuyên gia'],
     'articles'  => ['/admin/articles.php', 'Bài viết'],
     'stats'     => ['/admin/stats.php', 'Thống kê'],
     'audit'     => ['/admin/audit-log.php', 'Nhật ký'],

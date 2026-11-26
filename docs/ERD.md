@@ -2,7 +2,7 @@
 
 Tài liệu thiết kế database, dùng làm tài liệu tham chiếu khi tạo/sửa bảng. Cập nhật file này mỗi khi thêm/sửa bảng (theo quy định trong `CLAUDE.md`).
 
-Phạm vi: 3 role (`USER`, `ADMIN`, `COACH`). `COACH` (huấn luyện viên, HLV) chỉ có được khi ADMIN duyệt đơn đăng ký HLV. Không có chat tự do giữa user với user: tin nhắn chỉ có giữa một HLV và học viên đang tập với HLV đó (bảng `coach_messages`). Nội dung học tập gồm ảnh + video hướng dẫn trong bảng `exercises` và **bài viết kiến thức** (bài dạng file trong `public/content/articles/` + bài admin soạn trong bảng `articles`).
+Phạm vi: 4 role (`USER`, `ADMIN`, `COACH`, `EXPERT`). `EXPERT` (chuyên gia sức khỏe, A-55) cũng chỉ có được khi ADMIN duyệt đơn. `COACH` (huấn luyện viên, HLV) chỉ có được khi ADMIN duyệt đơn đăng ký HLV. Không có chat tự do giữa user với user: tin nhắn chỉ có giữa một HLV và học viên đang tập với HLV đó (bảng `coach_messages`). Nội dung học tập gồm ảnh + video hướng dẫn trong bảng `exercises` và **bài viết kiến thức** (bài dạng file trong `public/content/articles/` + bài admin soạn trong bảng `articles`).
 
 Database dùng MySQL/MariaDB, quản trị qua phpMyAdmin. File tạo bảng thật là `/sql/schema.sql` (đã gộp mọi file bổ sung, chạy được trên database trống). Khi sửa cấu trúc bảng thì cập nhật cả file đó và file này.
 
@@ -46,6 +46,13 @@ erDiagram
     COACH_CLIENTS ||--o{ COACH_FEEDBACK : "nhận xét"
     COACH_CLIENTS ||--o{ COACH_MESSAGES : "tin nhắn"
     COACH_CLIENTS ||--o{ COACH_CHANGE_REQUESTS : "xin tự sửa"
+    COACH_CLIENTS ||--o{ COACH_SESSIONS : "lịch hẹn từng buổi"
+    COACH_CLIENTS ||--o{ COACH_ORDERS : "mua gói"
+    USERS ||--o{ EXPERT_APPLICATIONS : "nộp đơn chuyên gia"
+    USERS ||--o| EXPERT_PROFILES : "hồ sơ chuyên gia"
+    USERS ||--o{ HEALTH_QUESTIONS : "hỏi (user_id)"
+    USERS |o--o{ HEALTH_QUESTIONS : "chuyên gia nhận (expert_id)"
+    HEALTH_QUESTIONS ||--o{ HEALTH_MESSAGES : "trao đổi"
     WORKOUT_LOGS |o--o{ COACH_FEEDBACK : "nhận xét riêng 1 bài"
     USERS |o--o{ WORKOUT_PLANS : "giao lịch (assigned_by)"
     USERS |o--o{ NUTRITION_TARGETS : "đặt mục tiêu (assigned_by)"
@@ -55,7 +62,7 @@ erDiagram
         varchar full_name
         varchar email UK
         varchar password_hash
-        enum role "USER, ADMIN, COACH"
+        enum role "USER, ADMIN, COACH, EXPERT"
         int age
         float height_cm
         float weight_kg
@@ -259,6 +266,10 @@ erDiagram
         varchar approach
         tinyint max_clients
         varchar availability
+        int price_per_session "NULL = không bán theo buổi"
+        int price_per_month "NULL = không bán theo tháng"
+        tinyint trial_sessions "buổi thử miễn phí 1-3"
+        varchar payment_note "chỉ học viên đang tập thấy"
         tinyint accepting "1 = đang nhận học viên"
         datetime created_at
         datetime updated_at
@@ -270,6 +281,7 @@ erDiagram
         int client_id FK
         enum status "PENDING, ACTIVE, ENDED, REJECTED"
         varchar request_note
+        tinyint trial_sessions "chụp lại lúc gửi yêu cầu"
         datetime created_at
         datetime accepted_at
         datetime ended_at
@@ -307,6 +319,74 @@ erDiagram
         datetime created_at
         datetime resolved_at
         varchar open_key UK "sinh tự động, có khi PENDING"
+    }
+
+    COACH_SESSIONS {
+        int id PK
+        int coach_client_id FK
+        int coach_id FK
+        datetime starts_at "mỗi buổi 60 phút"
+        enum billing "TRIAL, PACK, MONTH"
+        enum status "REQUESTED, CONFIRMED, DONE, NO_SHOW, CANCELLED, DECLINED, EXPIRED"
+        varchar client_note
+        int cancelled_by "không FK"
+        datetime created_at
+        datetime updated_at
+    }
+
+    COACH_ORDERS {
+        int id PK
+        int coach_client_id FK
+        enum kind "SESSIONS, MONTH"
+        tinyint quantity "số buổi hoặc số tháng"
+        int unit_price "giá chụp lại lúc tạo đơn"
+        int amount
+        enum status "PENDING, PAID, CANCELLED"
+        date starts_on "gói tháng"
+        date ends_on "gói tháng"
+        varchar cancel_note
+        datetime created_at
+        datetime paid_at
+        int open_rel UK "sinh tự động, có khi PENDING"
+    }
+
+    EXPERT_PROFILES {
+        int user_id PK
+        enum profession "DOCTOR, NUTRITIONIST, PHYSIO"
+        varchar title
+        varchar workplace
+        varchar license_no "chỉ ADMIN và chính chuyên gia thấy"
+        tinyint experience_years
+        varchar topics "mã chủ đề, cách nhau dấu phẩy"
+        varchar bio
+        tinyint accepting
+        datetime created_at
+        datetime updated_at
+    }
+
+    HEALTH_QUESTIONS {
+        int id PK
+        int user_id FK
+        enum topic "INJURY, CONDITION, NUTRITION, RECOVERY, WOMEN, OTHER"
+        varchar title
+        varchar body
+        varchar profile_snapshot "NULL = không chia sẻ"
+        varchar red_flags
+        enum status "OPEN, CLAIMED, CLOSED, CANCELLED"
+        int expert_id FK "NULL khi chưa ai nhận"
+        tinyint helpful
+        datetime created_at
+        datetime claimed_at
+        datetime closed_at
+    }
+
+    HEALTH_MESSAGES {
+        int id PK
+        int question_id FK
+        int sender_id FK
+        varchar body
+        datetime read_at
+        datetime created_at
     }
 ```
 
@@ -429,7 +509,7 @@ Khi đang có HLV, học viên **không tự sửa** lịch tập và dinh dư�
 ## Thông báo trong ứng dụng (`sql/notifications.sql`, đã gộp vào `schema.sql`, A-44)
 
 ### `notifications`
-Mỗi dòng là một thông báo cho MỘT người (`user_id`, xóa người thì xóa theo). `type` là mã sự kiện viết sẵn trong code (`coach.message`, `coach.feedback`, `coach.request`, `coach.relation`, `coach.plan`, `coach.nutrition`, `coach.change_request`, `coach.change_reply`, `coach.application_approved`, `coach.application_rejected`, `coach.revoked`, `admin.coach_application`). `link` là đường dẫn nội bộ bắt đầu bằng `/` do code tạo. `read_at` NULL = chưa đọc. Index `(user_id, read_at, id)` cho việc đếm số chưa đọc và lấy danh sách mới nhất. Tin nhắn, nhận xét, giao lịch, đặt mục tiêu được gộp: đã có thông báo CHƯA ĐỌC cùng `type` + `link` thì cập nhật nội dung thay vì thêm dòng. Thông báo được ghi trong cùng transaction với thao tác gây ra nó (`includes/coach-db.php`).
+Mỗi dòng là một thông báo cho MỘT người (`user_id`, xóa người thì xóa theo). `type` là mã sự kiện viết sẵn trong code (`coach.message`, `coach.feedback`, `coach.request`, `coach.relation`, `coach.plan`, `coach.nutrition`, `coach.change_request`, `coach.change_reply`, `coach.session`, `coach.order`, `coach.billing`, `coach.application_approved`, `coach.application_rejected`, `coach.revoked`, `admin.coach_application`). `link` là đường dẫn nội bộ bắt đầu bằng `/` do code tạo. `read_at` NULL = chưa đọc. Index `(user_id, read_at, id)` cho việc đếm số chưa đọc và lấy danh sách mới nhất. Tin nhắn, nhận xét, giao lịch, đặt mục tiêu được gộp: đã có thông báo CHƯA ĐỌC cùng `type` + `link` thì cập nhật nội dung thay vì thêm dòng. Thông báo được ghi trong cùng transaction với thao tác gây ra nó (`includes/coach-db.php`).
 
 ## Tổng kết tuần bằng AI (`sql/weekly_summaries.sql`, đã gộp vào `schema.sql`, A-46)
 
@@ -445,6 +525,41 @@ Mỗi mẫu thuộc đúng 1 HLV (`coach_id`, xóa HLV thì xóa mẫu), lưu t�
 
 ### `coach_reviews`
 Mỗi quan hệ HLV - học viên tối đa 1 đánh giá (`UNIQUE coach_client_id`), lưu thêm `coach_id`, `client_id` để tổng hợp nhanh. `rating` 1-5, `comment` tối đa 500 ký tự. Điều kiện được viết (kiểm tra ở `includes/coach-reviews.php`): quan hệ đã được duyệt (ACTIVE hoặc ENDED), đủ 14 ngày từ lúc bắt đầu, có ít nhất 1 ngày tập ghi trong thời gian đó. Công khai chỉ hiện "Học viên" + tên, không hiện họ tên đầy đủ. ADMIN xóa được đánh giá vi phạm (ghi `admin_audit_log` mã `coach.review_delete`).
+
+## Giá tập với HLV, buổi thử, lịch hẹn và gói (`sql/coach_billing.sql`, đã gộp vào `schema.sql`, A-54)
+
+Code: quy tắc thuần ở `includes/coach-billing-rules.php`, truy vấn ở `includes/coach-billing.php`; test `test-coach-billing.php`. Không có cổng thanh toán: học viên trả tiền trực tiếp cho HLV, HLV xác nhận trên trang.
+
+| Thay đổi | Ý nghĩa |
+|---|---|
+| `coach_profiles.price_per_session`, `price_per_month` | Giá 1 buổi / 1 tháng (VNĐ, làm tròn nghìn). NULL = không bán kiểu đó; HLV phải bán ít nhất 1 kiểu khi lưu form giá |
+| `coach_profiles.trial_sessions` | Số buổi tập thử miễn phí 1-3 cho học viên mới |
+| `coach_profiles.payment_note` | Hướng dẫn thanh toán (số tài khoản...), chỉ học viên đang tập với HLV mới thấy |
+| `coach_clients.trial_sessions` | Số buổi thử chụp lại lúc học viên gửi yêu cầu; HLV đổi sau đó không ảnh hưởng. NULL = quan hệ có từ trước A-54, dùng số trong hồ sơ HLV |
+
+### `coach_sessions`
+Lịch hẹn từng buổi (60 phút). Học viên đặt (`REQUESTED`), HLV xác nhận (`CONFIRMED`) hoặc từ chối (`DECLINED`); sau giờ bắt đầu HLV đánh dấu `DONE` (đã tập) hoặc `NO_SHOW` (vắng, vẫn trừ buổi). Hủy trước giờ (`CANCELLED`) thì không trừ; buổi chờ quá giờ mà HLV chưa nhận tự thành `EXPIRED`. `billing` là nguồn của buổi, chọn lúc đặt theo thứ tự: gói tháng phủ ngày đó (`MONTH`) → buổi thử còn lại (`TRIAL`) → gói buổi đã trả (`PACK`). Buổi `TRIAL`/`PACK` giữ chỗ khi đang chờ/đã xác nhận và dùng hết khi `DONE`/`NO_SHOW`. `coach_id` lặp lại từ quan hệ để kiểm tra trùng giờ của HLV (hai buổi cách nhau dưới 60 phút là trùng; đặt buổi có khóa dòng hồ sơ HLV nên hai người đặt cùng lúc không trùng được). Quan hệ kết thúc thì buổi sắp tới chuyển `CANCELLED`.
+
+### `coach_orders`
+Đơn mua gói: `SESSIONS` (gói 1/4/8/12 buổi) hoặc `MONTH` (gói 1/3 tháng, mỗi tháng 30 ngày, đặt buổi không giới hạn). Giá chụp lại lúc tạo đơn. `PENDING` → `PAID` khi HLV bấm "Đã nhận tiền" (gói tháng được điền `starts_on`/`ends_on`, nối tiếp gói tháng trước nếu còn hạn), hoặc → `CANCELLED` (học viên tự hủy, HLV hủy kèm lý do, hoặc quan hệ kết thúc). `open_rel` + UNIQUE: mỗi quan hệ tối đa 1 đơn đang chờ.
+
+**Khóa khi hết buổi:** không có gói tháng còn hạn hôm nay, hết buổi thử, hết buổi trong gói và không còn buổi nào đang giữ chỗ → HLV tạm không giao lịch, đặt dinh dưỡng, nhận xét được (kiểm tra ở máy chủ: `coachBillingAssert()` / `coachBillingLocked()`); tin nhắn vẫn dùng được. Mua gói và HLV xác nhận tiền thì mở lại.
+
+## Tư vấn sức khỏe từ chuyên gia (`sql/health_experts.sql`, đã gộp vào `schema.sql`, A-55)
+
+Code: quy tắc thuần ở `includes/expert-rules.php`, truy vấn ở `includes/expert-db.php`, phân quyền ở `includes/expert.php`; test `test-expert.php`. Thêm vai trò `EXPERT` vào `users.role`.
+
+### `expert_applications`
+Đơn làm chuyên gia: ngành (`DOCTOR` / `NUTRITIONIST` / `PHYSIO`), chức danh, nơi công tác, **số chứng chỉ hành nghề** và **file chứng chỉ** (bắt buộc, lưu ở `storage/certificates/` ngoài `public/`, chỉ ADMIN mở qua `admin/expert-certificate.php`), chủ đề nhận tư vấn, giới thiệu. `open_user_id` + UNIQUE: mỗi người tối đa 1 đơn đang chờ. Duyệt (`expertApproveApplication`): 1 transaction đổi vai trò thành `EXPERT` và tạo hồ sơ. Hồ sơ mẫu do `tools/seed-experts.php` tạo có đơn `APPROVED` nhưng `certificate_file` NULL.
+
+### `expert_profiles`
+Hồ sơ công khai, 1-1 với `users`. Người dùng thấy ngành, chức danh, nơi công tác, chủ đề, giới thiệu; nhãn "đã kiểm tra chứng chỉ" chỉ hiện khi có đơn đã duyệt kèm file chứng chỉ. `license_no` không hiện công khai. Chuyên gia chỉ tự sửa `bio`, `topics`, `accepting`; các thông tin đã xác minh muốn đổi phải nộp đơn mới.
+
+### `health_questions`
+Câu hỏi riêng tư. `OPEN` (chờ nhận) → `CLAIMED` (một chuyên gia nhận, `expert_id`) → `CLOSED`; `OPEN` → `CANCELLED` (người hỏi hủy); `CLAIMED` → `OPEN` khi chuyên gia trả lại (chỉ khi chưa trả lời) hoặc bị thu hồi vai trò. Ai xem được: người hỏi; chuyên gia có chủ đề phù hợp khi câu còn `OPEN` (chủ đề `OTHER` mọi chuyên gia thấy); chuyên gia đã nhận. ADMIN không đọc. `profile_snapshot`: số liệu hồ sơ chụp lại lúc gửi, chỉ khi người hỏi tick chia sẻ (mặc định tắt). `red_flags`: dấu hiệu cấp cứu máy chủ nhận ra (đau ngực, khó thở...), người hỏi phải xác nhận không khẩn cấp mới gửi được. Mỗi người tối đa 3 câu chưa đóng, 5 câu mới mỗi 24 giờ; mỗi chuyên gia tối đa 15 câu đang trao đổi.
+
+### `health_messages`
+Tin trong một câu hỏi: người hỏi gửi khi `OPEN` (bổ sung) hoặc `CLAIMED`; chuyên gia chỉ gửi khi đã nhận và `CLAIMED`. Giới hạn 2 giây giữa 2 tin, 60 tin/giờ. `read_at` để đếm tin chưa đọc.
 
 ## Nhật ký ăn (`sql/meal_logs.sql`, đã gộp vào `schema.sql`, A-50)
 

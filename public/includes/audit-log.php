@@ -33,6 +33,14 @@ function auditActions(): array
         'coach.assign_plan'    => 'HLV giao lịch tập',
         'coach.set_macros'     => 'HLV đặt mục tiêu dinh dưỡng',
         'coach.change_request' => 'HLV trả lời yêu cầu sửa',
+        'coach.pricing'        => 'HLV đặt giá tập',
+        'coach.order_paid'     => 'HLV xác nhận đã nhận tiền',
+        'coach.order_cancel'   => 'HLV hủy đơn mua gói',
+        'coach.session_done'   => 'HLV xác nhận buổi đã tập',
+        'coach.session_absent' => 'HLV ghi học viên vắng buổi',
+        'expert.approve'       => 'Duyệt đơn chuyên gia sức khỏe',
+        'expert.reject'        => 'Từ chối đơn chuyên gia sức khỏe',
+        'expert.revoke'        => 'Thu hồi vai trò chuyên gia',
         'system.backup'        => 'Tải bản sao lưu database',
     ];
 }

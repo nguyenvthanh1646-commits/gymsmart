@@ -19,7 +19,7 @@ $selfId = (int)$_SESSION['user_id'];
 // Tìm kiếm, lọc vai trò và phân trang làm ở máy chủ (GET ?q=&role=&page=), để trang không phải tải toàn bộ tài khoản
 const USERS_PER_PAGE = 20;
 $q = mb_substr(trim((string)($_GET['q'] ?? '')), 0, 100);
-$roleFilter = in_array($_GET['role'] ?? '', ['USER', 'COACH', 'ADMIN'], true) ? $_GET['role'] : '';
+$roleFilter = in_array($_GET['role'] ?? '', ['USER', 'COACH', 'EXPERT', 'ADMIN'], true) ? $_GET['role'] : '';
 $page = max(1, (int)filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['default' => 1]]));
 
 $where = [];
@@ -90,7 +90,7 @@ include __DIR__ . '/../includes/admin-nav.php';
             <input class="adm-input" type="search" name="q" value="<?= htmlspecialchars($q) ?>" maxlength="100" placeholder="Tìm theo tên hoặc email..." aria-label="Tìm người dùng">
             <select class="adm-select" name="role" id="adm-role" aria-label="Lọc theo vai trò">
                 <option value="">Mọi vai trò</option>
-                <?php foreach (['USER' => 'USER', 'COACH' => 'COACH (HLV)', 'ADMIN' => 'ADMIN'] as $value => $label): ?>
+                <?php foreach (['USER' => 'USER', 'COACH' => 'COACH (HLV)', 'EXPERT' => 'EXPERT (chuyên gia)', 'ADMIN' => 'ADMIN'] as $value => $label): ?>
                     <option value="<?= $value ?>"<?= $roleFilter === $value ? ' selected' : '' ?>><?= $label ?></option>
                 <?php endforeach; ?>
             </select>

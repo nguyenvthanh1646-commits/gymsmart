@@ -319,6 +319,7 @@ function coachDraftEdit(PDO $pdo, int $coachId, int $clientId, string $action, a
 function coachPublishDraft(PDO $pdo, int $coachId, int $clientId): int
 {
     return coachTx($pdo, function () use ($pdo, $coachId, $clientId) {
+        coachBillingAssert($pdo, $coachId, $clientId);   // A-54: học viên hết buổi thì tạm không giao lịch được
         $draft = coachDraftPlan($pdo, $coachId, $clientId);
         if ($draft === null) {
             throw new CoachException('Chưa có bản nháp để giao.');

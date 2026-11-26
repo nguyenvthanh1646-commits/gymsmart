@@ -13,7 +13,8 @@
 SET NAMES utf8mb4;
 
 -- 1. Thêm vai trò COACH. MODIFY ghi lại toàn bộ danh sách nên chạy lại vẫn ra cùng kết quả.
-ALTER TABLE users MODIFY role ENUM('USER', 'ADMIN', 'COACH') NOT NULL DEFAULT 'USER';
+--    Có luôn 'EXPERT' (chuyên gia sức khỏe, sql/health_experts.sql) để chạy lại file này trên DB đã có chuyên gia không bị lỗi.
+ALTER TABLE users MODIFY role ENUM('USER', 'ADMIN', 'COACH', 'EXPERT') NOT NULL DEFAULT 'USER';
 
 -- 2. Đơn đăng ký làm HLV. Người dùng nộp, ADMIN duyệt (APPROVED → đổi vai trò thành COACH) hoặc từ chối.
 --    open_user_id: chỉ có giá trị khi đơn đang PENDING, có UNIQUE nên mỗi người chỉ có tối đa 1 đơn đang chờ

@@ -44,6 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $editParams = ['row_id' => postNum('row_id'), 'sets' => postNum('sets'), 'reps' => postNum('reps'),
                    'new_exercise_id' => postNum('new_exercise_id'), 'day_of_week' => postNum('day_of_week'), 'exercise_id' => postNum('exercise_id')];
     try {
+        // A-54: học viên hết buổi thì không đổi được lịch học viên đang thấy (bản nháp và lưu mẫu vẫn làm được)
+        if (in_array($action, ['adopt', 'update', 'replace', 'remove', 'add'], true) || ($action === 'generate' && !$drafts)) {
+            coachBillingAssert($pdo, $coachId, $clientId);
+        }
         switch ($action) {
             case 'generate':
                 $split = (string)($_POST['split_type'] ?? '');
@@ -156,6 +160,7 @@ include __DIR__ . '/../includes/coach-nav.php';
     <?php if ($flash): ?>
         <div class="adm-toast adm-toast-<?= $flash[0] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($flash[1]) ?></div>
     <?php endif; ?>
+    <?= coachBillingBanner($pdo, $relationId) ?>
 
     <?php if ($drafts): ?>
         <nav class="ch-tabs" aria-label="Chế độ">

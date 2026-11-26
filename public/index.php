@@ -29,6 +29,11 @@ if ($loggedIn && ($_SESSION['role'] ?? '') === 'COACH') {
     header('Location: /coach/dashboard.php');
     exit;
 }
+// Chuyên gia sức khỏe (A-55) có khu riêng /expert/
+if ($loggedIn && ($_SESSION['role'] ?? '') === 'EXPERT') {
+    header('Location: /expert/dashboard.php');
+    exit;
+}
 
 /** Vẽ biểu tượng nét (SVG nhúng thẳng), màu theo chữ xung quanh (currentColor). */
 function hmIcon(string $name, int $size = 24): string

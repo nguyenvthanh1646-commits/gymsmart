@@ -57,12 +57,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **Khóa tự sửa:** khi đang có HLV, học viên không tự sửa lịch tập/dinh dưỡng (`coachSelfEditState()`); muốn sửa phải gửi yêu cầu, HLV duyệt thì mở khóa 24 giờ.
   - Thao tác quan trọng của HLV ghi chung bảng `admin_audit_log` với mã `coach.*`.
   - **Đánh giá HLV (A-49):** `includes/coach-reviews.php` (quy tắc đủ điều kiện là hàm thuần, test ở `test-coach-reviews.php`), ô đánh giá `includes/coach-review-card.php` ở `my-coach.php`, điểm trung bình ở `coaches.php` và bảng điều khiển HLV, ADMIN xử lý vi phạm ở `admin/coach-reviews.php`.
+  - **Giá tập, buổi thử, lịch hẹn, gói (A-54):** `includes/coach-billing-rules.php` (thuần: kiểm tra giá, báo giá gói, khung giờ đặt, máy trạng thái buổi, `coachBillingSummary()` tính buổi thử / gói buổi / gói tháng và khóa) + `includes/coach-billing.php` (truy vấn). Trang `coach/sessions.php`, tab `my-coach.php?tab=sessions`, form giá ở `coach/profile.php`. Không có cổng thanh toán: HLV bấm "Đã nhận tiền". Hết buổi thì `coachBillingAssert()` / `coachBillingLocked()` chặn giao lịch, đặt dinh dưỡng, nhận xét (tin nhắn vẫn được). Test ở `test-coach-billing.php`.
   - **Mẫu lịch (A-48):** `includes/coach-templates.php` + trang `coach/templates.php`; lưu mẫu ở `coach/client-plan.php` ("Lưu làm mẫu"). Giao mẫu kiểm tra lại quan hệ ACTIVE cho TỪNG học viên được chọn. Test ở `test-coach-templates.php`.
+- **Tư vấn sức khỏe từ chuyên gia (vai trò `EXPERT`, A-55):** người dùng nộp đơn (`expert-apply.php`, bắt buộc số chứng chỉ hành nghề + file chứng chỉ), ADMIN duyệt / thu hồi (`admin/expert-applications.php`, `admin/experts.php`, file ở `admin/expert-certificate.php`). Người dùng hỏi riêng theo chủ đề (`consult.php`, `consult-ask.php`, `consult-question.php`); chuyên gia nhận và trả lời ở khu `/expert/` (`includes/expert-nav.php`). `includes/expert-rules.php` (thuần: kiểm tra đơn / câu hỏi, nhận dấu hiệu cấp cứu `healthRedFlags()`, máy trạng thái `healthNextStatus()`, số liệu chia sẻ), `includes/expert-db.php` (truy vấn), `includes/expert.php` (`requireExpert()`, khung nhắc gọi 115). Câu hỏi là dữ liệu riêng tư: chỉ người hỏi và chuyên gia đúng chủ đề / đã nhận xem được, ADMIN không đọc. Chuyên gia không chẩn đoán xác định, không kê đơn. Test ở `test-expert.php`; 3 chuyên gia mẫu bằng `tools/seed-experts.php`.
 - **Thông báo (chuông, A-44):** `includes/notifications.php` (`notify()`, đọc/đánh dấu đã đọc), gọi ngay trong các hàm của `coach-db.php` khi có sự kiện (nhận xét, tin nhắn, yêu cầu, duyệt đơn...). Chuông là `includes/notif-bell.php` (gắn ở `navbar.php`, `coach-nav.php`, `admin-nav.php`), JS `js/notifications.js`, API `api/notifications.php`, trang `notifications.php`. Thêm sự kiện mới thì gọi `notify()` trong cùng transaction với thao tác chính.
 
 ### Database và file SQL
 
-`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `article_reads.sql`, `body_metrics.sql`, `nutrition_preferences.sql`, `password_resets.sql`, `split_types.sql`, `users_avatar.sql`, `coach_features.sql`, `coach_extras.sql`, `body_metrics_fix.sql`, `notifications.sql`, `weekly_summaries.sql`, `exercise_equipment.sql`, `coach_templates.sql`, `coach_reviews.sql`, `meal_logs.sql`). `exercise_equipment.sql` vừa thêm cột vừa điền dụng cụ cho 40 bài, nên phải chạy lại SAU `seed_exercises_v2.sql` (install.php đã xếp đúng). Mọi file bổ sung đều **chạy lại nhiều lần vẫn an toàn** (dùng cú pháp `IF NOT EXISTS` của MariaDB/XAMPP), nên database cũ chỉ cần `php tools/install.php --upgrade`. Thêm file bổ sung mới thì nhớ thêm tên vào hằng `MIGRATIONS` trong `tools/install.php`. Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
+`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `article_reads.sql`, `body_metrics.sql`, `nutrition_preferences.sql`, `password_resets.sql`, `split_types.sql`, `users_avatar.sql`, `coach_features.sql`, `coach_extras.sql`, `body_metrics_fix.sql`, `notifications.sql`, `weekly_summaries.sql`, `exercise_equipment.sql`, `coach_templates.sql`, `coach_reviews.sql`, `meal_logs.sql`, `coach_billing.sql`, `health_experts.sql`). `exercise_equipment.sql` vừa thêm cột vừa điền dụng cụ cho 40 bài, nên phải chạy lại SAU `seed_exercises_v2.sql` (install.php đã xếp đúng). Mọi file bổ sung đều **chạy lại nhiều lần vẫn an toàn** (dùng cú pháp `IF NOT EXISTS` của MariaDB/XAMPP), nên database cũ chỉ cần `php tools/install.php --upgrade`. Thêm file bổ sung mới thì nhớ thêm tên vào hằng `MIGRATIONS` trong `tools/install.php`. Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
 
 ## Phạm vi tính năng
 
@@ -81,7 +83,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Đã loại bỏ:** chat tự do user-user, community/forum.
 
-**Đã làm thêm ngoài kế hoạch ban đầu:** bài viết kiến thức có trích nghiên cứu, khu admin (người dùng, bài tập, bài viết, nhật ký hoạt động, thống kê, xuất CSV), quên/đặt lại mật khẩu, ảnh đại diện, **phân hệ Huấn luyện viên**. Trạng thái từng việc xem `TASKS.md`.
+**Đã làm thêm ngoài kế hoạch ban đầu:** bài viết kiến thức có trích nghiên cứu, khu admin (người dùng, bài tập, bài viết, nhật ký hoạt động, thống kê, xuất CSV), quên/đặt lại mật khẩu, ảnh đại diện, **phân hệ Huấn luyện viên**, **tư vấn sức khỏe từ chuyên gia** (hỏi đáp riêng, không phải diễn đàn). Trạng thái từng việc xem `TASKS.md`.
 
 ## Quy ước code (PHP/JS thuần)
 
@@ -142,8 +144,10 @@ php -S localhost:8000 -t public
 php test-workout-plan.php       # thuật toán lịch tập, dữ liệu từ test-exercises-fixture.php (không cần DB)
 php test-workout-plan-db.php    # lớp workout-plan-db.php trên SQLite in-memory (cần pdo_sqlite)
 php test-dashboard.php          # hàm thuần và lớp đọc DB của bảng điều khiển (phần DB cần pdo_sqlite)
-php tools/test-coach-http.php   # kịch bản HLV qua HTTP (118 bước): tự tạo DB gymsmart_test_hlv + máy chủ :8099 rồi xóa; cần MySQL đang chạy, không đụng DB thật
+php tools/test-coach-http.php   # kịch bản HLV + giá tập + tư vấn sức khỏe qua HTTP (185 bước): tự tạo DB gymsmart_test_hlv + máy chủ :8099 rồi xóa; cần MySQL đang chạy, không đụng DB thật
 php test-coach.php              # phân hệ HLV: đơn đăng ký, quan hệ, quyền xem, khóa tự sửa, macro, tin nhắn (phần DB cần pdo_sqlite)
+php test-coach-billing.php      # giá tập, buổi thử, lịch hẹn, gói, khóa khi hết buổi (phần DB cần pdo_sqlite)
+php test-expert.php             # tư vấn sức khỏe: đơn chuyên gia, câu hỏi, dấu hiệu cấp cứu, quyền xem, nhận / trả lại / đóng (phần DB cần pdo_sqlite)
 php test-health.php             # trang Sức khỏe hệ thống: đọc bảng từ schema.sql, trạng thái chung, câu INSERT sao lưu (không cần DB)
 php test-nutrition.php          # nhịp mục tiêu, ngày tập/nghỉ, tiến độ cân nặng, loại trừ thực phẩm, lịch 7 ngày (phần lưu lựa chọn cần pdo_sqlite)
 
@@ -160,6 +164,8 @@ php tools/chatbot-check.php
 php tools/install.php                 # tạo DB_NAME: schema.sql + 40 bài tập + ảnh/video
 php tools/install.php --upgrade       # DB cũ: chạy lại mọi file bổ sung trong sql/ (không mất dữ liệu)
 php tools/install.php --db=gymsmart_demo --fresh --demo   # DB thử riêng kèm tài khoản thử @gymsmart.test
+php tools/seed-coaches.php            # 5 HLV mẫu (3 nam, 2 nữ) kèm giá, mật khẩu Coach@12345; chạy lại chỉ cập nhật, không tạo trùng
+php tools/seed-experts.php            # 3 chuyên gia sức khỏe MẪU (không có chứng chỉ, hiện nhãn "hồ sơ mẫu"), mật khẩu Expert@12345
 
 # Chạy mọi test một lệnh, in bảng tổng kết (--http thêm kịch bản HLV qua HTTP, cần MySQL)
 php tools/run-tests.php
