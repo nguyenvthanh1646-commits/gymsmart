@@ -125,8 +125,22 @@ body{overflow-x:hidden}
 .adm-nav .adm-nav-site:hover{border-color:var(--accent-2);color:#fff}
 .adm-nav-av{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-2),var(--accent));color:#fff;font-weight:700;font-size:.92rem}
 .adm-nav .adm-nav-out{height:auto;padding:8px 4px;font-size:.88rem;color:#aab4cf}
-@media (max-width:1480px){.adm-nav:not(.ch-nav) .adm-nav-site{display:none}}   /* menu có 7 mục: ẩn nút "Xem trang người dùng" trên màn hình hẹp để không bị cắt mất chữ Đăng xuất */
 .adm-nav-links{display:flex;align-items:center;gap:6px}
+/* Khu quản trị có 9 mục (thêm "Chuyên gia", A-55): logo + 9 mục + chuông + Đăng xuất cần khoảng 1210px, vượt khung 1180px.
+   Khung cuộn ngang ẩn thanh cuộn nên phần thừa (gồm Đăng xuất) bị cắt mà không ai thấy. Cách sửa:
+   - thanh admin rộng tới 1440px; nút "Xem trang người dùng" chỉ hiện khi màn hình rất rộng (≥ 1800px)
+   - dưới 1320px chuyển sang 2 hàng: hàng 1 logo + Đăng xuất, hàng 2 là lưới 9 mục (giống cách làm ở màn hình điện thoại) */
+.adm-nav:not(.ch-nav) .adm-nav-in{max-width:1440px}
+@media (max-width:1799px){.adm-nav:not(.ch-nav) .adm-nav-site{display:none}}
+@media (max-width:1320px){
+  .adm-nav:not(.ch-nav){position:static}
+  .adm-nav:not(.ch-nav) .adm-nav-in{flex-wrap:wrap;height:auto;overflow:visible;white-space:normal;padding:0 16px;gap:0}
+  .adm-nav:not(.ch-nav) a.adm-nav-brand{height:56px}
+  .adm-nav:not(.ch-nav) .adm-nav-links{order:3;width:100%;display:grid;grid-template-columns:repeat(9,1fr);gap:0;border-top:1px solid rgba(255,255,255,.08)}
+  .adm-nav:not(.ch-nav) .adm-nav-links a{height:48px;justify-content:center;padding:0 4px;font-size:.88rem;text-align:center}
+  .adm-nav:not(.ch-nav) .adm-nav-links a.is-active::after{left:18%;right:18%}
+  .adm-nav:not(.ch-nav) .adm-nav-out{padding:12px 4px}
+}
 /* Màn hình hẹp: hàng 1 = logo + Đăng xuất, hàng 2 = 7 mục dạng lưới, thấy hết không cần cuộn */
 @media (max-width:900px){
   .adm-nav{position:static}   /* menu 2 hàng cao hơn: không dính đầu trang để khỏi che nội dung */
@@ -136,9 +150,11 @@ body{overflow-x:hidden}
   .adm-nav-links a{height:48px;justify-content:center;padding:0 4px;font-size:.88rem;text-align:center}
   .adm-nav-links a.is-active::after{left:18%;right:18%}
   .adm-nav .adm-nav-out{padding:12px 4px}
+  .adm-nav:not(.ch-nav) .adm-nav-links{grid-template-columns:repeat(5,1fr)}   /* 9 mục: 2 hàng 5 + 4 */
 }
 @media (max-width:520px){
   .adm-nav-links{grid-template-columns:repeat(4,1fr)}
+  .adm-nav:not(.ch-nav) .adm-nav-links{grid-template-columns:repeat(3,1fr)}   /* 9 mục: 3 hàng x 3 */
   .adm-nav-links a{height:44px}
   .adm-nav-av{display:none}
 }

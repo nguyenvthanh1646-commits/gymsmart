@@ -41,3 +41,6 @@
 @media (max-width: 480px) {
     .hq-msg.is-me { margin-left: 0; }
 }
+
+/* Thanh khu chuyên gia chỉ có 2 mục: trên màn hình hẹp chia 2 cột (thay vì 4 cột của khu HLV) để chữ không xuống dòng */
+@media (max-width: 900px) { .ex-nav .adm-nav-links { grid-template-columns: repeat(2, 1fr); } }

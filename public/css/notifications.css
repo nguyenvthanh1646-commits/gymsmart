@@ -76,6 +76,8 @@
 .adm-nav .ntf a.ntf__item { height: auto; display: grid; padding: 12px 16px 12px 28px; color: var(--text); font-size: inherit; font-weight: inherit; }
 .adm-nav .ntf a.ntf__item:hover { color: var(--text); }
 .adm-nav .ntf a.ntf__more { height: auto; display: block; padding: 12px 16px; color: var(--accent-dark); font-size: 14px; font-weight: 700; }
+/* Thanh khu quản trị rộng tới 1440px (admin-style.php) nên khung bám theo mép phải của khung 1440px */
+.adm-nav:not(.ch-nav) .ntf__panel { right: max(12px, calc((100vw - 1440px) / 2 + 20px)); }
 @media (max-width: 600px) {
-    .adm-nav .ntf__panel { left: 12px; right: 12px; }
+    .adm-nav .ntf__panel, .adm-nav:not(.ch-nav) .ntf__panel { left: 12px; right: 12px; }
 }

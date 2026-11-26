@@ -144,6 +144,7 @@ $pageTitle = 'Giao lịch tập';
 $pageCss = ['/css/coach.css'];
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/admin-style.php';
+include __DIR__ . '/../includes/admin-style-extra.php';   // .adm-hint-box và các khung nhắc
 $coachNavActive = 'clients';
 include __DIR__ . '/../includes/coach-nav.php';
 ?>
