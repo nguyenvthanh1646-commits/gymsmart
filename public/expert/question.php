@@ -57,6 +57,7 @@ $pageTitle = 'Câu hỏi tư vấn';
 $pageCss = ['/css/coach.css', '/css/consult.css'];
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/admin-style.php';
+include __DIR__ . '/../includes/admin-style-extra.php';   // .adm-hint-box và các khung nhắc
 $expertNavActive = 'dashboard';
 include __DIR__ . '/../includes/expert-nav.php';
 ?>

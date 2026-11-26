@@ -35,6 +35,7 @@ $pageTitle = 'Khu huấn luyện viên';
 $pageCss = ['/css/coach.css'];
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/admin-style.php';
+include __DIR__ . '/../includes/admin-style-extra.php';   // .adm-hint-box và các khung nhắc
 $coachNavActive = 'dashboard';
 include __DIR__ . '/../includes/coach-nav.php';
 

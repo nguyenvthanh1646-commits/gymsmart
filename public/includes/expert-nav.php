@@ -14,7 +14,7 @@ $expertNavItems = [
 $expertNavParts = preg_split('/\s+/u', trim((string)($_SESSION['full_name'] ?? '')), -1, PREG_SPLIT_NO_EMPTY);
 $expertNavInitial = $expertNavParts ? mb_strtoupper(mb_substr(end($expertNavParts), 0, 1)) : '?';
 ?>
-<nav class="adm-nav ch-nav" aria-label="Khu chuyên gia">
+<nav class="adm-nav ch-nav ex-nav" aria-label="Khu chuyên gia">
     <div class="adm-nav-in">
         <a class="adm-nav-brand" href="/expert/dashboard.php" aria-label="GymSmart Chuyên gia — Câu hỏi"><?= gsLogoMark(32) ?><span>Gym<b>Smart</b></span><span class="adm-nav-tag">Chuyên gia</span></a>
         <div class="adm-nav-links">
