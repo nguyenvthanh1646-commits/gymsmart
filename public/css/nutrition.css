@@ -49,11 +49,11 @@
     display: flex; flex-direction: column; gap: 4px; padding: 20px 22px; border-radius: 18px;
     background: #fff; border: 1px solid var(--ui-line); box-shadow: var(--ui-shadow-sm);
 }
-.nt-kpi__tag { align-self: flex-start; padding: 3px 11px; border-radius: 999px; background: #eef1f7; color: #344054; font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.nt-kpi__tag { align-self: flex-start; padding: 3px 11px; border-radius: 999px; background: #eef1f7; color: var(--text-2); font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .nt-kpi__label { margin: 8px 0 0; font-size: .92rem; font-weight: 600; color: var(--color-text-muted); }
 .nt-kpi__num { margin: 0; font-size: clamp(2.1rem, 3.6vw, 2.8rem); font-weight: 800; letter-spacing: -.03em; line-height: 1.15; color: var(--gs-ink); font-variant-numeric: tabular-nums; }
 .nt-kpi__num small { font-size: .88rem; font-weight: 600; letter-spacing: 0; color: var(--color-text-muted); }
-.nt-kpi__sub { margin: 6px 0 0; font-size: .86rem; line-height: 1.55; color: #475467; }
+.nt-kpi__sub { margin: 6px 0 0; font-size: .86rem; line-height: 1.55; color: var(--text-3); }
 .nt-kpi__sub b { color: var(--gs-ink); }
 .nt-kpi--main { background: linear-gradient(135deg, var(--gs-ink), var(--gs-ink-2)); border-color: transparent; box-shadow: 0 14px 30px rgba(11, 16, 32, .22); }
 .nt-kpi--main .nt-kpi__tag { background: var(--gs-accent); color: #fff; }
@@ -82,12 +82,12 @@
 .nt-mstat.nt-p { --nt-x: var(--nt-p); }
 .nt-mstat.nt-c { --nt-x: var(--nt-c); }
 .nt-mstat.nt-f { --nt-x: var(--nt-f); }
-.nt-mstat__name { display: flex; align-items: center; gap: 6px; font-size: .84rem; font-weight: 700; color: #344054; }
+.nt-mstat__name { display: flex; align-items: center; gap: 6px; font-size: .84rem; font-weight: 700; color: var(--text-2); }
 .nt-mstat__num { margin: 4px 0 0; font-size: 1.85rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; color: var(--gs-ink); font-variant-numeric: tabular-nums; }
 .nt-mstat__num small { font-size: .9rem; font-weight: 600; color: var(--color-text-muted); }
 .nt-mstat__meta { margin: 0; font-size: .8rem; color: var(--color-text-muted); }
 .nt-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; background: var(--nt-x); }
-.nt-bar { display: block; height: 6px; margin-top: 8px; border-radius: 999px; background: #e4e8f1; overflow: hidden; }
+.nt-bar { display: block; height: 6px; margin-top: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
 .nt-bar span { display: block; height: 100%; border-radius: inherit; background: var(--nt-x); }
 .nt-hint { margin: 16px 0 0; font-size: .85rem; line-height: 1.55; color: var(--color-text-muted); }
 
@@ -111,8 +111,8 @@
 .nt-custom .field { margin: 0; }
 .nt-custom .field input { text-align: center; }
 .nt-g { display: block; margin-top: 4px; text-align: center; font-size: .82rem; color: var(--color-text-muted); }
-.nt-total { margin: 10px 0 0; text-align: center; font-size: .92rem; color: #067647; }
-.nt-total.is-bad { color: #b42318; }
+.nt-total { margin: 10px 0 0; text-align: center; font-size: .92rem; color: var(--ok-text); }
+.nt-total.is-bad { color: var(--danger-text); }
 
 /* ===== Lịch ăn ===== */
 .nt-meals { margin-bottom: 36px; scroll-margin-top: 90px; }
@@ -127,7 +127,7 @@
 .nt-meal { display: flex; flex-direction: column; gap: 14px; padding: 18px; }
 .nt-meal header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .nt-meal h3 { margin: 0; font-size: 1.05rem; flex: 1 1 auto; }
-.nt-meal__time { padding: 3px 10px; border-radius: 999px; background: #eef1f7; color: #475467; font-size: .8rem; font-weight: 700; }
+.nt-meal__time { padding: 3px 10px; border-radius: 999px; background: #eef1f7; color: var(--text-3); font-size: .8rem; font-weight: 700; }
 .nt-meal__dish { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid #f0f2f7; }
 .nt-meal__name { margin: 0; font-size: 1rem; font-weight: 700; line-height: 1.4; color: var(--gs-ink); }
 .nt-meal__kcal { margin: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; color: var(--ui-accent-dark); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -147,8 +147,8 @@
 
 /* Tổng cả ngày so với mục tiêu */
 .nt-day { margin-top: 16px; }
-.nt-day__status { padding: 4px 12px; border-radius: 999px; background: #fef3f2; color: #b42318; font-size: .82rem; font-weight: 700; }
-.nt-day__status.is-ok { background: #ecfdf3; color: #067647; }
+.nt-day__status { padding: 4px 12px; border-radius: 999px; background: var(--danger-soft); color: var(--danger-text); font-size: .82rem; font-weight: 700; }
+.nt-day__status.is-ok { background: var(--ok-soft); color: var(--ok-text); }
 .nt-day__status.is-ok::before { content: "✓ "; }
 .nt-day__table td:first-child { color: var(--color-text-muted); font-weight: 600; }
 .nt-day__table b { color: var(--gs-ink); font-size: 1.05rem; }
@@ -179,7 +179,7 @@
 .nt-track { margin-bottom: 36px; }
 .nt-track__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
 .nt-track__grid div { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 14px; border-radius: 14px; background: #f6f8fc; }
-.nt-track__grid span { font-size: .8rem; font-weight: 700; color: #344054; }
+.nt-track__grid span { font-size: .8rem; font-weight: 700; color: var(--text-2); }
 .nt-track__grid b { font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; color: var(--gs-ink); font-variant-numeric: tabular-nums; }
 .nt-track__grid small { font-size: .8rem; color: var(--color-text-muted); }
 .nt-track__grid .is-action { background: var(--ui-accent-soft); }
@@ -189,7 +189,7 @@
 /* ===== Loại trừ thực phẩm ===== */
 .nt-excl { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; justify-content: space-between; margin-bottom: 16px; padding: 14px 18px; border: 1px solid var(--ui-line); border-radius: 14px; background: #fff; }
 .nt-excl fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
-.nt-excl legend { padding: 0; margin-bottom: 8px; font-size: .88rem; font-weight: 700; color: #344054; }
+.nt-excl legend { padding: 0; margin-bottom: 8px; font-size: .88rem; font-weight: 700; color: var(--text-2); }
 .nt-excl__list { display: flex; flex-wrap: wrap; gap: 8px; }
 .nt-excl__item { position: relative; cursor: pointer; }
 .nt-excl__item input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
@@ -219,8 +219,8 @@
 .nt-wmeal p { margin: 0; }
 .nt-wmeal__slot { font-size: .78rem; font-weight: 700; color: var(--color-text-muted); }
 .nt-wmeal__dish { font-weight: 700; line-height: 1.35; color: var(--gs-ink); }
-.nt-wmeal__foods { font-size: .84rem; line-height: 1.45; color: #475467; }
-.nt-wday__macro { margin: auto 0 0; padding-top: 10px; border-top: 1px solid #f0f2f7; font-size: .84rem; font-weight: 600; color: #475467; }
+.nt-wmeal__foods { font-size: .84rem; line-height: 1.45; color: var(--text-3); }
+.nt-wday__macro { margin: auto 0 0; padding-top: 10px; border-top: 1px solid #f0f2f7; font-size: .84rem; font-weight: 600; color: var(--text-3); }
 
 /* ===== Danh sách đi chợ ===== */
 .nt-shop { margin-top: 16px; }

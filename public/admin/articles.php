@@ -62,7 +62,7 @@ try {
 
 $views = [];
 try {
-    foreach ($pdo->query('SELECT slug, SUM(views) AS n FROM article_views GROUP BY slug')->fetchAll() as $r) {
+    foreach ($pdo->query('SELECT slug, SUM(views) AS n FROM article_views GROUP BY slug')->fetchAll() as $r) {  // audit:ok (câu SQL cố định, không có dữ liệu người dùng)
         $views[$r['slug']] = (int)$r['n'];
     }
 } catch (PDOException $e) {

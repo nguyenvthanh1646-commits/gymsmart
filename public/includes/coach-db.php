@@ -12,6 +12,7 @@
  */
 
 require_once __DIR__ . '/coach-rules.php';
+require_once __DIR__ . '/notifications.php';   // chuông thông báo (A-44): notify() gọi ngay trong transaction của từng thao tác
 
 /** Lỗi nghiệp vụ, câu báo lỗi hiện thẳng cho người dùng. */
 class CoachException extends RuntimeException
@@ -124,9 +125,7 @@ function canCoachAccessClient(PDO $pdo, int $coachId, int $clientId): bool
 function coachLatestApplication(PDO $pdo, int $userId): ?array
 {
     $stmt = $pdo->prepare(
-        'SELECT id, headline, specialties, experience_years, certifications, bio, approach, max_clients, availability,
-                status, admin_note, reviewed_at, created_at
-         FROM coach_applications WHERE user_id = ? ORDER BY id DESC LIMIT 1'
+        'SELECT * FROM coach_applications WHERE user_id = ? ORDER BY id DESC LIMIT 1'
     );
     $stmt->execute([$userId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -170,13 +169,23 @@ function coachSubmitApplication(PDO $pdo, int $userId, array $data): int
             $userId, $data['headline'], $data['specialties'], $data['experience_years'], $data['certifications'],
             $data['bio'], $data['approach'], $data['max_clients'], $data['availability'], coachNow(),
         ]);
+        $newId = (int)$pdo->lastInsertId();
+        // File chứng chỉ (nếu có) ghi sau, vào cột thêm bởi sql/coach_extras.sql
+        if (!empty($data['certificate_file'])) {
+            $pdo->prepare('UPDATE coach_applications SET certificate_file = ? WHERE id = ?')->execute([$data['certificate_file'], $newId]);
+        }
     } catch (PDOException $e) {
         if (coachIsDuplicate($e)) {
             throw new CoachException('Bạn đã có một đơn đang chờ duyệt.');
         }
         throw $e;
     }
-    return (int)$pdo->lastInsertId();
+    $admins = $pdo->query("SELECT id FROM users WHERE role = 'ADMIN'")->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($admins as $adminId) {
+        notify($pdo, (int)$adminId, 'admin.coach_application', 'Đơn đăng ký HLV mới',
+            notifName($pdo, $userId) . ': ' . notifExcerpt((string)$data['headline']), '/admin/coach-applications.php');   // mỗi đơn một thông báo
+    }
+    return $newId;
 }
 
 /** Người nộp tự rút đơn đang chờ (chuyển thành REJECTED kèm ghi chú). */
@@ -267,6 +276,8 @@ function coachApproveApplication(PDO $pdo, int $appId, int $adminId, string $not
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)'
             )->execute(array_merge([$userId], $fields, [$now, $now]));
         }
+        notify($pdo, $userId, 'coach.application_approved', 'Đơn đăng ký HLV đã được duyệt',
+            'Bạn đã là huấn luyện viên. Vào khu HLV để kiểm tra hồ sơ và bắt đầu nhận học viên.', '/coach/dashboard.php');
         return (string)$app['full_name'];
     });
 }
@@ -288,6 +299,8 @@ function coachRejectApplication(PDO $pdo, int $appId, int $adminId, string $note
     if ($stmt->rowCount() === 0) {
         throw new CoachException('Đơn đã được xử lý ở nơi khác.');
     }
+    notify($pdo, (int)$app['user_id'], 'coach.application_rejected', 'Đơn đăng ký HLV chưa được duyệt',
+        'Lý do: ' . notifExcerpt($note, 200) . ' Bạn có thể sửa và nộp lại.', '/coach-apply.php');
     return (string)$app['full_name'];
 }
 
@@ -306,6 +319,15 @@ function coachRevoke(PDO $pdo, int $coachId, int $adminId): array
             throw new CoachException('Tài khoản này không phải huấn luyện viên.');
         }
         $now = coachNow();
+        $affected = $pdo->prepare("SELECT id, client_id, status FROM coach_clients WHERE coach_id = ? AND status IN ('ACTIVE', 'PENDING')");
+        $affected->execute([$coachId]);
+        foreach ($affected->fetchAll(PDO::FETCH_ASSOC) as $a) {
+            coachBillingCloseRelation($pdo, (int)$a['id'], $adminId);   // A-54: hủy buổi hẹn sắp tới và đơn chờ thanh toán
+            notify($pdo, (int)$a['client_id'], 'coach.relation', $a['status'] === 'ACTIVE' ? 'Quan hệ huấn luyện đã kết thúc' : 'Yêu cầu tới HLV không còn hiệu lực',
+                'HLV ' . $user['full_name'] . ' không còn là huấn luyện viên trên GymSmart. Lịch và mục tiêu đã giao vẫn được giữ, bạn có thể chọn HLV khác.', '/coaches.php');
+        }
+        notify($pdo, $coachId, 'coach.revoked', 'Vai trò huấn luyện viên đã bị thu hồi',
+            'Quản trị viên đã thu hồi vai trò HLV của bạn. Liên hệ quản trị viên nếu cần biết thêm.', '/index.php');
         $pdo->prepare(
             "UPDATE coach_change_requests SET status = 'CANCELLED', resolved_at = ?
              WHERE status = 'PENDING' AND coach_client_id IN (SELECT id FROM coach_clients WHERE coach_id = ? AND status = 'ACTIVE')"
@@ -369,15 +391,30 @@ function coachProfile(PDO $pdo, int $coachId): ?array
 }
 
 /** HLV tự sửa hồ sơ ($data đã qua validateCoachApplication($in, false)). */
-function coachSaveProfile(PDO $pdo, int $coachId, array $data, bool $accepting): void
+/**
+ * Lưu hồ sơ HLV. $fullName (đã chuẩn hóa và kiểm tra bằng coachNormalizeName/coachNameError) khác null thì đổi luôn
+ * tên hiển thị trong bảng users, cùng một transaction: hoặc lưu cả hai, hoặc không lưu gì.
+ * Chỉ đổi tên khi tài khoản vẫn là COACH (đề phòng vừa bị thu hồi vai trò).
+ */
+function coachSaveProfile(PDO $pdo, int $coachId, array $data, bool $accepting, ?string $fullName = null): void
 {
-    $stmt = $pdo->prepare(
-        'UPDATE coach_profiles SET headline = ?, specialties = ?, experience_years = ?, certifications = ?, bio = ?,
-                approach = ?, max_clients = ?, availability = ?, accepting = ?, updated_at = ?
-         WHERE user_id = ?'
-    );
-    $stmt->execute([$data['headline'], $data['specialties'], $data['experience_years'], $data['certifications'], $data['bio'],
-                    $data['approach'], $data['max_clients'], $data['availability'], $accepting ? 1 : 0, coachNow(), $coachId]);
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare(
+            'UPDATE coach_profiles SET headline = ?, specialties = ?, experience_years = ?, certifications = ?, bio = ?,
+                    approach = ?, max_clients = ?, availability = ?, accepting = ?, updated_at = ?
+             WHERE user_id = ?'
+        );
+        $stmt->execute([$data['headline'], $data['specialties'], $data['experience_years'], $data['certifications'], $data['bio'],
+                        $data['approach'], $data['max_clients'], $data['availability'], $accepting ? 1 : 0, coachNow(), $coachId]);
+        if ($fullName !== null) {
+            $pdo->prepare('UPDATE users SET full_name = ? WHERE id = ? AND role = ?')->execute([$fullName, $coachId, 'COACH']);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
 }
 
 /** HLV cho học viên chọn: mọi tài khoản COACH có hồ sơ, kèm số chỗ còn. HLV không nhận học viên vẫn hiện (nút bị khóa). */
@@ -430,15 +467,24 @@ function coachRequest(PDO $pdo, int $clientId, int $coachId, string $note): int
         throw new CoachException('Bạn đã có HLV hoặc đang chờ một HLV duyệt. Mỗi học viên chỉ đăng ký 1 HLV.');
     }
     try {
-        $stmt = $pdo->prepare("INSERT INTO coach_clients (coach_id, client_id, status, request_note, created_at) VALUES (?, ?, 'PENDING', ?, ?)");
-        $stmt->execute([$coachId, $clientId, $note, coachNow()]);
+        if (coachBillingReady($pdo)) {
+            // A-54: chụp lại số buổi tập thử học viên đang thấy, HLV đổi sau đó không ảnh hưởng yêu cầu này
+            $stmt = $pdo->prepare("INSERT INTO coach_clients (coach_id, client_id, status, request_note, trial_sessions, created_at) VALUES (?, ?, 'PENDING', ?, ?, ?)");
+            $stmt->execute([$coachId, $clientId, $note, (int)($coach['trial_sessions'] ?? COACH_TRIAL_MIN), coachNow()]);
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO coach_clients (coach_id, client_id, status, request_note, created_at) VALUES (?, ?, 'PENDING', ?, ?)");
+            $stmt->execute([$coachId, $clientId, $note, coachNow()]);
+        }
     } catch (PDOException $e) {
         if (coachIsDuplicate($e)) {   // 2 lần bấm gần như cùng lúc: UNIQUE(open_client_id) trong DB chặn lần thứ hai
             throw new CoachException('Bạn đã có HLV hoặc đang chờ một HLV duyệt. Mỗi học viên chỉ đăng ký 1 HLV.');
         }
         throw $e;
     }
-    return (int)$pdo->lastInsertId();
+    $newId = (int)$pdo->lastInsertId();
+    notify($pdo, $coachId, 'coach.request', 'Yêu cầu học viên mới',
+        notifName($pdo, $clientId) . ' muốn tập với bạn' . ($note !== '' ? ': ' . notifExcerpt($note) : '.'), '/coach/dashboard.php');
+    return $newId;
 }
 
 /**
@@ -483,8 +529,24 @@ function coachChangeRelation(PDO $pdo, string $actor, int $actorId, int $relatio
             // Kết thúc quan hệ thì các yêu cầu xin sửa còn chờ cũng không còn ý nghĩa
             $pdo->prepare("UPDATE coach_change_requests SET status = 'CANCELLED', resolved_at = ? WHERE coach_client_id = ? AND status = 'PENDING'")
                 ->execute([$now, $relationId]);
+            coachBillingCloseRelation($pdo, $relationId, $actorId);   // A-54: buổi hẹn sắp tới và đơn chờ thanh toán cũng hủy
         }
         $rel['status'] = $next;
+        // Báo cho bên còn lại: HLV thao tác thì báo học viên, học viên thao tác thì báo HLV
+        if ($actor === 'coach') {
+            $coachName = notifName($pdo, (int)$rel['coach_id']);
+            $texts = ['ACTIVE' => ['HLV đã nhận bạn làm học viên', "HLV $coachName đã duyệt yêu cầu. Từ giờ HLV sẽ giao lịch tập và mục tiêu dinh dưỡng cho bạn."],
+                      'REJECTED' => ['Yêu cầu tới HLV chưa được nhận', "HLV $coachName chưa nhận thêm học viên lúc này. Bạn có thể chọn HLV khác."],
+                      'ENDED' => ['Quan hệ huấn luyện đã kết thúc', "HLV $coachName đã kết thúc quan hệ huấn luyện. Lịch và mục tiêu đã giao vẫn được giữ."]];
+            if (isset($texts[$next])) {
+                notify($pdo, (int)$rel['client_id'], 'coach.relation', $texts[$next][0], $texts[$next][1], '/my-coach.php');
+            }
+        } else {
+            $verb = ['ENDED' => 'đã kết thúc tập với bạn.', 'CANCELLED' => 'đã hủy yêu cầu tập với bạn.', 'REJECTED' => 'đã hủy yêu cầu tập với bạn.'];
+            if (isset($verb[$next])) {
+                notify($pdo, (int)$rel['coach_id'], 'coach.relation', 'Học viên thay đổi', $rel['client_name'] . ' ' . $verb[$next], '/coach/clients.php');
+            }
+        }
         return $rel;
     });
 }
@@ -594,6 +656,9 @@ function coachMarkPlanAssigned(PDO $pdo, int $coachId, int $clientId): int
 {
     $stmt = $pdo->prepare("UPDATE workout_plans SET assigned_by = ? WHERE user_id = ? AND status = 'ACTIVE'");
     $stmt->execute([$coachId, $clientId]);
+    if ($stmt->rowCount() > 0) {
+        notify($pdo, $clientId, 'coach.plan', 'HLV đã giao lịch tập mới', 'HLV ' . notifName($pdo, $coachId) . ' vừa giao lịch tập cho bạn.', '/workout-plan.php', true);
+    }
     return $stmt->rowCount();
 }
 
@@ -630,6 +695,7 @@ function coachPlanLockError(PDO $pdo, int $userId): ?string
  */
 function coachSaveNutrition(PDO $pdo, int $coachId, int $clientId, float $tdee, int $kcal, int $protein, int $carbs, int $fat, string $today): int
 {
+    coachBillingAssert($pdo, $coachId, $clientId);   // A-54: học viên hết buổi thì tạm không đặt dinh dưỡng được
     // Nếu hôm nay HLV đã đặt rồi thì cập nhật dòng đó (giống trang Dinh dưỡng: mỗi ngày 1 dòng mỗi nguồn)
     $find = $pdo->prepare('SELECT id FROM nutrition_targets WHERE user_id = ? AND calculated_date = ? AND assigned_by IS NOT NULL');
     $find->execute([$clientId, $today]);
@@ -637,13 +703,18 @@ function coachSaveNutrition(PDO $pdo, int $coachId, int $clientId, float $tdee, 
     if ($id !== false) {
         $pdo->prepare('UPDATE nutrition_targets SET tdee_kcal = ?, target_kcal = ?, protein_g = ?, carbs_g = ?, fat_g = ?, assigned_by = ? WHERE id = ?')
             ->execute([$tdee, $kcal, $protein, $carbs, $fat, $coachId, $id]);
+        notify($pdo, $clientId, 'coach.nutrition', 'HLV đã đặt mục tiêu dinh dưỡng',
+            "Mục tiêu mới: $kcal kcal, đạm $protein g, tinh bột $carbs g, béo $fat g mỗi ngày.", '/nutrition.php', true);
         return (int)$id;
     }
     $pdo->prepare(
         'INSERT INTO nutrition_targets (user_id, tdee_kcal, target_kcal, protein_g, carbs_g, fat_g, calculated_date, assigned_by)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     )->execute([$clientId, $tdee, $kcal, $protein, $carbs, $fat, $today, $coachId]);
-    return (int)$pdo->lastInsertId();
+    $newId = (int)$pdo->lastInsertId();
+    notify($pdo, $clientId, 'coach.nutrition', 'HLV đã đặt mục tiêu dinh dưỡng',
+        "Mục tiêu mới: $kcal kcal, đạm $protein g, tinh bột $carbs g, béo $fat g mỗi ngày.", '/nutrition.php', true);
+    return $newId;
 }
 
 /** Mục tiêu HLV đang giao cho học viên: dòng mới nhất có assigned_by = HLV hiện tại. null nếu chưa đặt. */
@@ -720,7 +791,12 @@ function coachRequestChange(PDO $pdo, int $clientId, string $area, string $reaso
         }
         throw $e;
     }
-    return (int)$pdo->lastInsertId();
+    $newId = (int)$pdo->lastInsertId();
+    $coach = $pdo->prepare('SELECT coach_id FROM coach_clients WHERE id = ?');
+    $coach->execute([$state['relation_id']]);
+    notify($pdo, (int)$coach->fetchColumn(), 'coach.change_request', 'Học viên xin tự sửa ' . mb_strtolower(COACH_CHANGE_AREAS[$area]),
+        notifName($pdo, $clientId) . ': ' . notifExcerpt($reason), '/coach/client.php?id=' . $clientId);
+    return $newId;
 }
 
 /** Yêu cầu xin sửa đang chờ của một học viên (cho trang hồ sơ học viên phía HLV). */
@@ -756,6 +832,11 @@ function coachResolveChange(PDO $pdo, int $coachId, int $requestId, bool $approv
     $pdo->prepare('UPDATE coach_change_requests SET status = ?, coach_reply = ?, unlock_until = ?, resolved_at = ? WHERE id = ?')
         ->execute([$approve ? 'APPROVED' : 'REJECTED', $reply, $until, $now, $requestId]);
     $req['unlock_until'] = $until;
+    $area = mb_strtolower(COACH_CHANGE_AREAS[$req['area']] ?? $req['area']);
+    notify($pdo, (int)$req['client_id'], 'coach.change_reply',
+        $approve ? "HLV cho phép bạn tự sửa $area" : "HLV chưa đồng ý cho tự sửa $area",
+        ($approve ? 'Mở khóa tới ' . date('H:i d/m', strtotime($until)) . '.' : 'Bạn xem lời nhắn của HLV.') . ($reply !== '' ? ' HLV: ' . notifExcerpt($reply) : ''),
+        $req['area'] === 'PLAN' ? '/workout-plan.php' : '/nutrition.php');
     return $req;
 }
 
@@ -771,6 +852,9 @@ function coachAddFeedback(PDO $pdo, int $relationId, int $clientId, ?string $log
     if ($e = coachTextError($content, 'Nhận xét', 2, COACH_FEEDBACK_MAX)) {
         throw new CoachException($e);
     }
+    if (coachBillingLocked($pdo, $relationId)) {   // A-54: học viên hết buổi thì tạm không nhận xét được
+        throw new CoachException(coachBillingLockMessage(true));
+    }
     if ($logDate !== null) {
         $d = DateTime::createFromFormat('Y-m-d', $logDate);
         if ($d === false || $d->format('Y-m-d') !== $logDate) {
@@ -784,14 +868,19 @@ function coachAddFeedback(PDO $pdo, int $relationId, int $clientId, ?string $log
     }
     $stmt = $pdo->prepare('INSERT INTO coach_feedback (coach_client_id, log_date, content, created_at) VALUES (?, ?, ?, ?)');
     $stmt->execute([$relationId, $logDate, $content, coachNow()]);
-    return (int)$pdo->lastInsertId();
+    $newId = (int)$pdo->lastInsertId();
+    $coach = $pdo->prepare('SELECT coach_id FROM coach_clients WHERE id = ?');
+    $coach->execute([$relationId]);
+    notify($pdo, $clientId, 'coach.feedback', 'HLV ' . notifName($pdo, (int)$coach->fetchColumn()) . ' có nhận xét mới',
+        ($logDate !== null ? 'Buổi tập ' . date('d/m', strtotime($logDate)) . ': ' : '') . notifExcerpt($content), '/my-coach.php', true);
+    return $newId;
 }
 
 /** Nhận xét trong một quan hệ, mới nhất trước. */
 function coachFeedbackList(PDO $pdo, int $relationId, int $limit = 50): array
 {
     $stmt = $pdo->prepare(
-        'SELECT id, log_date, content, read_at, created_at FROM coach_feedback WHERE coach_client_id = ? ORDER BY id DESC LIMIT ' . max(1, min(200, $limit))
+        'SELECT * FROM coach_feedback WHERE coach_client_id = ? ORDER BY id DESC LIMIT ' . max(1, min(200, $limit))
     );
     $stmt->execute([$relationId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -800,6 +889,9 @@ function coachFeedbackList(PDO $pdo, int $relationId, int $limit = 50): array
 function coachMarkFeedbackRead(PDO $pdo, int $relationId): void
 {
     $pdo->prepare('UPDATE coach_feedback SET read_at = ? WHERE coach_client_id = ? AND read_at IS NULL')->execute([coachNow(), $relationId]);
+    $client = $pdo->prepare('SELECT client_id FROM coach_clients WHERE id = ?');
+    $client->execute([$relationId]);
+    notifMarkReadWhere($pdo, (int)$client->fetchColumn(), 'coach.feedback', '/my-coach.php');
 }
 
 /** Tin nhắn có id > $afterId (để hỏi tin mới định kỳ), cũ → mới, tối đa 100. */
@@ -833,7 +925,12 @@ function coachSendMessage(PDO $pdo, int $relationId, int $senderId, string $cont
     $at = date('Y-m-d H:i:s', $now);
     $pdo->prepare('INSERT INTO coach_messages (coach_client_id, sender_id, content, created_at) VALUES (?, ?, ?, ?)')
         ->execute([$relationId, $senderId, $content, $at]);
-    return ['id' => (int)$pdo->lastInsertId(), 'sender_id' => $senderId, 'content' => $content, 'read_at' => null, 'created_at' => $at];
+    $msgId = (int)$pdo->lastInsertId();
+    [$receiver, $link] = coachMessageNotifTarget($pdo, $relationId, $senderId);
+    if ($receiver > 0) {
+        notify($pdo, $receiver, 'coach.message', 'Tin nhắn mới từ ' . notifName($pdo, $senderId), notifExcerpt($content), $link, true);
+    }
+    return ['id' => $msgId, 'sender_id' => $senderId, 'content' => $content, 'read_at' => null, 'created_at' => $at];
 }
 
 /** Người đọc ($readerId) mở khung chat: đánh dấu đã đọc mọi tin của bên kia. */
@@ -841,6 +938,31 @@ function coachMarkMessagesRead(PDO $pdo, int $relationId, int $readerId): void
 {
     $pdo->prepare('UPDATE coach_messages SET read_at = ? WHERE coach_client_id = ? AND sender_id <> ? AND read_at IS NULL')
         ->execute([coachNow(), $relationId, $readerId]);
+    // Người đọc chính là "người nhận" của tin bên kia gửi: tìm link khung chat theo góc nhìn của họ
+    $rel = $pdo->prepare('SELECT coach_id, client_id FROM coach_clients WHERE id = ?');
+    $rel->execute([$relationId]);
+    $r = $rel->fetch(PDO::FETCH_ASSOC);
+    if ($r) {
+        $other = (int)$r['coach_id'] === $readerId ? (int)$r['client_id'] : (int)$r['coach_id'];
+        notifMarkReadWhere($pdo, $readerId, 'coach.message', coachMessageNotifTarget($pdo, $relationId, $other)[1]);
+    }
+}
+
+/**
+ * Người nhận và đường dẫn khung chat cho thông báo tin nhắn: HLV gửi thì học viên nhận (trang HLV của tôi, tab Tin nhắn);
+ * học viên gửi thì HLV nhận (khu HLV, khung chat với học viên đó). Trả [id người nhận, link] hoặc [0, ''].
+ */
+function coachMessageNotifTarget(PDO $pdo, int $relationId, int $senderId): array
+{
+    $st = $pdo->prepare('SELECT coach_id, client_id FROM coach_clients WHERE id = ?');
+    $st->execute([$relationId]);
+    $r = $st->fetch(PDO::FETCH_ASSOC);
+    if (!$r) {
+        return [0, ''];
+    }
+    return (int)$r['coach_id'] === $senderId
+        ? [(int)$r['client_id'], '/my-coach.php?tab=messages']
+        : [(int)$r['coach_id'], '/coach/messages.php?id=' . (int)$r['client_id']];
 }
 
 /**
@@ -868,3 +990,9 @@ function coachClientNotice(PDO $pdo, int $clientId): ?array
     }
     return $out;
 }
+
+
+// Phần mở rộng (bản nháp lịch, sửa nhận xét, lịch sử, chứng chỉ...) nằm ở file riêng cho dễ đọc
+require_once __DIR__ . '/coach-extras.php';
+// Giá tập, buổi thử, lịch hẹn và gói (A-54)
+require_once __DIR__ . '/coach-billing.php';

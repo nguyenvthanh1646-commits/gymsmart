@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup A · Tech dark — GymSmart</title>
+<!-- MOCKUP TĨNH để chọn hướng thiết kế, mở trực tiếp bằng trình duyệt. Không phải code của trang thật. -->
+<link rel="stylesheet" href="../../public/css/fonts.css">
+<style>
+:root{
+  --accent:#ff5a1f; --accent-2:#ff8a3d; --accent-soft:#fff1ea;
+  --ink:#070b18; --ink-2:#0f1730; --text-on-dark:#c7d0e6; --text:#131a2e; --text-muted:#667085; --line:#e4e8f1; --bg:#f4f6fb;
+  --glow:#7c5cff;                 /* màu lạnh phụ: CHỈ dùng làm ánh sáng/gradient, không dùng cho chữ hay nút */
+  --r:12px; --r-lg:18px; --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box} html,body{margin:0}
+body{font-family:'Be Vietnam Pro','Segoe UI',system-ui,sans-serif;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+.mk-note{position:sticky;top:0;z-index:50;background:#fffaeb;color:#93370d;border-bottom:1px solid #fedf89;font-size:13px;padding:6px 16px;text-align:center}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* ===== Hero ===== */
+.hero{position:relative;overflow:hidden;color:#fff;background:var(--ink);isolation:isolate}
+.hero__photo{position:absolute;inset:0 0 0 38%;background:url('../../public/assets/img/hero/hero-1920.webp') 70% 30%/cover;opacity:.32;filter:grayscale(.4) contrast(1.05);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 35%,#000 70%,transparent);mask-image:linear-gradient(90deg,transparent,#000 35%,#000 70%,transparent);z-index:-3}
+.hero__glow{position:absolute;inset:0;z-index:-2;
+  background:radial-gradient(700px 420px at 85% 10%,rgba(255,90,31,.38),transparent 65%),radial-gradient(620px 420px at 5% 95%,rgba(124,92,255,.30),transparent 65%)}
+.hero__dots{position:absolute;inset:0;z-index:-1;background-image:radial-gradient(rgba(255,255,255,.12) 1px,transparent 1.2px);background-size:22px 22px;
+  -webkit-mask-image:radial-gradient(ellipse at 60% 40%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse at 60% 40%,#000 20%,transparent 75%)}
+.hero__data{position:absolute;left:0;right:0;bottom:40px;height:120px;z-index:-1;opacity:.7}
+.hero__data path{fill:none;stroke-width:1.5}
+.hero__data .base{stroke:rgba(255,255,255,.08)}
+.hero__data .run{stroke:url(#gA);stroke-dasharray:12 220;animation:run 9s linear infinite}
+@keyframes run{to{stroke-dashoffset:-1160}}
+.nav{display:flex;align-items:center;gap:28px;height:72px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;text-decoration:none}
+.logo i{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent-2),var(--accent));display:grid;place-items:center;font-style:normal}
+.logo b{color:var(--accent-2)}
+.nav a.l{color:var(--text-on-dark);text-decoration:none;font-weight:500;font-size:15px}
+.nav .sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 24px;border-radius:999px;font:inherit;font-weight:700;text-decoration:none;border:1px solid transparent;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.btn--solid{background:linear-gradient(135deg,var(--accent-2),var(--accent));color:#fff;box-shadow:0 10px 30px rgba(255,90,31,.35)}
+.btn--solid::after{content:"";position:absolute;inset:-40% auto -40% -60%;width:40%;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transition:left .5s var(--ease)}
+.btn--solid:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(255,90,31,.5)} .btn--solid:hover::after{left:120%}
+.btn--ghost{color:#fff;border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.04)}
+.btn--ghost:hover{border-color:var(--accent-2)}
+.btn--sm{min-height:44px;padding:0 18px;font-size:14px}
+
+.hero__in{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:48px;align-items:center;padding:56px 0 120px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);font-size:13px;font-weight:600;color:var(--text-on-dark)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+h1{margin:20px 0 16px;font-size:clamp(40px,6vw,76px);line-height:1.04;font-weight:800;letter-spacing:-.035em}
+.grad{background:linear-gradient(100deg,var(--accent-2) 10%,var(--accent) 60%,#ffb38a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{margin:0;max-width:520px;font-size:18px;line-height:1.6;color:var(--text-on-dark)}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 14px}
+.fine{margin:0;font-size:14px;color:#98a2c0}
+
+/* Bảng điều khiển mô phỏng (glass) */
+.dash{position:relative;transform:perspective(1200px) rotateY(-8deg) rotateX(4deg);transform-style:preserve-3d;transition:transform .3s var(--ease)}
+.dash__card{background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);border-radius:22px;padding:20px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.12)}
+.dash__top{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:13px;color:var(--text-on-dark)}
+.dash__top b{color:#fff;font-weight:700}
+.tag{margin-left:auto;padding:3px 10px;border-radius:999px;background:rgba(255,138,61,.16);color:#ffb38a;font-size:12px;font-weight:700}
+.dash__grid{display:grid;grid-template-columns:150px 1fr;gap:14px}
+.tile{background:rgba(7,11,24,.55);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px}
+.tile h4{margin:0 0 10px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#98a2c0}
+.ring{position:relative;width:118px;height:118px;margin:0 auto}
+.ring svg{transform:rotate(-90deg)} .ring circle{fill:none;stroke-width:10}
+.ring .tr{stroke:rgba(255,255,255,.08)} .ring .val{stroke:url(#gB);stroke-linecap:round;stroke-dasharray:283;stroke-dashoffset:283;transition:stroke-dashoffset 1.2s var(--ease)}
+.ring p{position:absolute;inset:0;display:grid;place-content:center;text-align:center;margin:0}
+.ring b{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em} .ring small{font-size:11px;color:#98a2c0}
+.bars{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.bars li{display:grid;grid-template-columns:70px 1fr 48px;align-items:center;gap:8px;font-size:13px}
+.bars span{color:var(--text-on-dark)} .bars b{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:99px;transition:width 1s var(--ease)}
+.week{grid-column:1/-1;display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{text-align:center;padding:8px 0;border-radius:10px;font-size:12px;color:#98a2c0;border:1px solid rgba(255,255,255,.06)}
+.day b{display:block;font-size:11px;margin-bottom:4px;color:var(--text-on-dark)}
+.day.done{background:rgba(255,90,31,.14);border-color:rgba(255,138,61,.35);color:#ffb38a}
+.day.today{outline:2px solid var(--accent);outline-offset:-2px}
+.chat{grid-column:1/-1;display:flex;gap:10px;align-items:flex-start}
+.chat .av{flex:none;width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent-2),var(--accent));display:grid;place-items:center;font-size:13px;font-weight:800}
+.chat .bub{flex:1;padding:10px 14px;border-radius:4px 14px 14px 14px;background:rgba(255,255,255,.07);font-size:14px;line-height:1.5;min-height:66px}
+.chat .bub small{display:block;font-size:11px;color:#98a2c0;margin-bottom:2px}
+.caret{display:inline-block;width:2px;height:14px;background:var(--accent-2);vertical-align:-2px;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* Marquee */
+.mq{background:#0b1020;color:#fff;border-top:1px solid rgba(255,255,255,.06);overflow:hidden}
+.mq__track{display:flex;gap:40px;width:max-content;padding:18px 0;animation:mq 40s linear infinite;font-weight:700;font-size:18px;letter-spacing:-.01em}
+.mq__track span{display:inline-flex;align-items:center;gap:40px;white-space:nowrap}
+.mq__track span::after{content:"✦";color:var(--accent-2)}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* Bento (nền sáng theo UI_UX_PROMPT.md mục 7) */
+.sec{padding:88px 0}
+.sec h2{margin:0 0 10px;font-size:clamp(28px,3.4vw,42px);font-weight:800;letter-spacing:-.03em;line-height:1.15}
+.sec .sub{margin:0 0 36px;color:var(--text-muted);font-size:17px;max-width:640px}
+.bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:190px;gap:18px}
+.b{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+.b h3{margin:12px 0 6px;font-size:19px;font-weight:700;letter-spacing:-.01em} .b p{margin:0;color:var(--text-muted);font-size:15px;line-height:1.5;max-width:340px}
+.b .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);color:#c2410c}
+.b--big{grid-column:span 2;grid-row:span 2;background:linear-gradient(160deg,#0b1020,#151d3a);color:#fff;border-color:#0b1020}
+.b--big p{color:var(--text-on-dark)} .b--big .ic{background:rgba(255,138,61,.15);color:#ffb38a}
+.b--wide{grid-column:span 2}
+.mini-plan{position:absolute;left:22px;right:22px;bottom:22px;display:grid;gap:8px}
+.mini-plan div{display:flex;justify-content:space-between;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:14px}
+.mini-plan b{font-variant-numeric:tabular-nums;color:#ffb38a}
+.spark{position:absolute;right:16px;bottom:14px;width:46%;height:70px}
+.spark path{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round}
+
+@media (max-width:960px){
+  .hero__in{grid-template-columns:1fr;padding:32px 0 96px}
+  .hero__photo{inset:0;opacity:.18}
+  .dash{transform:none}
+  .bento{grid-template-columns:1fr 1fr}
+}
+@media (max-width:600px){
+  .wrap{padding:0 16px}
+  .nav a.l{display:none}
+  .lead{font-size:16px}
+  .cta .btn{flex:1}
+  .dash__grid{grid-template-columns:1fr}
+  .bento{grid-template-columns:1fr;grid-auto-rows:auto}
+  .b,.b--big,.b--wide{grid-column:auto;grid-row:auto;min-height:170px}
+  .b--big{min-height:330px}
+  .sticky{display:flex}
+}
+.sticky{display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:40;justify-content:center}
+.sticky .btn{width:100%}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="mk-note">MOCKUP hướng A · "Tech dark" — chỉ để chọn hướng, mọi số liệu là <b>Ví dụ</b></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gA" x1="0" x2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#ff8a3d"/></linearGradient>
+    <linearGradient id="gB" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ff8a3d"/><stop offset="1" stop-color="#ff5a1f"/></linearGradient>
+  </defs>
+</svg>
+
+<section class="hero">
+  <div class="hero__photo" aria-hidden="true"></div>
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="hero__dots" aria-hidden="true"></div>
+  <svg class="hero__data" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+    <path class="base" d="M0 100 C 200 90, 300 96, 460 78 S 760 70, 900 52 S 1200 40, 1440 18"/>
+    <path class="run" d="M0 100 C 200 90, 300 96, 460 78 S 760 70, 900 52 S 1200 40, 1440 18"/>
+  </svg>
+
+  <div class="wrap">
+    <nav class="nav">
+      <a class="logo" href="#"><i>G</i><span>Gym<b>Smart</b></span></a>
+      <a class="l" href="#tinh-nang">Tính năng</a><a class="l" href="#">Bài viết</a>
+      <span class="sp"></span>
+      <a class="btn btn--ghost btn--sm" href="#">Đăng nhập</a>
+      <a class="btn btn--solid btn--sm" href="#">Đăng ký</a>
+    </nav>
+
+    <div class="hero__in">
+      <div>
+        <span class="pill"><i></i>Lịch tập · Dinh dưỡng · Trợ lý AI</span>
+        <h1>Tập thông minh hơn với <span class="grad">AI</span></h1>
+        <p class="lead">Nhập chỉ số cơ thể và mục tiêu, GymSmart gợi ý lịch tập, tính calo và macro, rồi theo dõi từng buổi cùng bạn.</p>
+        <div class="cta">
+          <a class="btn btn--solid" href="#">Tạo tài khoản miễn phí</a>
+          <a class="btn btn--ghost" href="#tinh-nang">Xem tính năng</a>
+        </div>
+        <p class="fine">Miễn phí · Đăng ký 3 bước · Không cần thẻ</p>
+      </div>
+
+      <div class="dash" id="dash" role="group" aria-label="Bảng điều khiển ví dụ, không phải dữ liệu người dùng thật">
+        <div class="dash__card">
+          <div class="dash__top"><b>Hôm nay</b> · Thứ Tư <span class="tag">Ví dụ</span></div>
+          <div class="dash__grid">
+            <div class="tile">
+              <h4>Calo mục tiêu</h4>
+              <div class="ring">
+                <svg width="118" height="118" viewBox="0 0 118 118"><circle class="tr" cx="59" cy="59" r="45"/><circle class="val" id="ring" cx="59" cy="59" r="45"/></svg>
+                <p><b id="kcal">2.650</b><small>kcal/ngày</small></p>
+              </div>
+            </div>
+            <div class="tile">
+              <h4>Macro</h4>
+              <ul class="bars">
+                <li><span>Đạm</span><div class="bar"><i data-w="62" style="background:var(--accent)"></i></div><b>165 g</b></li>
+                <li><span>Tinh bột</span><div class="bar"><i data-w="88" style="background:var(--accent-2)"></i></div><b>330 g</b></li>
+                <li><span>Chất béo</span><div class="bar"><i data-w="40" style="background:#ffc29e"></i></div><b>74 g</b></li>
+              </ul>
+            </div>
+            <div class="week" aria-label="Tuần này: đã tập thứ Hai, thứ Tư">
+              <div class="day done"><b>T2</b>✓</div><div class="day"><b>T3</b>Nghỉ</div><div class="day done today"><b>T4</b>✓</div>
+              <div class="day"><b>T5</b>Nghỉ</div><div class="day"><b>T6</b>Tập</div><div class="day"><b>T7</b>Nghỉ</div><div class="day"><b>CN</b>Nghỉ</div>
+            </div>
+            <div class="chat">
+              <span class="av" aria-hidden="true">AI</span>
+              <p class="bub"><small>GymSmart AI</small><span id="typed">Người mới tập ngực: Hít đất 3×10 và Ép ngực máy 3×12, nghỉ 90 giây giữa các set.</span><span class="caret" aria-hidden="true"></span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="mq" aria-hidden="true"><div class="mq__track">
+  <span>Lịch tập AI</span><span>TDEE &amp; Macro</span><span>40 bài tập có video</span><span>Biểu đồ tiến trình</span><span>Chatbot 24/7</span><span>Bài viết có dẫn chứng</span>
+  <span>Lịch tập AI</span><span>TDEE &amp; Macro</span><span>40 bài tập có video</span><span>Biểu đồ tiến trình</span><span>Chatbot 24/7</span><span>Bài viết có dẫn chứng</span>
+</div></div>
+
+<section class="sec" id="tinh-nang">
+  <div class="wrap">
+    <h2>Mọi thứ cho buổi tập, ở một nơi</h2>
+    <p class="sub">Hồ sơ của bạn quyết định lịch tập và dinh dưỡng; nhật ký cho thấy bạn tiến bộ ra sao.</p>
+    <div class="bento">
+      <div class="b b--big"><span class="ic">▦</span><h3>Lịch tập cá nhân hóa</h3><p>Chia buổi theo mục tiêu, trình độ và số ngày bạn có.</p>
+        <div class="mini-plan"><div>Hít đất <b>3 × 10</b></div><div>Kéo cáp ngồi <b>3 × 10</b></div><div>Squat tạ đơn <b>3 × 12</b></div></div></div>
+      <div class="b"><span class="ic">◔</span><h3>TDEE &amp; Macro</h3><p>Công thức Mifflin–St Jeor.</p></div>
+      <div class="b"><span class="ic">▶</span><h3>40 bài có video</h3><p>Kèm các bước và lỗi thường gặp.</p></div>
+      <div class="b b--wide"><span class="ic">↗</span><h3>Biểu đồ tiến trình</h3><p>Cân nặng, số đo theo thời gian.</p>
+        <svg class="spark" viewBox="0 0 200 70" aria-hidden="true"><path d="M4 60 C 40 52, 60 58, 90 40 S 150 30, 196 10"/></svg></div>
+    </div>
+  </div>
+</section>
+
+<div class="sticky"><a class="btn btn--solid" href="#">Tạo tài khoản miễn phí</a></div>
+
+<script>
+// Hiệu ứng minh họa trong mockup: đếm số, thanh chạy, gõ chữ, nghiêng 3D theo chuột. Tắt khi prefers-reduced-motion.
+(function(){
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ring = document.getElementById('ring'), kcal = document.getElementById('kcal'), typed = document.getElementById('typed');
+  document.querySelectorAll('.bar i').forEach(function(i){ i.style.width = i.dataset.w + '%'; });
+  ring.style.strokeDashoffset = 283 * (1 - .78);
+  if (reduce) return;
+  var t0 = performance.now(), target = 2650;
+  (function tick(t){ var p = Math.min(1,(t-t0)/1200); kcal.textContent = Math.round(target*(1-Math.pow(1-p,3))).toLocaleString('vi-VN'); if(p<1) requestAnimationFrame(tick); })(t0);
+  var full = typed.textContent, n = 0; typed.textContent = '';
+  setTimeout(function step(){ typed.textContent = full.slice(0, ++n); if (n < full.length) setTimeout(step, 28); }, 700);
+  var dash = document.getElementById('dash');
+  if (matchMedia('(min-width: 961px)').matches) {
+    dash.parentElement.addEventListener('mousemove', function(e){
+      var r = dash.getBoundingClientRect(), x = (e.clientX - r.left)/r.width - .5, y = (e.clientY - r.top)/r.height - .5;
+      dash.style.transform = 'perspective(1200px) rotateY(' + (-8 + x*8) + 'deg) rotateX(' + (4 - y*6) + 'deg)';
+    });
+  }
+})();
+</script>
+</body>
+</html>

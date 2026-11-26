@@ -1,0 +1,81 @@
+/* notifications.css — chuông thông báo (includes/notif-bell.php) và trang /notifications.php (A-44).
+   Nạp trong header.php khi đã đăng nhập. Chỉ dùng token chuẩn trong ui.css. Biểu tượng chuông dùng currentColor
+   nên tự hợp với thanh menu sáng (trang thường) lẫn tối (trang chủ, khu admin, khu HLV). */
+
+.ntf { position: relative; display: inline-flex; flex: none; }
+.nb__in > .ntf { order: 3; }   /* thanh người dùng: chuông nằm ngoài menu gập (luôn thấy trên điện thoại), cuối hàng trên máy tính */
+.ntf__btn { position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+    color: inherit; text-decoration: none; transition: background .15s var(--ease); }
+.ntf__btn:hover { background: rgba(127, 127, 127, .14); color: inherit; text-decoration: none; }
+.ntf__btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.ntf__badge { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill);
+    background: var(--danger); color: #fff; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; box-sizing: border-box; }
+.ntf__badge[hidden] { display: none; }
+
+.ntf__panel { position: absolute; top: calc(100% + 8px); right: 0; z-index: 80; width: min(380px, 92vw); max-height: min(520px, 75vh);
+    display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+    color: var(--text); box-shadow: var(--shadow-lg); overflow: hidden; text-align: left; }
+.ntf__panel[hidden] { display: none; }
+.ntf__head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.ntf__head b { font-size: 16px; }
+.ntf .ntf__all { min-height: 36px; padding: 0 10px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--accent-dark);
+    font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: none; }
+.ntf .ntf__all:hover { background: var(--accent-soft); }
+.ntf__list { flex: 1; margin: 0; padding: 0; list-style: none; overflow-y: auto; }
+.ntf__item { display: grid; gap: 2px; padding: 12px 16px 12px 28px; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; position: relative; }
+.ntf__item:hover { background: var(--bg); color: var(--text); text-decoration: none; }
+.ntf__item b { font-size: 14px; font-weight: 600; }
+.ntf__item span { color: var(--text-muted); font-size: 13px; line-height: 1.45; }
+.ntf__item small { color: var(--text-muted); font-size: 12px; }
+.ntf__item.is-unread { background: #fffaf7; }
+.ntf__item.is-unread b { font-weight: 800; }
+.ntf__item.is-unread::before { content: ""; position: absolute; left: 12px; top: 18px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.ntf__state { margin: 0; padding: 20px 16px; color: var(--text-muted); font-size: 14px; text-align: center; }
+.ntf__state[hidden] { display: none; }
+.ntf__more { display: block; padding: 12px 16px; border-top: 1px solid var(--line); color: var(--accent-dark); font-size: 14px; font-weight: 700; text-align: center; text-decoration: none; }
+.ntf__more:hover { background: var(--bg); text-decoration: none; }
+.ntf__sr, .ntp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (max-width: 600px) {
+    .ntf__panel { position: fixed; top: 64px; left: 12px; right: 12px; width: auto; }
+}
+
+/* ===== Trang /notifications.php ===== */
+.ntp { max-width: 760px; margin: 0 auto; }
+.ntp-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s-3); margin-bottom: var(--s-4); }
+.ntp-head h1 { margin: 0; font-size: 30px; font-weight: 800; }
+.ntp-sub { margin: 4px 0 0; color: var(--text-muted); }
+.ntp-head .btn { min-height: 44px; }
+.ntp-list { margin: 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; box-shadow: var(--shadow-sm); }
+.ntp-list li + li { border-top: 1px solid var(--line); }
+.ntp-item { margin: 0; }
+.ntp-list .ntp-item button[type="submit"] { display: flex; gap: var(--s-3); width: 100%; min-height: 64px; padding: 14px 18px; border: 0; border-radius: 0; background: transparent;
+    color: var(--text); font: inherit; text-align: left; cursor: pointer; box-shadow: none; transform: none; }
+.ntp-list .ntp-item button[type="submit"]:hover { background: var(--bg); }
+.ntp-list .ntp-item button[type="submit"]:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.ntp-list .ntp-item.is-unread button[type="submit"] { background: #fffaf7; }
+.ntp-item__dot { flex: none; width: 8px; height: 8px; margin-top: 7px; border-radius: 50%; background: transparent; }
+.ntp-item.is-unread .ntp-item__dot { background: var(--accent); }
+.ntp-item__txt { display: grid; gap: 2px; }
+.ntp-item__txt b { font-weight: 600; }
+.ntp-item.is-unread .ntp-item__txt b { font-weight: 800; }
+.ntp-item__txt span, .ntp-item__txt small { color: var(--text-muted); font-size: 14px; }
+.ntp-item__txt small { font-size: 12px; }
+.ntp-empty { padding: var(--s-6) var(--s-4); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); text-align: center; color: var(--text-muted); }
+.ntp-empty__title { margin: 0 0 4px; font-size: 18px; font-weight: 700; color: var(--text); }
+.ntp-pager { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-4); color: var(--text-muted); }
+.ntp-pager a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--r-pill); color: var(--text); font-weight: 600; text-decoration: none; }
+
+/* Thanh tối của trang chủ sau đăng nhập: chuông màu trắng */
+.nb--user-home .ntf__btn, .nb--user-home .ntf__btn:hover { color: #fff; }
+
+/* Khu admin / HLV: thanh menu cuộn ngang (overflow-x) sẽ cắt khung thả xuống, nên khung dùng position: fixed.
+   Quy tắc ".adm-nav a" (cao 64px, chữ xám) áp cả vào liên kết trong khung, nên đặt lại kiểu cho chúng. */
+.adm-nav .ntf__panel { position: fixed; top: 64px; right: max(12px, calc((100vw - 1180px) / 2 + 20px)); white-space: normal; }
+.adm-nav .ntf a.ntf__btn { width: 44px; height: 44px; padding: 0; display: inline-grid; color: #fff; }
+.adm-nav .ntf a.ntf__item { height: auto; display: grid; padding: 12px 16px 12px 28px; color: var(--text); font-size: inherit; font-weight: inherit; }
+.adm-nav .ntf a.ntf__item:hover { color: var(--text); }
+.adm-nav .ntf a.ntf__more { height: auto; display: block; padding: 12px 16px; color: var(--accent-dark); font-size: 14px; font-weight: 700; }
+@media (max-width: 600px) {
+    .adm-nav .ntf__panel { left: 12px; right: 12px; }
+}

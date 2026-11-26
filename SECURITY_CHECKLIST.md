@@ -60,8 +60,10 @@ Mở từng URL trong 3 trạng thái: **chưa đăng nhập**, **USER**, **ADMI
 | `/index.php` | Trang giới thiệu | Trang chủ | Chuyển sang `/admin/dashboard.php` |
 | `/login.php`, `/register.php` | Xem được | Chuyển về trang chủ | Chuyển về trang chủ |
 | `/profile.php` | Chuyển về đăng nhập | Xem được | Xem được |
-| `/exercises.php` | Chuyển về đăng nhập | Xem được | Xem được |
-| `/exercise-detail.php?id=1` | Chuyển về đăng nhập | Xem được | Xem được |
+| `/exercises.php` | Xem được (chỉ đọc, có dải mời đăng ký; từ A-45) | Xem được | Xem được |
+| `/exercise-detail.php?id=1` | Xem được (chỉ đọc; từ A-45) | Xem được | Xem được |
+| `/articles.php`, `/article.php?slug=` | Xem được (không ghi "đã đọc" cho khách; từ A-45) | Xem được | Xem được |
+| `/workout-plan.php`, `/nutrition.php`, `/progress.php`, `/report.php` | Chuyển về đăng nhập | Xem được | Xem được |
 | `/admin/dashboard.php` | Chuyển về đăng nhập | **Bị chặn** | Xem được |
 | `/admin/exercises.php` | Chuyển về đăng nhập | **Bị chặn** | Xem được |
 | `/admin/exercise-form.php` | Chuyển về đăng nhập | **Bị chặn** | Xem được |
@@ -299,3 +301,145 @@ Dữ liệu thử: `php tools/seed-coach-demo.php` (mật khẩu chung `Test@123
 | Nhập `<script>alert(1)</script>` vào tin nhắn, nhận xét, lời nhắn, mẫu đơn HLV, lý do từ chối | Hiện nguyên chữ ở mọi nơi (tin nhắn gán bằng `textContent`) |
 | Xem HTML trang HLV, trang danh sách HLV | Không có email học viên / email HLV (chỉ ADMIN thấy email ở trang duyệt đơn) |
 | Gửi bất kỳ form HLV nào không kèm `csrf_token` | 403 "Phiên làm việc đã hết hạn" |
+
+### Mở rộng (A-36) và kiểm thử tự động
+Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng trên và các mục dưới. Công cụ tự tạo database `gymsmart_test_hlv` và máy chủ thử, xong thì xóa; không đụng database `gymsmart`.
+
+| Cách thử | Kết quả mong đợi |
+|---|---|
+| HLV gửi `draft_remove` với `row_id` của lịch ĐANG DÙNG (không phải bản nháp) | "Không tìm thấy bài này trong bản nháp", không xóa |
+| Học viên mở lịch tập khi HLV đang có bản nháp | Không thấy bản nháp, lịch đang dùng không đổi |
+| HLV khác gửi `feedback_delete` qua trang học viên không phải của mình | 404, nhận xét còn nguyên |
+| Học viên mở `my-coach.php?history=` của người khác / id không tồn tại | 404 |
+| USER gọi chatbot `mode=coach`; HLV gửi `client_id` của học viên HLV khác | 403, không gọi AI |
+| Tải file PHP đổi đuôi `.png` làm chứng chỉ; file > 3 MB | Bị từ chối (kiểm tra nội dung, không tin đuôi) |
+| Mở `/storage/certificates/<tên>` bằng URL; USER mở `admin/certificate.php` | 404 (ngoài `public/`); 403 |
+| Đổi `certificate_file` trong DB thành `../../config.php` rồi admin mở | 404, không đọc được file ngoài thư mục |
+
+## Bổ sung: Nâng cấp 11/2026 (A-39)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Xem header của một trang bất kỳ (F12 > Network) | Có `Content-Security-Policy` chỉ cho script/CSS/fetch từ chính website, khung nhúng chỉ `youtube-nocookie.com` |
+| Mở trang chi tiết bài tập có video, F12 > Console | Video chạy, không có dòng "Refused to ..." (CSP chặn nhầm) |
+| `admin/users.php?q=%25` hoặc `?q=_` | Tìm đúng chữ `%`/`_`, không thành mẫu khớp mọi dòng (đã thoát ký tự LIKE) |
+| `admin/users.php?role=ABC&page=-5` | Bỏ qua vai trò lạ, về trang 1, không lỗi |
+| Ghi nhật ký lúc 0-6 giờ sáng | Ngày nhật ký, "Hôm nay" ở trang chủ và tỉ lệ tập của HLV cùng một ngày (PHP và MySQL cùng múi giờ) |
+| `php tools/install.php` khi DB thật đã có bảng | Dừng, không ghi đè; `--fresh` trên DB thật bắt buộc thêm `--yes` |
+
+### Chế độ Đang tập (A-41)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Gọi `api/log-session.php` khi chưa đăng nhập / thiếu `csrf_token` | 401 / 403 |
+| Gửi `row_id` thuộc lịch của người khác | 404, không ghi dòng nào (transaction) |
+| Tạ 9999, lặp 0, trùng `row_id`, `rows=abc` | 422, không ghi |
+| Gửi số đã gộp sẵn từ trình duyệt | Máy chủ bỏ qua, tự gộp lại từ từng set |
+| Mở `workout-session.php?day=abc` | Về ngày hôm nay, không lỗi |
+
+### Chatbot dùng dữ liệu thật và lịch sử (A-42)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Tắt "Dùng hồ sơ của tôi", hỏi "hôm nay tôi tập gì" | AI trả lời chung và nhắc bật công tắc, không có số liệu riêng |
+| Bật công tắc, hỏi lại | Có lịch, mức tạ gợi ý thật; không có tên, email, ghi chú trong prompt (`test-chat.php`) |
+| Khách gọi `GET api/chatbot-history.php` | 401 |
+| `POST api/chatbot-history.php {"action":"clear"}` thiếu `X-CSRF-Token` | 403, không xóa |
+| Tài khoản A đọc lịch sử | Chỉ thấy hội thoại của A (user_id lấy từ session) |
+| Gửi hơn 30 câu/giờ, đăng xuất rồi đăng nhập lại gửi tiếp | Vẫn 429 (đếm theo tài khoản trong DB) |
+| Trợ lý quản trị, trợ lý HLV | Không lưu lịch sử vào DB |
+
+### Báo cáo và tải dữ liệu cá nhân (A-43)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Khách mở `report.php` hoặc `export-my-data.php?type=logs` | Chuyển sang đăng nhập |
+| `export-my-data.php?type=users` | 400, không xuất gì |
+| Thêm `&user_id=` khác vào URL tải CSV | Không có tác dụng: chỉ xuất dữ liệu của tài khoản đang đăng nhập |
+| Ghi chú nhật ký bắt đầu bằng `=HYPERLINK(...)` rồi tải CSV, mở bằng Excel | Ô hiện chữ, không chạy công thức (có dấu ' phía trước) |
+| `report.php?month=2099-01`, `?month=abc` | Về tháng hiện tại, không lỗi |
+
+### Thông báo (A-44)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Khách gọi `GET api/notifications.php` | 401 |
+| `POST api/notifications.php action=read&id=<id của người khác>` | 404, không đổi gì |
+| `POST` thiếu `csrf_token` | 403 |
+| HLV nhắn tin chứa `<script>alert(1)</script>` | Học viên thấy đúng chữ đó trong chuông, không chạy script (textContent) |
+| Sửa cột `link` trong DB thành `https://web-la.com` hoặc `javascript:...` | Chuông và trang Thông báo bỏ link đó (`notifSafeLink()`), không chuyển ra ngoài |
+| DB cũ chưa import `sql/notifications.sql` | Mọi trang và thao tác HLV vẫn chạy, chuông không có số |
+
+### Tổng kết tuần bằng AI (A-46)
+
+| Thử | Kết quả đúng |
+|---|---|
+| POST `report.php` thiếu `csrf_token` | Trang báo lỗi mã bảo vệ, không gọi AI |
+| Bấm "Tạo tổng kết" lần 2 trong cùng ngày (sửa HTML để hiện lại nút) | Báo "tối đa 1 lần mỗi ngày", không gọi AI |
+| Tuần trước không có dữ liệu | Báo chưa có gì để tổng kết, không gọi AI |
+| Xem `stats_json` trong DB | Chỉ có số liệu tổng hợp, không có tên, email, ghi chú |
+| AI trả lời có thẻ HTML | Hiện đúng chữ (htmlspecialchars), không chạy mã |
+
+### Mẫu lịch HLV (A-48)
+
+| Thử | Kết quả đúng |
+|---|---|
+| USER hoặc khách mở `/coach/templates.php` | 403 / chuyển đăng nhập |
+| HLV B gửi `template_id` của HLV A (apply / delete) | Báo "Không tìm thấy mẫu", không đổi gì |
+| Sửa form, thêm `clients[]` là id học viên của HLV khác hoặc đã kết thúc | Người đó bị bỏ qua ("Bỏ qua ... người không còn tập với bạn"), lịch của họ không đổi |
+| Gửi form thiếu `csrf_token` | Trang báo lỗi mã bảo vệ |
+
+### Đánh giá HLV (A-49)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Học viên mới tập 3 ngày, hoặc chưa ghi buổi nào, gửi form đánh giá (sửa HTML để hiện form) | Bị từ chối kèm lý do, không lưu |
+| Gửi `relation_id` của học viên khác | "Không tìm thấy quan hệ huấn luyện này", không lưu |
+| `rating=9` hoặc nhận xét 501 ký tự | Bị từ chối |
+| Sửa trường `back` thành `https://web-la.com` | Vẫn chỉ quay về `/my-coach.php` |
+| USER mở `/admin/coach-reviews.php`; POST thiếu `csrf_token` | 403; trang báo lỗi mã bảo vệ |
+| Nhận xét chứa thẻ HTML | Hiện đúng chữ ở mọi trang (htmlspecialchars) |
+
+### Nhật ký ăn (A-50)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Khách mở `/food-log.php` | Chuyển sang đăng nhập |
+| Sửa ô thực phẩm thành `u:<id thực phẩm của người khác>` hoặc `c:phobo` (không có trong bảng) | Bị từ chối, không ghi |
+| Gửi `id` món của người khác khi xóa | "Không tìm thấy món này trong nhật ký của bạn" |
+| Ngày tương lai, khối lượng 0 hoặc 9999 g, đạm 150 g/100 g | Bị từ chối |
+| Tên thực phẩm chứa thẻ HTML | Hiện đúng chữ (htmlspecialchars) |
+| Gửi kcal tự tính từ trình duyệt | Không có ô đó: máy chủ tự tính từ thực phẩm và gam |
+
+### Sức khỏe hệ thống và sao lưu (A-51)
+
+| Thử | Kết quả đúng |
+|---|---|
+| USER hoặc COACH mở `/admin/health.php` | 403 |
+| Khách gửi POST tới `/admin/backup.php` | Chuyển sang đăng nhập |
+| Mở `/admin/backup.php` bằng GET (link) | Quay về trang Sức khỏe, không tải gì |
+| POST sai `csrf_token` | 403 |
+| POST đúng CSRF nhưng không tick ô xác nhận | Quay lại kèm thông báo, không tải |
+| Xem nguồn trang Sức khỏe | Không có khóa Gemini hay mật khẩu DB, chỉ "Đã cấu hình (n ký tự)" |
+| Tải sao lưu | Có dòng `system.backup` trong Nhật ký hoạt động; file có header `Cache-Control: no-store` |
+
+### HLV đổi tên (A-53)
+
+| Thử | Kết quả đúng |
+|---|---|
+| Gửi tên rỗng, 1 ký tự, hơn 100 ký tự hoặc dạng mảng `full_name[]=x` | Báo lỗi ở ô tên, không lưu gì (cả hồ sơ lẫn tên) |
+| Tên chứa `<script>` | Hiện đúng chữ ở trang Huấn luyện viên, tin nhắn, nhận xét (htmlspecialchars) |
+| Tài khoản vừa bị thu hồi vai trò HLV gửi form | `requireCoach()` chặn; câu UPDATE tên còn kèm điều kiện `role = 'COACH'` |
+| Gửi kèm `user_id` của người khác | Không có tác dụng: id luôn lấy từ session |
+
+### Thanh toán bằng mã VietQR (A-56)
+
+| Thử | Kết quả đúng |
+|---|---|
+| HLV gửi form giá với `bank_bin=123456` (sửa bằng F12), số TK `12ab56`, số TK 5 hoặc 20 chữ số | Báo lỗi đúng ô, không lưu gì (cả giá) |
+| Tên chủ TK `Nguyễn Văn A`, `NGUYEN  VAN A1`, 51 ký tự | Có dấu / có số / quá dài → báo lỗi; khoảng trắng thừa và chữ thường được chuẩn hóa thành `NGUYEN VAN A` |
+| Gửi form giá không có CSRF token | Trang lỗi CSRF, không lưu |
+| Học viên có đơn PENDING mở tab Lịch hẹn và gói, F12 > Network | Ảnh từ `img.vietqr.io` có `amount` đúng số tiền đơn, `addInfo=GS<mã đơn>`; Console không có "Refused to load the image" |
+| Học viên khác / học viên chưa có đơn chờ / HLV khác mở trang | Không thấy mã QR hay số tài khoản của HLV này |
+| Sửa `bank_account` trong DB thành `123&amount=1` rồi mở đơn | Không hiện mã QR (kiểm tra lại trước khi ghép), quay về hướng dẫn chữ |
+| Nhật ký hoạt động sau khi HLV lưu tài khoản | Chỉ ghi `****` + 4 số cuối, không ghi đủ số tài khoản |

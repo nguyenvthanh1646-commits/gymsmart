@@ -33,7 +33,7 @@
 
 ## 3. Design tokens (bắt buộc dùng biến, không viết mã màu trực tiếp)
 
-Hiện CSS có nhiều tiền tố biến (`--color-*`, `--ui-*`, `--gc-*`, `--gs-*`). Từ nay **chỉ dùng bộ dưới đây**, khai báo một lần trong `public/css/ui.css`. Khi sửa trang nào thì chuyển biến cũ của trang đó sang bộ này.
+Bộ dưới đây khai báo **một lần duy nhất** ở `:root` của `public/css/ui.css` (A-52). Các tên cũ `--color-*` và `--ui-*` (cuối `:root` của `ui.css`) và `--gs-*` (`brand.css`) giờ chỉ là tên phụ trỏ về bộ này, không có giá trị riêng; code mới đừng dùng. `style.css` chỉ còn vài biến cũ không có trong bộ chuẩn (`--color-accent-hover`, `--color-accent-soft`, `--color-error*`, `--color-success*`, `--transition`). `--gc-*` (chatbot), `--du-*` (bảng điều khiển), `--gh-*` (trang khách) là biến riêng của một khu, được phép nhưng nên dẫn xuất từ bộ chuẩn. Mã hex trùng đúng giá trị token đã được thay bằng `var(...)` (179 chỗ, so ảnh 80 màn hình trước/sau không đổi điểm ảnh nào ngoài phần nội dung động).
 
 | Nhóm | Biến | Giá trị |
 |---|---|---|
@@ -53,6 +53,11 @@ Hiện CSS có nhiều tiền tố biến (`--color-*`, `--ui-*`, `--gc-*`, `--g
 | | `--warn` | `#f79009` |
 | | `--danger` | `#f04438` |
 | | `--info` | `#2e90fa` |
+| Chữ / nền trạng thái (thông báo, huy hiệu, nút xóa) | `--ok-text` / `--ok-soft` | `#067647` / `#ecfdf3` |
+| | `--warn-text` / `--warn-soft` | `#93370d` / `#fffaeb` |
+| | `--danger-text` / `--danger-soft` | `#b42318` / `#fef3f2` |
+| Chữ phụ đậm (nhãn, tiêu đề cột) | `--text-2` / `--text-3` | `#344054` / `#475467` |
+| Ánh sáng lạnh (**chỉ trang khách**) | `--glow-cool` | `#22d3ee` — chỉ làm quầng sáng/gradient trang trí trong `home-guest.css`; không dùng cho chữ, nút hay trạng thái |
 | Bo góc | `--r-sm` / `--r` / `--r-lg` / `--r-pill` | `8px` / `12px` / `18px` / `999px` |
 | Bóng | `--shadow-sm` | `0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06)` |
 | | `--shadow-md` | `0 8px 24px rgba(16,24,40,.08)` |
@@ -94,6 +99,7 @@ Quy tắc màu:
   - Mục đang mở có chữ cam và gạch chân cam 3px.
   - Bên phải là avatar tròn cam và nút Đăng xuất dạng viền.
   - Trên điện thoại thu gọn thành nút menu.
+- **Thanh điều hướng của khách:** Bài tập & Video, Bài viết (trang chủ khách có thêm Tính năng), bên phải Đăng nhập và nút Đăng ký. Ở thư viện bài tập và bài viết, khách thấy một dải mời đăng ký nền `--accent-soft` ngay dưới tiêu đề (`includes/guest-cta.php`).
 - **Thanh điều hướng quản trị:** nền `--ink`, nhãn `ADMIN` cam, nút "Xem trang người dùng". Khu HLV dùng cùng kiểu với nhãn `HLV`.
 - **Nút:**
   - Chính: nền cam, chữ trắng, bo `--r`, có hover/active/focus.
@@ -112,6 +118,7 @@ Quy tắc màu:
 - **Thanh và vòng tiến độ:** phần đạt màu cam, phần còn lại `--line`, luôn kèm số hoặc chữ.
 - **Trạng thái rỗng:** biểu tượng tròn nền `--accent-soft`, tiêu đề ngắn, một câu hướng dẫn, một nút hành động. Không để ô trống.
 - **Đang tải:** khung xương (skeleton) xám nhạt. Không dùng vòng quay toàn trang.
+- **Chuông thông báo:** nút tròn 44px trên mọi thanh menu khi đã đăng nhập, số chưa đọc trong huy hiệu đỏ (`--danger`, kèm `aria-label` có số). Bấm mở khung thả xuống nền trắng (điện thoại: gần hết bề ngang), mỗi thông báo có chấm cam + chữ đậm khi chưa đọc, nút "Đánh dấu đã đọc tất cả", liên kết "Xem tất cả". Esc để đóng. Không có JS thì chuông là liên kết tới trang Thông báo.
 - **Chatbot:**
   - Nút nổi góc phải dưới, 56px.
   - Khung chat nền đặc (không trong suốt), z-index cao nhất, nằm trọn trong viewport.
@@ -121,11 +128,14 @@ Quy tắc màu:
 
 ## 7. Quy định theo trang
 
-- **Trang chủ khách:**
-  - Ngoại lệ duy nhất được dùng hero nền tối (`--ink`) với ảnh gym có nguồn ghi trong `public/img/CREDITS.md` và lớp phủ gradient.
-  - Các khối bên dưới quay về nền sáng.
+- **Trang chủ khách (hướng "Future sport", 11/2026):**
+  - Hero nền tối `--ink` (ngoại lệ duy nhất): lưới sàn phối cảnh, quầng sáng cam và `--glow-cool`, tiêu đề viết hoa nghiêng từng dòng (dòng giữa chỉ có viền, có dự phòng chữ đặc), dải số liệu THẬT (số bài tập, nhóm cơ, bài viết có dẫn chứng). Bên phải: ảnh gym tông cam/tối cắt hình bình hành có vạch quét (nguồn ghi trong `public/assets/img/CREDITS.md`) và **một** bảng điều khiển kính tối có nhãn "Ví dụ".
+  - Không dùng ảnh người nổi tiếng/influencer: vừa vướng bản quyền, vừa khiến người xem hiểu nhầm là họ quảng cáo cho GymSmart.
+  - Nút cam dùng chữ `--ink` (chữ trắng trên `#ff5a1f` chỉ đạt 3,12:1).
+  - Bên dưới: dải từ khóa chạy ngang, công cụ tính calo (tính trong trình duyệt), lưới bento, 3 bước, chatbot mẫu, bài viết thật, kêu gọi cuối trang nền cam; mọi khối nền sáng.
+  - Chuyển động chỉ chạy khi nhìn thấy và tab đang mở; tắt hết khi `prefers-reduced-motion`.
 - **Trang chủ đã đăng nhập (bảng điều khiển):**
-  - Dùng nền sáng như trang chức năng, không dùng nền xanh đen.
+  - Nền tối `--ink` (thẻ xanh đen). Đầu trang theo hướng "Future sport" giống hero trang khách: lưới sàn phối cảnh, quầng sáng cam (không dùng `--glow-cool`), lời chào viết hoa nghiêng có tên tô gradient cam, ô số liệu nghiêng viền trái cam. Từ 900px có thêm ảnh gym cắt bình hành bên phải; màn hình hẹp ẩn ảnh để số liệu lên sớm.
   - Gồm: lời chào và ngày, một nút hành động theo trạng thái (Tạo lịch tập, Bắt đầu buổi tập, Hoàn thiện hồ sơ), thẻ Hôm nay, thẻ Tuần này (dải 7 ngày, có chữ Đã tập, Chưa tập, Nghỉ), thẻ Dinh dưỡng (vòng macro), thẻ Tiến trình (sparkline cân nặng).
 - **Đăng ký:** 3 bước (Tài khoản, Cơ thể, Mục tiêu) có thanh tiến độ, giữ lại dữ liệu khi lỗi.
 - **Đăng nhập, quên mật khẩu:** tối giản, có liên kết qua lại, thông báo chung không lộ email có tồn tại.
@@ -134,8 +144,11 @@ Quy tắc màu:
   - Thẻ có ảnh cùng tỷ lệ 4:3 và huy hiệu độ khó.
   - Trang chi tiết có video 16:9, các bước, lỗi thường gặp và bài cùng nhóm cơ.
 - **Lịch tập:** xem theo ngày trong tuần; mỗi bài là một dòng (set × rep, mức tạ gợi ý); ghi nhật ký nhanh.
+- **Đang tập (`workout-session.php`):** dùng một tay trong phòng gym: ô nhập và nút cao từ 48px, bàn phím số; mỗi set một dòng có nút "Xong"; gợi ý mức tạ có nhãn chữ (Tăng tạ, Giữ mức, Giảm tạ), không chỉ dùng màu; thanh dính đáy chứa đồng hồ nghỉ và nút lưu, chừa chỗ cho nút chatbot.
 - **TDEE/Macro:** số lớn kèm vòng macro, đổi mục tiêu thì tính lại ngay, lịch ăn theo bữa.
 - **Tiến trình:** form số đo ngắn, biểu đồ đường một trục, chọn khoảng 7/30/90 ngày, có trạng thái rỗng.
+- **Nhật ký ăn (`food-log.php`):** chọn ngày (mũi tên + ô ngày), 4 ô tổng so với mục tiêu có thanh tiến độ (vượt quá 110% đổi màu `--warn`, luôn kèm chữ "còn ..." / "vượt ..."), form ghi món (bữa, thực phẩm, gam) và danh sách theo bữa, khu "Thực phẩm của tôi" nhập theo nhãn. Ghi rõ giá trị thực phẩm thường dùng là xấp xỉ.
+- **Báo cáo & thành tích (`report.php`):** 3 ô chuỗi tuần (ô chính nền `--ink`), báo cáo tháng có nút tháng trước/sau, huy hiệu dạng thẻ: đã đạt nền `--accent-soft` kèm ngày đạt, chưa đạt màu xám kèm thanh tiến độ và số (ví dụ 6/10). Chỉ có huy hiệu khi đạt mốc thật. Có bản in (`@media print`) để lưu PDF.
 - **Bài viết:**
   - Khối "Đọc trước khi tập" ở đầu.
   - Thẻ bài có ảnh bìa, chuyên mục, thời gian đọc.
@@ -149,6 +162,7 @@ Quy tắc màu:
   - Cùng phong cách khu quản trị.
   - Bảng điều khiển gồm học viên, yêu cầu chờ duyệt, học viên chưa tập 7 ngày, tin nhắn chưa đọc.
   - Lịch hoặc mục tiêu do HLV giao có nhãn "Do HLV … giao" ở phía học viên.
+  - Đánh giá HLV: sao màu `--warn` luôn kèm số ("5,0/5 · 3 đánh giá") và `aria-label`; chưa có thì ghi "Chưa có đánh giá", không hiện 0 sao. Chỉ học viên đã tập đủ điều kiện mới thấy form, người khác thấy câu giải thích vì sao chưa được.
 
 ## 8. Khả năng tiếp cận (bắt buộc)
 

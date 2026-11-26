@@ -31,7 +31,10 @@ include __DIR__ . '/../includes/admin-nav.php';
             <h1>Huấn luyện viên</h1>
             <p class="adm-sub">Người dùng trở thành HLV khi đơn đăng ký được duyệt. Thu hồi thì mọi học viên của HLV đó được kết thúc.</p>
         </div>
-        <a class="adm-btn" href="/admin/coach-applications.php">Đơn đăng ký<?= $counts['pending_apps'] > 0 ? ' (' . (int)$counts['pending_apps'] . ' chờ duyệt)' : '' ?></a>
+        <div class="adm-actions">
+            <a class="adm-btn adm-btn-ghost" href="/admin/coach-reviews.php">Đánh giá HLV</a>
+            <a class="adm-btn" href="/admin/coach-applications.php">Đơn đăng ký<?= $counts['pending_apps'] > 0 ? ' (' . (int)$counts['pending_apps'] . ' chờ duyệt)' : '' ?></a>
+        </div>
     </div>
 
     <?php if ($flash): ?>

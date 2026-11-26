@@ -7,11 +7,13 @@
  *   - HLV tạm ngừng nhận hoặc đã đủ học viên thì không gửi được.
  *   - HLV và ADMIN xem được danh sách nhưng không gửi yêu cầu.
  * Danh sách HLV chỉ hiện thông tin công khai trong hồ sơ HLV, không có email.
+ * Giá tập và số buổi thử miễn phí (A-54) hiện trên từng thẻ khi DB đã chạy sql/coach_billing.sql. Hướng dẫn thanh toán KHÔNG hiện ở đây.
  */
 require_once __DIR__ . '/includes/auth.php';
 requireLogin();
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/coach.php';
+require_once __DIR__ . '/includes/coach-reviews.php';   // số sao trung bình và đánh giá gần nhất (A-49)
 
 $userId = (int)$_SESSION['user_id'];
 $ready  = coachTablesReady($pdo);
@@ -20,9 +22,12 @@ coachHandleClientAction($pdo, '/coaches.php');
 $role    = coachUserRole($pdo, $userId) ?? 'USER';
 $flash   = coachTakeFlash();
 $coaches = $ready ? coachListPublic($pdo) : [];
+$ratings = ($ready && coachReviewsReady($pdo)) ? coachRatingSummary($pdo, array_column($coaches, 'id')) : [];
+$reviewsOn = $ready && coachReviewsReady($pdo);
 $openRel = ($ready && $role === 'USER') ? coachOpenRelationForClient($pdo, $userId) : null;
 $canAsk  = $ready && $role === 'USER' && $openRel === null;
 $app     = ($ready && $role === 'USER') ? coachLatestApplication($pdo, $userId) : null;
+$prices  = ($ready && coachBillingReady($pdo)) ? coachPricingMap($pdo, array_column($coaches, 'id')) : null;
 
 $pageTitle = 'Huấn luyện viên';
 $pageCss = ['/css/coach.css'];
@@ -61,6 +66,9 @@ include __DIR__ . '/includes/header.php';
                         <span class="ch-badge ch-badge--warn">Chờ HLV duyệt</span>
                         <h2 style="margin-top:8px">Bạn đã gửi yêu cầu tới <?= htmlspecialchars($openRel['coach_name']) ?></h2>
                         <p>Gửi lúc <?= htmlspecialchars(coachTimeAgo($openRel['created_at'])) ?>. Trong lúc chờ, bạn không gửi yêu cầu tới HLV khác được.</p>
+                        <?php if ($stale = coachPendingStaleDays($openRel['created_at'], coachNow())): ?>
+                            <div class="alert alert--note" role="note"><div>HLV chưa trả lời sau <?= (int)$stale ?> ngày. Bạn có thể hủy yêu cầu để chọn HLV khác, hoặc chờ thêm.</div></div>
+                        <?php endif; ?>
                         <form method="post" action="/coaches.php" data-confirm="Hủy yêu cầu gửi tới HLV này?">
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="cancel">
@@ -102,6 +110,10 @@ include __DIR__ . '/includes/header.php';
                             <div>
                                 <h2><?= htmlspecialchars($c['full_name']) ?></h2>
                                 <p><?= htmlspecialchars($c['headline']) ?></p>
+                                <?php if ($reviewsOn): ?>
+                                    <?php $rt = $ratings[(int)$c['id']] ?? null; ?>
+                                    <p class="ch-rating"><?php if ($rt): ?><span class="ch-stars" aria-hidden="true">★</span> <b><?= htmlspecialchars(number_format($rt['avg'], 1, ',', '')) ?></b>/5 · <?= (int)$rt['count'] ?> đánh giá từ học viên đã tập<?php else: ?>Chưa có đánh giá<?php endif; ?></p>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="ch-tags">
@@ -114,6 +126,13 @@ include __DIR__ . '/includes/header.php';
                             <div><dt>học viên</dt><dd><?= (int)$c['active_clients'] ?></dd></div>
                             <div><dt>chỗ còn</dt><dd><?= (int)$c['seats_left'] ?></dd></div>
                         </dl>
+                        <?php if ($prices !== null): $pr = $prices[(int)$c['id']] ?? null; ?>
+                            <p class="ch-price">
+                                <?php if ($pr): ?><span class="ch-badge ch-badge--ok">Tập thử miễn phí <?= (int)$pr['trial_sessions'] ?> buổi đầu</span><?php endif; ?>
+                                <?php $line = $pr ? coachPriceLine($pr['price_per_session'], $pr['price_per_month']) : ''; ?>
+                                <?= $line !== '' ? '<b>' . htmlspecialchars($line) . '</b>' : '<span class="ch-muted ch-small">HLV chưa đặt giá gói</span>' ?>
+                            </p>
+                        <?php endif; ?>
                         <p class="ch-coach__bio"><?= htmlspecialchars($c['bio']) ?></p>
                         <details>
                             <summary>Phương pháp, chứng chỉ, thời gian</summary>
@@ -121,6 +140,18 @@ include __DIR__ . '/includes/header.php';
                             <p><b>Chứng chỉ:</b> <?= htmlspecialchars($c['certifications'] !== '' ? $c['certifications'] : 'Không ghi chứng chỉ.') ?></p>
                             <?php if ($c['availability'] !== ''): ?><p><b>Thời gian hỗ trợ:</b> <?= htmlspecialchars($c['availability']) ?></p><?php endif; ?>
                         </details>
+                        <?php if ($reviewsOn && !empty($ratings[(int)$c['id']])): ?>
+                            <details>
+                                <summary>Đánh giá gần đây</summary>
+                                <ul class="ch-reviews">
+                                    <?php foreach (coachReviewsForCoach($pdo, (int)$c['id'], 3) as $rv): ?>
+                                        <li><span class="ch-stars" aria-label="<?= (int)$rv['rating'] ?> trên 5 sao"><?= str_repeat('★', $rv['rating']) . str_repeat('☆', 5 - $rv['rating']) ?></span>
+                                            <b><?= htmlspecialchars($rv['name']) ?></b> <span class="ch-muted ch-small"><?= htmlspecialchars(date('d/m/Y', strtotime($rv['date']))) ?></span>
+                                            <?php if ($rv['comment'] !== ''): ?><p><?= htmlspecialchars($rv['comment']) ?></p><?php endif; ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </details>
+                        <?php endif; ?>
                         <div class="ch-coach__act">
                             <?php if ($isMine): ?>
                                 <span class="ch-badge ch-badge--accent" style="justify-self:start"><?= $openRel['status'] === 'ACTIVE' ? 'HLV của bạn' : 'Đã gửi yêu cầu' ?></span>
@@ -137,6 +168,9 @@ include __DIR__ . '/includes/header.php';
                                               placeholder="Mục tiêu, lịch rảnh, chấn thương nếu có…"></textarea>
                                     <span class="ch-count" data-count="note-<?= (int)$c['id'] ?>"></span>
                                     <p class="ch-muted ch-small" style="margin:6px 0 0">HLV sẽ xem được hồ sơ tập luyện, lịch tập, nhật ký và số đo của bạn (không xem email). Mỗi người chỉ đăng ký 1 HLV.</p>
+                                    <?php if (!empty($prices[(int)$c['id']])): ?>
+                                        <p class="ch-muted ch-small" style="margin:6px 0 0">Khi HLV nhận, bạn được tập thử miễn phí <?= (int)$prices[(int)$c['id']]['trial_sessions'] ?> buổi đầu. Sau đó mua gói buổi hoặc gói tháng, trả trực tiếp cho HLV.</p>
+                                    <?php endif; ?>
                                     <div class="ch-req__row">
                                         <button type="submit" class="btn" data-busy-text="Đang gửi…">Gửi yêu cầu</button>
                                     </div>

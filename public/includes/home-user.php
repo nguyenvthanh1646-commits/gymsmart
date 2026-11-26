@@ -60,21 +60,21 @@ if ($dash['nutrition']['status'] === 'ok') {
 if ($dash['progress']['status'] === 'ok') {
     $duStats[] = ['chart', 'Cân nặng', dashNumber((float)$dash['progress']['latest']['weight_kg']), 'kg'];
 }
+// Chuỗi tuần tập đều (F1): chỉ hiện khi đã từng có tuần đạt, để người mới không thấy số 0 vô nghĩa
+if ($dash['streak'] !== null && $dash['streak']['best'] > 0) {
+    $duStats[] = ['target', 'Chuỗi tuần tập đều', (string)$dash['streak']['current'], 'tuần'];
+}
 ?>
 <script src="/js/home-user.js" defer></script>
 
 <div class="du">
     <div class="du-hero">
-        <!-- Ảnh trang trí nên alt rỗng. Nguồn ảnh ghi ở assets/img/CREDITS.md -->
-        <picture>
-            <source media="(max-width: 720px)" type="image/webp" srcset="/assets/img/hero/hero-800.webp" width="800" height="1000">
-            <source media="(max-width: 720px)" type="image/jpeg" srcset="/assets/img/hero/hero-800.jpg" width="800" height="1000">
-            <source type="image/webp" srcset="/assets/img/hero/hero-1920.webp" width="1920" height="1080">
-            <img class="du-hero__photo" src="/assets/img/hero/hero-1920.jpg" alt="" width="1920" height="1080" fetchpriority="high" decoding="async">
-        </picture>
+        <!-- Nền trang trí kiểu "Future sport" giống hero trang khách: lưới sàn phối cảnh và quầng sáng cam -->
+        <span class="du-hero__floor" aria-hidden="true"></span>
+        <span class="du-hero__glow" aria-hidden="true"></span>
         <div class="du-wrap du-hero__in">
             <div class="du-hero__copy">
-                <p class="du-hero__date"><?= htmlspecialchars($dash['dateLabel']) ?></p>
+                <p class="du-hero__date"><span class="du-hero__dot" aria-hidden="true"></span><?= htmlspecialchars($dash['dateLabel']) ?></p>
                 <h1 class="du-hero__title">Chào <em><?= htmlspecialchars($firstName) ?></em></h1>
                 <p class="du-hero__lead" data-dash-lead><?= htmlspecialchars($duLead) ?></p>
                 <a class="du-btn" href="<?= htmlspecialchars($dash['action']['href']) ?>" data-dash-primary><?= htmlspecialchars($dash['action']['label']) ?></a>
@@ -90,6 +90,18 @@ if ($dash['progress']['status'] === 'ok') {
                     <?php endforeach; ?>
                 </dl>
             <?php endif; ?>
+            <!-- Ảnh trang trí (alt rỗng), chỉ hiện ở màn hình rộng. loading="lazy" để điện thoại (ảnh bị ẩn) không phải tải.
+                 Nguồn ảnh ghi ở assets/img/CREDITS.md -->
+            <div class="du-hero__art" aria-hidden="true">
+                <div class="du-hero__frame">
+                    <picture>
+                        <source type="image/webp" srcset="/assets/img/hero/hero-duo.webp" width="450" height="492">
+                        <img src="/assets/img/hero/hero-duo.jpg" alt="" width="450" height="492" loading="lazy" decoding="async">
+                    </picture>
+                    <span class="du-hero__scan"></span>
+                </div>
+                <span class="du-hero__stripes"></span>
+            </div>
         </div>
     </div>
 

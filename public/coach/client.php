@@ -18,6 +18,30 @@ requireCoach();
 $self = '/coach/client.php?id=' . $clientId;
 coachHandleCoachAction($pdo, ($_POST['action'] ?? '') === 'end' ? '/coach/clients.php' : $self);
 
+// Sửa / xóa nhận xét: coachOwnFeedback() kiểm tra nhận xét thuộc HLV này và quan hệ còn ACTIVE
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['feedback_edit', 'feedback_delete'], true)) {
+    if (!verifyCsrf()) {
+        showCsrfError();
+    }
+    $fbId = coachParseId($_POST['feedback_id'] ?? null);
+    try {
+        if (!coachExtrasReady($pdo)) {
+            throw new CoachException('Cần import sql/coach_extras.sql để sửa nhận xét.');
+        }
+        if ($_POST['action'] === 'feedback_edit') {
+            coachUpdateFeedback($pdo, (int)$_SESSION['user_id'], $fbId, coachCleanText($_POST['content'] ?? ''));
+            coachFlash('ok', 'Đã sửa nhận xét. Học viên sẽ được báo lại.');
+        } else {
+            coachDeleteFeedback($pdo, (int)$_SESSION['user_id'], $fbId);
+            coachFlash('ok', 'Đã xóa nhận xét.');
+        }
+    } catch (CoachException $e) {
+        coachFlash('error', $e->getMessage());
+    }
+    header('Location: ' . $self . '#h-logs');
+    exit;
+}
+
 // Nhận xét: log_date rỗng = nhận xét chung; có ngày thì phải là ngày học viên có ghi log (coachAddFeedback kiểm tra)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'feedback') {
     if (!verifyCsrf()) {
@@ -43,10 +67,12 @@ $planBy   = coachPlanAssigner($pdo, $clientId);
 $logs     = coachClientLogs($pdo, $clientId, $today, 30);
 $target   = coachLatestNutrition($pdo, $clientId);
 $requests = coachChangeRequests($pdo, $relationId, true);
+$canEditFb = coachExtrasReady($pdo);   // sửa/xóa nhận xét cần cột updated_at (sql/coach_extras.sql)
 $feedbackByDate = [];
 foreach (coachFeedbackList($pdo, $relationId, 100) as $f) {
     $feedbackByDate[$f['log_date'] ?? 'general'][] = $f;
 }
+$bill = coachBillingReady($pdo) ? coachBillingState($pdo, $relationId) : null;   // buổi thử, gói (A-54)
 $st = $pdo->prepare('SELECT accepted_at FROM coach_clients WHERE id = ?');
 $st->execute([$relationId]);
 $acceptedAt = (string)$st->fetchColumn();
@@ -99,6 +125,7 @@ include __DIR__ . '/../includes/coach-nav.php';
     <?php if ($flash): ?>
         <div class="adm-toast adm-toast-<?= $flash[0] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($flash[1]) ?></div>
     <?php endif; ?>
+    <?= coachBillingBanner($pdo, $relationId) ?>
 
     <?php if ($requests): ?>
         <section class="adm-panel adm-card-pad" style="margin-bottom:16px;border-color:var(--accent)" aria-labelledby="h-req">
@@ -127,14 +154,24 @@ include __DIR__ . '/../includes/coach-nav.php';
 
     <div class="adm-split">
         <div style="display:grid;gap:16px;min-width:0">
+            <div class="cc-charts">
             <section class="adm-panel adm-card-pad" aria-labelledby="h-chart">
                 <h2 id="h-chart">Cân nặng</h2>
-                <div id="cc-chart" data-client="<?= (int)$clientId ?>">
-                    <span class="ch-skel" style="height:240px" aria-hidden="true"></span>
-                    <p class="adm-sub" id="cc-chart-msg" role="status">Đang tải số đo…</p>
-                    <div class="adm-chart" hidden><canvas id="cc-canvas" role="img" aria-label="Biểu đồ cân nặng của học viên theo ngày"></canvas></div>
+                <div class="cc-chart" data-client="<?= (int)$clientId ?>" data-api="body-metrics" data-field="weightKg" data-unit="kg" data-label="Cân nặng" data-empty="Học viên chưa nhập số đo nào. Nhắc học viên cân và ghi ở trang Tiến trình mỗi tuần.">
+                    <span class="ch-skel" style="height:220px" aria-hidden="true"></span>
+                    <p class="adm-sub cc-chart__msg" role="status">Đang tải…</p>
+                    <div class="adm-chart" hidden><canvas role="img" aria-label="Cân nặng"></canvas></div>
                 </div>
             </section>
+            <section class="adm-panel adm-card-pad" aria-labelledby="h-kcal">
+                <h2 id="h-kcal">Calo mục tiêu</h2>
+                <div class="cc-chart" data-client="<?= (int)$clientId ?>" data-api="nutrition-history" data-field="targetKcal" data-unit="kcal" data-label="Calo mục tiêu mỗi ngày" data-empty="Chưa có mục tiêu dinh dưỡng nào được lưu.">
+                    <span class="ch-skel" style="height:220px" aria-hidden="true"></span>
+                    <p class="adm-sub cc-chart__msg" role="status">Đang tải…</p>
+                    <div class="adm-chart" hidden><canvas role="img" aria-label="Calo mục tiêu mỗi ngày"></canvas></div>
+                </div>
+            </section>
+            </div>
 
             <section class="adm-panel adm-card-pad" aria-labelledby="h-logs">
                 <h2 id="h-logs">Nhật ký 30 ngày</h2>
@@ -149,7 +186,7 @@ include __DIR__ . '/../includes/coach-nav.php';
                     </form>
                 </details>
                 <?php foreach ($feedbackByDate['general'] ?? [] as $f): ?>
-                    <div class="ch-quote"><b>Nhận xét chung · <?= htmlspecialchars(coachTimeAgo($f['created_at'])) ?>:</b> <?= htmlspecialchars($f['content']) ?><?= $f['read_at'] ? ' <small class="adm-sub">(đã xem)</small>' : '' ?></div>
+                    <?= coachFeedbackItem($f, $self, 'Nhận xét chung · ' . coachTimeAgo($f['created_at']), $canEditFb) ?>
                 <?php endforeach; ?>
                 <?php if (!$logs): ?>
                     <p class="adm-sub">Học viên chưa ghi buổi tập nào trong 30 ngày qua. Nhắn tin hỏi thăm để giữ nhịp tập.</p>
@@ -164,7 +201,7 @@ include __DIR__ . '/../includes/coach-nav.php';
                                 <?php endforeach; ?>
                             </ul>
                             <?php foreach ($feedbackByDate[$date] ?? [] as $f): ?>
-                                <div class="ch-quote"><b>Nhận xét của bạn:</b> <?= htmlspecialchars($f['content']) ?><?= $f['read_at'] ? ' <small class="adm-sub">(đã xem)</small>' : '' ?></div>
+                                <?= coachFeedbackItem($f, $self, 'Nhận xét của bạn', $canEditFb) ?>
                             <?php endforeach; ?>
                             <details class="cc-fb">
                                 <summary>Nhận xét buổi này</summary>
@@ -183,6 +220,18 @@ include __DIR__ . '/../includes/coach-nav.php';
         </div>
 
         <div class="adm-side" style="display:grid;gap:16px">
+            <?php if ($bill !== null): ?>
+            <section class="adm-panel adm-card-pad" aria-labelledby="h-bill">
+                <h2 id="h-bill">Buổi tập và gói</h2>
+                <dl class="adm-kv">
+                    <div><dt>Buổi thử</dt><dd>còn <?= (int)$bill['trial_left'] ?>/<?= (int)$bill['trial'] ?></dd></div>
+                    <div><dt>Gói buổi</dt><dd><?= $bill['pack_units'] > 0 ? 'còn ' . (int)$bill['pack_left'] . '/' . (int)$bill['pack_units'] : 'Chưa mua' ?></dd></div>
+                    <div><dt>Gói tháng</dt><dd><?= $bill['month_until'] !== null ? 'tới ' . htmlspecialchars(date('d/m/Y', strtotime($bill['month_until']))) : 'Không có' ?></dd></div>
+                    <div><dt>Buổi đang hẹn</dt><dd><?= (int)$bill['holding'] ?></dd></div>
+                </dl>
+                <a class="adm-btn adm-btn-ghost adm-btn-sm" href="/coach/sessions.php">Lịch hẹn và gói</a>
+            </section>
+            <?php endif; ?>
             <section class="adm-panel adm-card-pad" aria-labelledby="h-body">
                 <h2 id="h-body">Chỉ số cơ thể</h2>
                 <dl class="adm-kv">

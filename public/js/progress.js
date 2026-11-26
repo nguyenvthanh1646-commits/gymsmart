@@ -116,10 +116,21 @@
 
         // Mỡ (trục trái, %) và vòng eo (trục phải, cm)
         var bRows = body.filter(function (r) { return r.bodyFatPercent !== null || r.waistCm !== null; });
+        // Chỉ tạo trục cho đường có dữ liệu: chưa nhập % mỡ thì không hiện trục % trống (0 đến 1) bên trái
         var bSets = [];
-        if (hasValue(bRows, 'bodyFatPercent')) { bSets.push(line('Mỡ cơ thể (%)', 'bodyFatPercent', bRows, COLORS.fat, 'y')); }
-        if (hasValue(bRows, 'waistCm')) { bSets.push(line('Vòng eo (cm)', 'waistCm', bRows, COLORS.waist, 'y1')); }
-        paint('pr-c-body', 'line', labels(bRows), bSets, { y: scale('%'), y1: scale('cm', 'right') });
+        var hasFat = hasValue(bRows, 'bodyFatPercent');
+        var hasWaist = hasValue(bRows, 'waistCm');
+        var bScales = {};
+        if (hasFat) {
+            bSets.push(line('Mỡ cơ thể (%)', 'bodyFatPercent', bRows, COLORS.fat, 'y'));
+            bScales.y = scale('%');
+        }
+        if (hasWaist) {
+            var waistAxis = hasFat ? 'y1' : 'y';   // có cả hai thì vòng eo dùng trục phải
+            bSets.push(line('Vòng eo (cm)', 'waistCm', bRows, COLORS.waist, waistAxis));
+            bScales[waistAxis] = scale('cm', hasFat ? 'right' : 'left');
+        }
+        paint('pr-c-body', 'line', labels(bRows), bSets, bScales);
 
         // Khối lượng cơ bắp ước tính = cân nặng × (1 − %mỡ); khối lượng mỡ = cân nặng − khối lượng nạc
         var mRows = body.filter(function (r) { return r.weightKg !== null && r.bodyFatPercent !== null; }).map(function (r) {

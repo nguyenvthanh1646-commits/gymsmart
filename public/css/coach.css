@@ -191,20 +191,21 @@
 .cc-day:first-of-type { border-top: 0; padding-top: 0; }
 .cc-day .adm-list li { padding: 8px 0; }
 .cc-day .ch-quote { margin-top: var(--s-2); }
-#cc-chart .ch-skel { display: block; }
-#cc-chart.is-ready .ch-skel, #cc-chart.is-ready #cc-chart-msg { display: none; }
+.cc-chart .ch-skel { display: block; }
+.cc-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.cc-charts .adm-chart { height: 220px; }
 
 /* ---------- Khu HLV: sửa lịch học viên (mỗi bài một dòng, 3 form nhỏ) ---------- */
 .cp-day h2 small { font-weight: 500; margin-left: 6px; }
-.cp-row { display: grid; grid-template-columns: minmax(140px, 1fr) auto auto auto; gap: var(--s-2) var(--s-3); align-items: center;
+.cp-row { display: grid; grid-template-columns: minmax(110px, 1fr) auto auto auto; gap: var(--s-2) var(--s-3); align-items: center;
     padding: var(--s-3) 0; border-top: 1px solid var(--line); }
 .cp-row:first-of-type { border-top: 0; }
 .cp-row__name b { display: block; }
 .cp-row__name small { color: var(--text-muted); }
 .cp-form { display: flex; gap: var(--s-2); align-items: center; margin: 0; }
 .cp-form label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-muted); }
-.cp-form .adm-input { width: 64px; height: 44px; min-height: 44px; padding: 0 8px; text-align: center; }
-.cp-form .adm-select { width: 190px; height: 44px; min-height: 44px; }
+.cp-form .adm-input { width: 56px; height: 44px; min-height: 44px; padding: 0 8px; text-align: center; }
+.cp-form .adm-select { width: 150px; height: 44px; min-height: 44px; }
 @media (max-width: 1100px) { .cp-row { grid-template-columns: 1fr; } .cp-form { flex-wrap: wrap; } .cp-form .adm-select { flex: 1; width: auto; min-width: 0; } }
 
 /* ---------- Khu HLV: tổng calo khi đặt macro ---------- */
@@ -242,3 +243,74 @@
 /* Cột xếp thẻ bằng grid gap: bỏ margin-top của ".card + .card" (ui.css) để khoảng cách không bị gấp đôi */
 .ch-stack { display: grid; gap: var(--s-5); min-width: 0; }
 .ch-stack > .card + .card, .ch-side > .card + .card { margin-top: 0; }
+
+/* "Đã xem" dưới tin nhắn của mình */
+.ch-seen { align-self: flex-end; margin: -4px 4px 0; font-size: 12px; color: var(--text-muted); }
+
+/* Thanh bản nháp lịch tập (Giao / Bỏ) */
+.cp-draftbar { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; justify-content: space-between; border-color: var(--warn); background: color-mix(in srgb, var(--warn) 8%, var(--surface)); }
+.cp-draftbar .adm-actions { width: auto; }
+
+/* Mẫu lịch tập của HLV (coach/templates.php, A-48) */
+.tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.tpl-card h2 { margin: 0 0 4px; font-size: 19px; }
+.tpl-days { margin: 12px 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; color: var(--text); }
+.tpl-days b { display: inline-block; min-width: 30px; color: var(--accent-dark); }
+.tpl-apply fieldset { margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); }
+.tpl-apply legend { padding: 0 4px; font-weight: 700; font-size: 14px; }
+.tpl-check { display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 15px; cursor: pointer; }
+.tpl-check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.tpl-del { margin-top: 8px; }
+.tpl-empty h2 { margin: 0 0 6px; }
+@media (max-width: 420px) { .tpl-grid { grid-template-columns: 1fr; } }
+
+/* Đánh giá HLV (A-49) */
+.ch-stars { color: var(--warn); letter-spacing: 1px; }
+.ch-rating { margin: 4px 0 0; font-size: 14px; color: var(--text-muted); }
+.ch-rating b { color: var(--text); }
+.ch-reviews { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.ch-reviews li { padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); }
+.ch-reviews p { margin: 4px 0 0; font-size: 14px; }
+.ch-review__mine { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 18px; }
+.ch-review__form { display: grid; gap: 8px; margin-top: 10px; }
+.ch-review__form textarea { width: 100%; box-sizing: border-box; }
+.ch-rate { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0; padding: 0; border: 0; }
+.ch-rate legend { margin-bottom: 4px; font-size: 14px; font-weight: 600; }
+.ch-rate label { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; cursor: pointer; }
+.ch-rate input { width: 18px; height: 18px; accent-color: var(--accent); }
+.ch-review__del { margin-top: 8px; }
+
+/* Lịch hẹn, buổi thử và gói (A-54): my-coach.php?tab=sessions, coach/sessions.php, coaches.php */
+.ch-sess-list { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.ch-sess { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r); }
+.ch-sess__main { display: grid; gap: 2px; min-width: 0; flex: 1 1 220px; }
+.ch-sess__main > span { font-size: 14px; color: var(--text-muted); }
+.ch-sess__main .ch-quote { margin-top: 6px; font-size: 14px; color: var(--text); }
+.ch-sess__side { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.ch-sess__side .adm-actions { width: auto; flex-wrap: wrap; }
+.ch-btn-sm { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.ch-book { display: grid; gap: 4px; }
+.ch-book__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ch-packs fieldset { margin: 0 0 8px; padding: 0; border: 0; display: grid; gap: 8px; }
+.ch-pack { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); cursor: pointer; }
+.ch-pack:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.ch-pack input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; margin: 0; }
+.ch-pack > span:first-of-type { display: grid; flex: 1; min-width: 0; }
+.ch-pack small { color: var(--text-muted); font-size: 13px; }
+.ch-pack__price { font-weight: 700; white-space: nowrap; }
+.ch-pay-note { font-size: 14px; overflow-wrap: anywhere; }
+/* A-56: mã VietQR cho đơn chờ thanh toán (my-coach.php). Nền trắng cố định để app ngân hàng quét được cả khi giao diện tối */
+.ch-qr { margin: var(--s-3) 0 var(--s-2); text-align: center; }
+.ch-qr img { display: block; width: 100%; max-width: 260px; height: auto; margin: 0 auto 6px; background: #fff; border-radius: 12px; padding: 6px; }
+.ch-qr__info { margin-bottom: var(--s-3); }
+.ch-qr__info dd { overflow-wrap: anywhere; }
+.ch-inline-form summary { list-style: none; cursor: pointer; }
+.ch-inline-form summary::-webkit-details-marker { display: none; }
+.ch-inline-form[open] form { display: grid; gap: 6px; margin-top: 8px; min-width: min(260px, 100%); }
+.ch-price { margin: 10px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 15px; }
+.ch-price b { color: var(--text); }
+.ch-bill-lock a { font-weight: 600; }
+@media (max-width: 480px) {
+    .ch-book__row { grid-template-columns: 1fr; }
+    .ch-sess__side { justify-content: flex-start; }
+}

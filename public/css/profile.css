@@ -14,12 +14,12 @@
 
 /* ===== Thẻ ảnh ===== */
 .pf-me { display: flex; flex-direction: column; align-items: center; padding: 26px 20px 20px; text-align: center; }
-.pf-ava__pic { width: 120px; height: 120px; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, #ff7a3a, #ff5a1f); display: grid; place-items: center; box-shadow: 0 0 0 4px #fff, 0 0 0 6px var(--ui-accent-soft), 0 8px 20px rgba(16, 24, 40, .14); }
+.pf-ava__pic { width: 120px; height: 120px; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, #ff7a3a, var(--accent)); display: grid; place-items: center; box-shadow: 0 0 0 4px #fff, 0 0 0 6px var(--ui-accent-soft), 0 8px 20px rgba(16, 24, 40, .14); }
 .pf-ava__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pf-ava__initial { color: #fff; font-size: 2.8rem; font-weight: 800; line-height: 1; }
 .pf-me__name { margin: 16px 0 0; font-size: 1.15rem; line-height: 1.25; overflow-wrap: anywhere; }
 .pf-me__mail { margin: 3px 0 0; font-size: .86rem; color: var(--color-text-muted); overflow-wrap: anywhere; }
-.pf-me__since { margin: 8px 0 0; padding: 2px 10px; font-size: .74rem; font-weight: 600; color: #475467; background: #f2f4f7; border-radius: 999px; }
+.pf-me__since { margin: 8px 0 0; padding: 2px 10px; font-size: .74rem; font-weight: 600; color: var(--text-3); background: #f2f4f7; border-radius: 999px; }
 
 .pf-ava__form { width: 100%; margin: 16px 0 0; }
 .pf-pick[hidden], .pf-me__hint[hidden] { display: none; }
@@ -27,12 +27,12 @@
 .pf-ava__bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .pf-ava__bar[hidden], .pf-ava__msg[hidden] { display: none; }
 .pf-btn-sm { box-sizing: border-box; justify-content: center; padding: 9px 12px; font-size: .88rem; }
-.pf-ava__msg { margin: 8px 0 0; font-size: .82rem; line-height: 1.4; color: #b42318; }
+.pf-ava__msg { margin: 8px 0 0; font-size: .82rem; line-height: 1.4; color: var(--danger-text); }
 .pf-me__hint { margin: 8px 0 0; font-size: .76rem; color: #98a2b3; }
 .pf-me__hint--warn { color: #b54708; }
 .pf-me__hint code { padding: 1px 5px; background: #f2f4f7; border-radius: 5px; }
 .pf-ava__rm { margin: 6px 0 0; }
-button.pf-link { padding: 0; font: inherit; font-size: .8rem; font-weight: 600; color: #b42318; background: none; border: 0; border-radius: 0; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+button.pf-link { padding: 0; font: inherit; font-size: .8rem; font-weight: 600; color: var(--danger-text); background: none; border: 0; border-radius: 0; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 button.pf-link:hover { background: none; color: #912018; }
 
 /* ===== Thẻ chỉ số ===== */
@@ -46,10 +46,10 @@ button.pf-link:hover { background: none; color: #912018; }
 .pf-m dd b { font-size: 1.05rem; color: var(--color-text); }
 .pf-m__date { margin-left: 2px; font-size: .78rem; }
 .pf-tag { display: inline-block; margin-left: 4px; padding: 1px 8px; font-size: .72rem; font-weight: 700; border-radius: 999px; vertical-align: 1px; }
-.pf-tag--ok { color: #067647; background: #ecfdf3; }
-.pf-tag--low, .pf-tag--high { color: #b54708; background: #fffaeb; }
-.pf-tag--bad { color: #b42318; background: #fef3f2; }
-.pf-tag--flat { color: #475467; background: #f2f4f7; }
+.pf-tag--ok { color: var(--ok-text); background: var(--ok-soft); }
+.pf-tag--low, .pf-tag--high { color: #b54708; background: var(--warn-soft); }
+.pf-tag--bad { color: var(--danger-text); background: var(--danger-soft); }
+.pf-tag--flat { color: var(--text-3); background: #f2f4f7; }
 .pf-scale { position: relative; flex: 1 1 100%; height: 6px; margin-top: 8px; border-radius: 99px; background: linear-gradient(90deg, #fdb022 0 17.5%, #32d583 17.5% 50%, #fdb022 50% 75%, #f97066 75%); }
 .pf-scale i { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; background: #fff; border: 3px solid #101828; border-radius: 50%; }
 .pf-metrics__more { display: block; margin-top: 6px; padding-top: 12px; border-top: 1px solid #eef0f4; font-size: .86rem; font-weight: 600; text-decoration: none; }

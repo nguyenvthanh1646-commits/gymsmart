@@ -14,8 +14,9 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php'; // exerciseImageSrc()
+require_once __DIR__ . '/includes/equipment-db.php'; // nhãn dụng cụ, lọc theo dụng cụ (A-47)
 
-requireLogin(); // theo API_SPEC: xem thư viện bài tập cần đăng nhập
+// Khách xem được (A-45): trang chỉ đọc, không có dữ liệu cá nhân. Ghi nhật ký, lịch tập vẫn cần đăng nhập ở trang khác.
 
 // ===== Bảng nhãn: giá trị trong DB → chữ hiển thị tiếng Việt =====
 // Khóa bên trái PHẢI trùng đúng giá trị lưu trong cột của bảng exercises.
@@ -79,6 +80,8 @@ function escapeLike(string $text): string
 $selectedMuscle     = readChoice('muscle_group', $muscleLabels);
 $selectedType       = readChoice('type', $typeLabels);
 $selectedDifficulty = readChoice('difficulty', $difficultyLabels);
+$hasEquipment       = exerciseEquipmentReady($pdo);   // DB cũ chưa chạy sql/exercise_equipment.sql thì ẩn ô lọc dụng cụ
+$selectedEquipment  = $hasEquipment ? readChoice('equipment', EQUIPMENT_LABELS) : '';
 
 // Từ khóa tìm kiếm: phải là chuỗi, bỏ khoảng trắng thừa, giới hạn 100 ký tự
 $keyword = $_GET['q'] ?? '';
@@ -104,6 +107,10 @@ if ($selectedType !== '') {
 if ($selectedDifficulty !== '') {
     $where[]  = 'difficulty = ?';
     $params[] = $selectedDifficulty;
+}
+if ($selectedEquipment !== '') {
+    $where[]  = 'equipment = ?';
+    $params[] = $selectedEquipment;
 }
 if ($keyword !== '') {
     // Tìm theo TÊN bài tập. Thêm nữa: nếu từ khóa trùng một phần với tên nhóm cơ hoặc loại
@@ -131,7 +138,7 @@ if ($keyword !== '') {
     $params  = array_merge($params, $orParams);
 }
 
-$sql = "SELECT id, name, type, muscle_group, difficulty, image_url FROM exercises";
+$sql = "SELECT id, name, type, muscle_group, difficulty, image_url" . ($hasEquipment ? ', equipment' : '') . ' FROM exercises';
 if (!empty($where)) {
     $sql .= ' WHERE ' . implode(' AND ', $where); // nối các điều kiện bằng AND
 }
@@ -146,6 +153,7 @@ $current = [
     'muscle_group' => $selectedMuscle,
     'type'         => $selectedType,
     'difficulty'   => $selectedDifficulty,
+    'equipment'    => $selectedEquipment,
     'q'            => $keyword,
 ];
 $hasFilter = ($selectedMuscle !== '' || $selectedType !== ''
@@ -161,6 +169,7 @@ include __DIR__ . '/includes/header.php';
         <p class="pg-sub">Chọn nhóm cơ, lọc theo loại và độ khó, rồi bấm vào bài tập để xem video hướng dẫn.</p>
     </div>
 </div>
+<?php $guestCtaText = 'Tạo tài khoản miễn phí để GymSmart xếp các bài này thành lịch tập theo trình độ, gợi ý mức tạ và ghi nhật ký từng set.'; include __DIR__ . '/includes/guest-cta.php'; // chỉ hiện với khách ?>
 
 <!-- Hàng nút lọc theo nhóm cơ: giữ nguyên các bộ lọc khác đang bật -->
 <nav class="chips" aria-label="Lọc theo nhóm cơ">
@@ -174,7 +183,7 @@ include __DIR__ . '/includes/header.php';
 
 <!-- Form tìm kiếm + lọc loại/độ khó. Dùng GET (không phải POST) vì đây là thao tác
      chỉ để xem: kết quả có địa chỉ riêng, gửi link hoặc bấm F5 đều ổn. -->
-<form method="get" action="/exercises.php" class="filter-bar">
+<form method="get" action="/exercises.php" class="filter-bar<?= $hasEquipment ? ' filter-bar--4' : '' ?>">
     <?php if ($selectedMuscle !== ''): ?>
         <!-- Giữ nhóm cơ đang chọn khi bấm "Lọc" -->
         <input type="hidden" name="muscle_group" value="<?= htmlspecialchars($selectedMuscle) ?>">
@@ -200,6 +209,15 @@ include __DIR__ . '/includes/header.php';
             </option>
         <?php endforeach; ?>
     </select>
+
+    <?php if ($hasEquipment): ?>
+        <select name="equipment" aria-label="Dụng cụ">
+            <option value="">Mọi dụng cụ</option>
+            <?php foreach (EQUIPMENT_LABELS as $value => $label): ?>
+                <option value="<?= htmlspecialchars($value) ?>" <?= $selectedEquipment === $value ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+            <?php endforeach; ?>
+        </select>
+    <?php endif; ?>
 
     <button type="submit" class="btn">Lọc</button>
 </form>
@@ -248,6 +266,7 @@ include __DIR__ . '/includes/header.php';
                     <div class="exercise-card__meta ex-meta">
                         <span class="tag"><?= htmlspecialchars($muscle) ?></span>
                         <span class="tag"><?= htmlspecialchars($type) ?></span>
+                        <?php if ($hasEquipment): ?><span class="tag tag--equip"><?= htmlspecialchars(equipmentLabel($ex['equipment'])) ?></span><?php endif; ?>
                     </div>
                 </div>
             </a>

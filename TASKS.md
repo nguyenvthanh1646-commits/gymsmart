@@ -44,6 +44,7 @@ Quy ước dùng chung:
 - [x] A-15 Giao diện Hồ sơ mới + ảnh đại diện đổi được (`profile.php`, `css/profile.css`, `js/profile.js`, `sql/users_avatar.sql`; ảnh lưu ở `public/uploads/avatars/`, JPG/PNG/WebP tối đa 2 MB, vẽ lại thành JPG)
 - [x] A-16 Đăng ký 3 bước (tài khoản, cơ thể, mục tiêu): thu đủ tuổi, giới tính, chiều cao, cân nặng, vận động, trình độ, mục tiêu ngay lúc đăng ký (`register.php`, `css/register.css`, `js/register.js`)
 - [x] A-23 Nâng cấp trang chủ khi chưa đăng nhập (`includes/home-guest.php`, `css/home-guest.css`, `js/home-guest.js`, ảnh hero trong `assets/img/hero/`, nguồn ảnh ở `assets/img/CREDITS.md`): hero ảnh gym và lớp công nghệ, thẻ "Ví dụ", 7 tính năng, 3 bước, xem trước bài tập từ DB, mục kiến thức. Giao diện khi đã đăng nhập không đổi
+- [x] A-38 Làm lại trang chủ khách theo hướng "Fresh energetic" (`a-37-landing-tre-trung`, mockup và ảnh trước/sau trong `docs/mockups/`, `docs/screens/landing-*`): hero sáng với tiêu đề lớn, một bảng điều khiển mô phỏng (vòng calo đếm lên, thanh macro, AI gõ chữ, dải 7 ngày, nghiêng 3D theo chuột), dải từ khóa, công cụ tính calo Mifflin–St Jeor chạy trong trình duyệt (khớp `tdee.php`), lưới bento, 3 bước có đường nối theo cuộn, chatbot mẫu, bài viết thật, nút dính đáy trên điện thoại. Token `--glow-cool` chỉ cho trang khách. Sau đó đổi hero sang hướng "Future sport" (hero tối công nghệ + thể thao, tiêu đề nghiêng, dải số liệu thật, ảnh cắt bình hành, bảng điều khiển kính tối); các khối dưới giữ nền sáng
 - [x] A-24 Bảng điều khiển sau đăng nhập ở trang chủ (`includes/dashboard.php`, `includes/home-user.php`, `includes/dash-*.php`, `css/home-user.css`, `js/home-user.js`, test `test-dashboard.php`): hôm nay, tuần này, dinh dưỡng, tiến trình, lối tắt, ghi nhanh. Thêm bảng `article_reads` (`sql/article_reads.sql`, đã gộp vào `schema.sql` và `ERD.md`). DB cũ cần import file này
 - [x] A-25 Sửa chatbot (`css/chatbot.css`, `js/chatbot.js`, `includes/chatbot-widget.php`, `includes/ai.php`, `api/chatbot.php`): khung bị mờ và bị thẻ trang đè khi đang chờ (trùng class `.is-busy` của `ui.css`), giao diện tối nền đặc, nút Dừng và Thử lại, markdown an toàn, không hiện lỗi kỹ thuật, chuyển sang model dự phòng khi model chính treo (mỗi lần gọi tối đa 15 giây, tổng 40 giây)
 - [x] A-26 Nâng cấp Dinh dưỡng (`nutrition.php`, `includes/meal-plan.php`, `includes/tdee.php`, `includes/nutrition-db.php`, `test-nutrition.php`): đổi món từng bữa, loại trừ thực phẩm, lịch 7 ngày không lặp món liên tiếp, danh sách đi chợ, nhịp mục tiêu, calo theo ngày tập/nghỉ, tiến độ cân nặng so với kế hoạch. Lựa chọn lưu ở bảng `nutrition_preferences` (`sql/nutrition_preferences.sql`, đã gộp vào `schema.sql`). Nhóm C cần đọc hiểu phần mới của `tdee.php`
@@ -61,8 +62,88 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - **Xong khi:** mỗi học viên chỉ có 1 HLV (đang chờ hoặc đang tập), DB cũng chặn bằng UNIQUE; HLV đủ chỗ hoặc tạm ngừng thì không gửi được
 - [x] A-33 Hồ sơ học viên, giao lịch, đặt macro (`a-33-coach-panel`): `coach/client.php` (chỉ đọc, biểu đồ qua `api/body-metrics.php?client_id=`), `client-plan.php` (tạo từ thuật toán gợi ý rồi chỉnh), `client-nutrition.php` (kcal = 4P + 4C + 9F, giới hạn ở máy chủ); khóa tự sửa lịch tập và dinh dưỡng khi có HLV, xin sửa thì HLV duyệt mở 24 giờ
 - [x] A-35 Nhận xét và nhắn tin (`a-35-coach-feedback-chat`): nhận xét từng buổi / nhận xét chung, `api/coach-messages.php` + `api/coach-message-send.php`, `coach/messages.php`, tab Tin nhắn ở `my-coach.php`, thông báo trên trang chủ (`includes/dash-coach.php`)
-- [ ] A-36 (Tùy chọn, làm sau cùng) Trợ lý chatbot cho HLV: chế độ `coach` trong `api/chatbot.php`, chỉ đưa dữ liệu học viên đã qua `canCoachAccessClient()` vào prompt
+- [x] A-36 Mở rộng phân hệ HLV (`a-36-coach-mo-rong`, cần thêm `sql/coach_extras.sql`):
+  - `tools/test-coach-http.php`: tự dựng DB thử + máy chủ thử, chạy 118 bước kịch bản qua HTTP rồi dọn sạch
+  - Tỉ lệ tập đúng lịch tuần này (`coachWeekCompliance`) ở bảng điều khiển và danh sách học viên
+  - Admin xem quan hệ HLV ở `admin/user-detail.php`
+  - HLV sửa / xóa nhận xét (học viên thấy nhãn "HLV đã sửa"); "Đã xem" trong khung chat
+  - Học viên xem lại tin nhắn, nhận xét với HLV cũ (`my-coach.php?history=`), chỉ đọc
+  - Nhắc khi yêu cầu chờ HLV quá 7 ngày (học viên, trang chủ, bảng điều khiển HLV)
+  - `api/nutrition-history.php?client_id=` + biểu đồ calo mục tiêu ở hồ sơ học viên
+  - Trợ lý chatbot cho HLV (chế độ `coach`, `includes/coach-ai.php`): chỉ dữ liệu học viên ACTIVE, không gửi email, chỉ gửi tên gọi
+  - Bản nháp lịch tập (`workout_plans.status = DRAFT`): tạo từ gợi ý / chép lịch hiện tại, sửa, giao, bỏ
+  - Tải file chứng chỉ trong mẫu đơn (JPG/PNG/WebP/PDF ≤ 3 MB, kiểm tra nội dung bằng finfo, lưu ở `storage/certificates/` ngoài `public/`, chỉ admin xem qua `admin/certificate.php`)
 - [x] A-37 Chụp ảnh `docs/screens/coach-*.png` (34 ảnh, 1440px và 390px) và chạy kịch bản thử trên MySQL (111 bước, xem `SECURITY_CHECKLIST.md` mục "Phân hệ HLV")
+
+---
+
+## Nâng cấp 11/2026 (đề xuất đã duyệt, mỗi gói một nhánh xếp chồng từ `a-37-landing-tre-trung`)
+
+Ảnh trước nâng cấp: `docs/screens/upgrade-before-*.png`, ảnh sau: `upgrade-after-*.png`.
+
+- [x] A-39 Sửa lỗi nền (`a-39-sua-loi-nen`):
+  - Múi giờ PHP và MySQL lệch 6 giờ (php.ini Europe/Berlin, MySQL theo giờ máy): `includes/db.php` đặt cả hai về `Asia/Ho_Chi_Minh` (đổi được bằng `APP_TIMEZONE`)
+  - `sql/body_metrics_fix.sql`: DB cũ có cột số đo kiểu FLOAT, cân nặng cho NULL, thiếu index; `users_avatar.sql` chạy lại được
+  - `tools/install.php` (tạo / nâng cấp DB một lệnh, `--demo` nạp tài khoản thử), `tools/run-tests.php` (chạy mọi test)
+  - `admin/users.php`: tìm kiếm, lọc vai trò, phân trang ở máy chủ (20 dòng/trang)
+  - Header `Content-Security-Policy` trong `includes/header.php`
+- [x] A-40 Sửa lỗi giao diện (`a-40-sua-loi-giao-dien`): lịch sử số đo ở điện thoại gọn 2 dòng và ẩn ô trống (trang ngắn khoảng 1/4); biểu đồ mỡ/eo chỉ tạo trục có dữ liệu; nút Xóa số đo bị tô thành nút cam; biểu đồ calo của HLV chỉ 1 mốc thì hiện con số; chân trang không bị nút chatbot che; nhãn ô nội dung bài viết; `favicon.ico`
+- [x] A-41 Chế độ "Đang tập" và gợi ý tăng tạ (`a-41-dang-tap`, đề xuất B1 + B2):
+  - `includes/progression.php` (thuần): `suggestProgression()` tăng tải kép (đạt 8 lặp mọi set 2 buổi liền cùng mức tạ thì tăng 2,5 kg chân/lưng, 1 kg nhóm khác; 2 buổi liền dưới 6 lặp thì giảm ~10%; bài không tạ thì thêm lặp), `summarizeSessionSets()`; test `test-progression.php`
+  - `workout-session.php` + `js/workout-session.js` + `css/workout-session.css`: tick từng set, đồng hồ nghỉ (±30 giây, bỏ qua, rung/kêu khi hết), nhớ tạm tiến độ khi lỡ tải lại, lưu cả buổi một lần qua `api/log-session.php` (transaction)
+  - `workout-plan.php` dùng gợi ý mới (một truy vấn cho cả lịch thay cho mỗi bài một truy vấn), nút "Bắt đầu tập" từng ngày; trang chủ: nút chính và thẻ Hôm nay mở chế độ Đang tập
+- [x] A-42 Chatbot dùng dữ liệu thật và lưu lịch sử (`a-42-chatbot-du-lieu`, đề xuất D1 + lỗi 13):
+  - `includes/chat-context.php`: bật "Dùng hồ sơ của tôi" thì AI biết lịch tập, buổi hôm nay kèm mức tạ gợi ý (từ `progression.php`), nhật ký 7 ngày, số đo 30 ngày; trả lời kèm nút mở Đang tập / Tiến trình
+  - Lịch sử lưu trên máy chủ (bảng `chatbot_*` có sẵn, trước đây chưa dùng): mở máy khác vẫn thấy; nút "Cuộc trò chuyện mới" và "Xóa lịch sử"; giữ 5 cuộc gần nhất
+  - Giới hạn 30 câu/giờ theo tài khoản (trước chỉ theo session, đăng nhập lại là hết giới hạn)
+  - Chip gợi ý theo trang (Lịch tập, Đang tập, Dinh dưỡng, Tiến trình, chi tiết bài tập); test `test-chat.php` (23 bước)
+- [x] A-43 Thành tích, báo cáo, test TDEE (`a-43-thanh-tich-bao-cao`, đề xuất F1 + G3):
+  - `includes/achievements.php` (thuần): chuỗi tuần tập đủ số buổi theo lịch, 11 huy hiệu cột mốc (buổi tập, chuỗi tuần, lần đo) kèm ngày đạt thật, tóm tắt tháng; test `test-achievements.php` (24 bước)
+  - `report.php`: Báo cáo & thành tích theo tháng (so với tháng trước, khối lượng nâng, bài nhiều set nhất), huy hiệu, in / lưu PDF; `export-my-data.php` tải CSV nhật ký và số đo của chính mình; `includes/csv.php` dùng chung với `admin/export.php`
+  - Trang chủ thêm ô "Chuỗi tuần tập đều", trang Tiến trình có nút sang Báo cáo
+  - `test-tdee.php` (26 bước): BMR Mifflin-St Jeor, TDEE, chia macro bằng số tính tay và các trường hợp dữ liệu sai
+- [x] A-44 Chuông thông báo (`a-44-thong-bao`, đề xuất A2, cần thêm `sql/notifications.sql`):
+  - Bảng `notifications`; `includes/notifications.php`; 12 loại sự kiện gắn trong `coach-db.php` / `coach-extras.php` (đơn HLV mới cho ADMIN, đơn được duyệt / từ chối, yêu cầu học viên, HLV nhận / từ chối / kết thúc, giao lịch, đặt dinh dưỡng, xin tự sửa và trả lời, nhận xét, tin nhắn, thu hồi HLV)
+  - Chuông trên thanh người dùng, khu HLV, khu admin; trang `notifications.php` chạy được khi tắt JS; mở khung chat hoặc trang HLV của tôi thì thông báo tương ứng tự thành đã đọc
+  - `test-coach.php` thêm 12 bước kiểm tra thông báo (115 bước)
+- [x] A-45 Khách xem thư viện bài tập và bài viết (`a-45-khach-xem-thu-vien`, đề xuất A3): bỏ `requireLogin()` ở 4 trang chỉ đọc, thanh menu khách có Bài tập & Video và Bài viết, dải mời đăng ký (`includes/guest-cta.php`), `tools/audit.php` thêm 4 trang vào danh sách công khai. Lịch tập, dinh dưỡng, tiến trình, báo cáo vẫn cần đăng nhập
+- [x] A-46 Tổng kết tuần bằng AI (`a-46-ai-tong-ket-tuan`, đề xuất D2, cần thêm `sql/weekly_summaries.sql`): `includes/weekly-summary.php` tính số liệu tuần (so với lịch, so với tuần trước, bài tăng tạ so với 4 tuần trước, cân nặng) rồi Gemini viết 3 dòng Điểm tốt / Cần chú ý / Tuần tới, chỉ dùng đúng các con số đó; lưu bảng `weekly_summaries`, tạo lại tối đa 1 lần/ngày; ô mới trên trang Báo cáo kèm cảnh báo y tế cố định; test `test-weekly.php` (21 bước)
+- [x] A-47 Kỷ lục cá nhân và đổi bài khi thiếu dụng cụ (`a-47-ky-luc-doi-bai`, đề xuất B3, cần thêm `sql/exercise_equipment.sql`):
+  - Cột `exercises.equipment` điền cho 40 bài theo cách thực hiện; thư viện lọc theo dụng cụ, thẻ bài có nhãn dụng cụ; form admin có ô Dụng cụ
+  - `includes/equipment.php`: bài tương đương cùng vai trò khác dụng cụ, kỷ lục cá nhân; hiện ở trang chi tiết bài tập, chế độ Đang tập ("Thiếu dụng cụ? Thay bằng"), ô đổi bài của Lịch tập (nhóm "Tương đương" lên đầu)
+  - Lưu buổi tập báo "Kỷ lục mới"; trang Báo cáo có mục Kỷ lục cá nhân; trang chi tiết bài có kỷ lục của chính mình; test `test-equipment.php` (19 bước)
+- [x] A-48 Mẫu lịch tập của HLV (`a-48-mau-lich-hlv`, đề xuất E1, cần thêm `sql/coach_templates.sql`): "Lưu làm mẫu" từ lịch hoặc bản nháp của một học viên, trang `coach/templates.php` xem trước theo ngày và giao cho nhiều học viên một lần (lịch cũ lưu trữ, học viên được báo qua chuông), xóa mẫu; mục "Mẫu lịch" trên menu HLV; test `test-coach-templates.php` (22 bước)
+- [x] A-49 Đánh giá HLV (`a-49-danh-gia-hlv`, đề xuất E2, cần thêm `sql/coach_reviews.sql`): chỉ học viên đã tập với HLV đủ 14 ngày và có ghi buổi tập mới đánh giá được, mỗi quan hệ 1 đánh giá (sửa / xóa được, cả với HLV cũ); điểm trung bình + 3 đánh giá gần nhất ở danh sách HLV (chỉ hiện tên, không họ), ô đánh giá trên bảng điều khiển HLV, HLV nhận thông báo; ADMIN xóa đánh giá vi phạm ở `admin/coach-reviews.php`; test `test-coach-reviews.php` (24 bước)
+- [x] A-50 Nhật ký ăn (`a-50-nhat-ky-an`, đề xuất C1, cần thêm `sql/meal_logs.sql`): trang `food-log.php` ghi món theo bữa và so tổng ngày với mục tiêu dinh dưỡng; "Thực phẩm của tôi" nhập theo nhãn bao bì; số liệu tính và chụp lại ở máy chủ (`includes/meal-log.php`); liên kết từ trang Dinh dưỡng và thẻ Dinh dưỡng ở trang chủ; test `test-meal-log.php` (25 bước)
+  - **Còn thiếu so với đề xuất:** chưa thêm kho món ăn Việt Nam (phở, bún bò, cơm tấm...) vì chưa có nguồn số liệu đã kiểm chứng (ví dụ Bảng thành phần thực phẩm Việt Nam của Viện Dinh dưỡng). Khi có nguồn, thêm vào `foodCatalog()` kèm ghi nguồn
+- [x] A-51 Sức khỏe hệ thống và sao lưu (`a-51-suc-khoe-he-thong`, đề xuất G2, không đổi database): trang `admin/health.php` (mục "Hệ thống" trên thanh admin) báo PHP/extension, bảng thiếu kèm file SQL cần chạy, múi giờ, khóa Gemini (không hiện giá trị), quyền ghi thư mục; nút tải bản sao lưu `.sql` (`admin/backup.php`, POST + CSRF + ô xác nhận, ghi nhật ký `system.backup`); đã thử sao lưu rồi nhập lại vào DB trống, khớp số dòng cả 29 bảng; test `test-health.php` (8 bước)
+- [x] A-52 Thống nhất token CSS (`a-52-token-css`, đề xuất A1, chỉ sửa CSS): bộ token chuẩn ở `:root` của `ui.css` là nguồn duy nhất; `--color-*`, `--ui-*`, `--gs-*` chỉ còn là tên phụ trỏ về bộ chuẩn; bỏ các giá trị chết trong `style.css` (bị `ui.css` ghi đè từ trước); thêm token cặp chữ/nền trạng thái và chữ phụ đậm; thay 179 mã hex trùng đúng giá trị token bằng `var(...)`. Kiểm chứng: chụp 80 màn hình (4 vai trò, 1440 và 390px) trước/sau, so từng điểm ảnh: không có khác biệt nào ngoài các vùng nội dung động vốn đã khác giữa hai lần chụp
+  - **Còn lại:** khoảng 600 mã màu viết cứng (tính cả các dòng định nghĩa token trong `ui.css`; khoảng 180 là `#fff`, 30 là `#000`, còn lại là các sắc độ trung gian của từng trang). Chuyển dần khi sửa từng trang; không gộp ép vào token gần giống vì sẽ đổi màu thật
+- [x] A-53 HLV đổi tên và sửa lỗi Nhật ký ăn (`a-53-hlv-doi-ten-sua-bua-an`, không đổi database)
+  - HLV đổi "Họ và tên hiển thị" ở `coach/profile.php`: chuẩn hóa bằng `coachNormalizeName()` (gộp khoảng trắng, bỏ ký tự điều khiển), kiểm tra `coachNameError()` (2 đến 100 ký tự); `coachSaveProfile()` lưu hồ sơ và tên trong cùng transaction, chỉ đổi khi tài khoản vẫn là COACH; cập nhật `$_SESSION['full_name']` để thanh menu đổi ngay
+  - Lỗi: ghi món bữa trưa xong, trang tải lại thì ô "Bữa" nhảy về bữa sáng (form luôn đoán bữa theo giờ). Sửa: nhớ bữa vừa ghi cho đúng ngày đó trong session, `mealDefaultKind()` ưu tiên bữa đã nhớ rồi mới đoán theo giờ; ghi lỗi thì giữ lại thực phẩm và số gam vừa nhập
+  - Test thêm: 6 bước ở `test-coach.php`, 4 bước ở `test-meal-log.php`
+  - Lỗi: Trợ lý HLV (chatbot khu /coach/) câu nào cũng báo "GymSmart AI gặp sự cố". Nguyên nhân: `includes/coach-ai.php` dùng `COACH_GOAL_LABELS`, `COACH_LEVEL_LABELS`... định nghĩa trong `includes/coach.php`, mà `api/chatbot.php` không nạp file đó (lỗi có từ lúc thêm trợ lý HLV). Sửa: `coach-ai.php` tự nạp `coach.php`; test ở `test-chat.php` nạp riêng `coach-ai.php` trong tiến trình PHP khác và kiểm tra đủ hằng
+- [x] A-54 Giá tập với HLV, buổi tập thử miễn phí, lịch hẹn và gói (`a-54-gia-tap-hlv`, cần thêm `sql/coach_billing.sql`)
+  - HLV đặt giá 1 buổi và/hoặc 1 tháng, 1-3 buổi tập thử miễn phí, hướng dẫn thanh toán (chỉ học viên đang tập thấy) ở `coach/profile.php`; danh sách HLV hiện giá và số buổi thử. Số buổi thử chụp lại lúc học viên gửi yêu cầu
+  - Lịch hẹn từng buổi 60 phút: học viên đặt (05:00-21:00, trước ít nhất 2 giờ, tối đa 30 ngày), HLV xác nhận / từ chối, sau giờ tập đánh dấu Đã tập hoặc Vắng mặt (vắng vẫn trừ buổi); hủy trước giờ không trừ; buổi chờ quá giờ tự hết hạn; chặn trùng giờ của HLV (khóa dòng trong transaction)
+  - Mỗi buổi tính vào gói tháng còn hạn → buổi thử → gói buổi. Gói buổi 1/4/8/12 buổi, gói tháng 1/3 tháng (nối tiếp gói cũ). Không có cổng thanh toán: học viên chọn gói, trả trực tiếp cho HLV, HLV bấm "Đã nhận tiền"
+  - Hết buổi thử, hết gói, không có gói tháng → HLV tạm không giao lịch, đặt dinh dưỡng, nhận xét được (chặn ở máy chủ, giao mẫu lịch thì bỏ qua học viên đó); tin nhắn vẫn dùng được; học viên được báo mua gói
+  - Trang mới `coach/sessions.php` (mục "Lịch hẹn"), tab "Buổi tập & gói" ở `my-coach.php`, thẻ quyền tập ở hồ sơ học viên phía HLV, nhắc việc ở bảng điều khiển HLV; thông báo `coach.session`, `coach.order`, `coach.billing`; nhật ký `coach.pricing`, `coach.order_paid`, `coach.order_cancel`, `coach.session_done`, `coach.session_absent`
+  - Test: `test-coach-billing.php` (100 bước, quy tắc thuần + SQLite), thêm phần D vào kịch bản HTTP (37 bước, tổng 155). Đã thử DB cũ chưa chạy file SQL: mọi trang HLV vẫn mở được, sau `--upgrade` thì phần giá hiện ra
+  - **Còn để ngỏ:** học viên không đặt buổi nào thì buổi thử không bao giờ hết, nên phần kèm online (giao lịch, nhận xét) vẫn miễn phí mãi. Nếu cần, thêm hạn dùng thử theo ngày. Hoàn tiền gói chưa dùng khi ngừng tập do hai bên tự thỏa thuận (ứng dụng chỉ hủy buổi sắp tới và đơn đang chờ)
+- [x] A-55 Tư vấn sức khỏe từ chuyên gia (`a-54-gia-tap-hlv`, cần thêm `sql/health_experts.sql`)
+  - Vai trò mới `EXPERT` (bác sĩ, chuyên gia dinh dưỡng, vật lý trị liệu): nộp đơn ở `expert-apply.php` (bắt buộc số chứng chỉ hành nghề + file chứng chỉ, cam kết không chẩn đoán xác định / không kê đơn), ADMIN duyệt ở `admin/expert-applications.php`, thu hồi ở `admin/experts.php` (câu đang trao đổi trả về hàng chờ)
+  - Người dùng (USER, COACH) hỏi riêng theo 6 chủ đề ở `consult-ask.php`, miễn phí, tối đa 3 câu chưa đóng / 5 câu mỗi 24 giờ; tùy chọn gửi kèm số liệu hồ sơ (mặc định tắt). Câu có dấu hiệu cấp cứu (đau ngực, khó thở, ngất, dấu hiệu đột quỵ, chảy máu, ý nghĩ tự hại...) thì nhắc gọi 115 và phải xác nhận không khẩn cấp mới gửi
+  - Chuyên gia đúng chủ đề thấy câu đang chờ ở `/expert/dashboard.php`, nhận (chỉ 1 người nhận được), trả lời, trả lại hàng chờ khi chưa trả lời, đóng câu hỏi; người hỏi đóng kèm đánh giá hữu ích. Chuyên gia chỉ thấy tên người hỏi, không thấy email; ADMIN không đọc câu hỏi
+  - Thanh menu thêm mục "Tư vấn", nút "Khu chuyên gia"; khu quản trị thêm mục "Chuyên gia"; `tools/audit.php` thêm luật trang `/expert/` phải có `requireExpert()`
+  - Test: `test-expert.php` (66 bước), thêm phần E vào kịch bản HTTP (30 bước, tổng 185). Đã thử DB cũ chưa chạy file SQL: các trang báo "chưa bật", không lỗi
+  - 3 chuyên gia mẫu (`tools/seed-experts.php`): không có file chứng chỉ nên hiện nhãn "Hồ sơ mẫu, chưa kiểm tra chứng chỉ", nơi công tác và số chứng chỉ ghi rõ là mẫu
+- [x] A-56 Thanh toán gói HLV bằng mã VietQR (`a-56-vietqr`, cần thêm `sql/coach_bank.sql`)
+  - HLV ghi tài khoản nhận chuyển khoản trong form giá ở `coach/profile.php`: chọn ngân hàng từ whitelist `COACH_BANKS` (33 mã BIN, đối chiếu với `api.vietqr.io/v2/banks`), số TK chỉ chữ số 6-19 ký tự, tên chủ TK in hoa không dấu ≤ 50 ký tự (có dấu thì báo lỗi, không tự bỏ dấu). Kiểm tra ở PHP, CSRF, lưu chung transaction với giá; nhật ký chỉ ghi 4 số cuối
+  - Học viên có đơn PENDING (tab Buổi tập & gói) thấy ảnh mã VietQR của img.vietqr.io: số tiền lấy từ `coach_orders.amount`, nội dung `GS<mã đơn>`, mọi phần `rawurlencode` + kiểm tra lại trước khi ghép, `htmlspecialchars` khi in; kèm dòng chữ để chuyển tay. HLV chưa có TK (hoặc dữ liệu lưu không hợp lệ) thì hiện `payment_note` như cũ. HLV thấy `GS<mã đơn>` ở đơn chờ để đối chiếu
+  - CSP `img-src` thêm `https://img.vietqr.io`. Không đổi logic xác nhận tiền: HLV vẫn bấm "Đã nhận tiền"
+  - Test: thêm 28 bước ở `test-coach-billing.php` (128), 15 bước ở kịch bản HTTP (tổng 200)
 
 ---
 
@@ -115,10 +196,10 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
 
 ## E — Giao diện + Chatbot
 
-- [ ] E-1 `style.css` khung: biến màu, chữ, bố cục chung; dùng các class đang có (`card`, `btn`)
-- [ ] E-2 Giao diện đăng ký, đăng nhập, hồ sơ, trang chủ theo wireframe
-- [ ] E-3 Responsive (điện thoại, máy tính bảng) cho các trang đã có
-- [ ] E-4 Giao diện trang lịch tập và trang TDEE/Macro (sau khi B và C có trang)
+- [x] E-1 `style.css` khung: biến màu, chữ, bố cục chung; dùng các class đang có (`card`, `btn`) — A làm thay ở A-6 (`ui.css`), E cần đọc hiểu
+- [x] E-2 Giao diện đăng ký, đăng nhập, hồ sơ, trang chủ theo wireframe — A làm thay ở A-6, A-15, A-16, A-38
+- [x] E-3 Responsive (điện thoại, máy tính bảng) cho các trang đã có — A làm thay, kiểm tra ở 390/768/1440px (`docs/screens/`)
+- [x] E-4 Giao diện trang lịch tập và trang TDEE/Macro (sau khi B và C có trang) — A làm thay ở A-6, A-11, A-26
 - [x] E-5 (Tùy chọn) Chatbot mức 1: `api/chatbot.php` và widget chat nổi (A làm lại ở A-13)
 
 ---

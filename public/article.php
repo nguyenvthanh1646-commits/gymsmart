@@ -8,7 +8,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/articles.php';
 
-requireLogin();
+// Khách đọc được bài viết (A-45). articleRecordRead() tự bỏ qua khi chưa đăng nhập nên không ghi gì cho khách.
 
 $slug = $_GET['slug'] ?? '';
 $all = loadArticles();
@@ -78,6 +78,7 @@ include __DIR__ . '/includes/header.php';
         <h1><?= htmlspecialchars($a['title']) ?></h1>
         <p class="ar-meta"><?= articleReadingMinutes($a) ?> phút đọc<?= $a['date'] !== '' ? ' · ' . htmlspecialchars(articleDate($a['date'])) : '' ?></p>
     </header>
+    <?php $guestCtaText = 'Áp dụng ngay: tạo tài khoản miễn phí để nhận lịch tập và mục tiêu dinh dưỡng theo cơ thể bạn.'; include __DIR__ . '/includes/guest-cta.php'; // chỉ hiện với khách ?>
 
     <?php if ($a['mustRead']): ?>
         <aside class="ar-must">

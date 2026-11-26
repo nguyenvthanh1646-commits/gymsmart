@@ -3,12 +3,13 @@
    Mọi class bắt đầu bằng "gs-" (thương hiệu) hoặc "nb-" (navbar) để không đụng class của người khác. */
 
 :root {
-    --gs-ink: #0b1020;          /* nền tối chính */
-    --gs-ink-2: #111a33;        /* nền tối phụ */
+    /* Tên riêng của thanh điều hướng, trỏ về bộ token chuẩn trong ui.css */
+    --gs-ink: var(--ink);              /* nền tối chính */
+    --gs-ink-2: var(--ink-2);          /* nền tối phụ */
     --gs-line-dark: rgba(255, 255, 255, .10);
-    --gs-text-soft: #c7d0e6;    /* chữ phụ trên nền tối */
-    --gs-accent: var(--color-accent, #ff5a1f);
-    --gs-accent-2: #ff8a3d;
+    --gs-text-soft: var(--text-on-dark); /* chữ phụ trên nền tối */
+    --gs-accent: var(--accent);
+    --gs-accent-2: var(--accent-2);
 }
 
 /* ===== Logo ===== */
@@ -72,6 +73,14 @@
 }
 .nb__toggle span::before { position: absolute; top: -6px; left: 0; }
 .nb__toggle span::after  { position: absolute; top: 6px; left: 0; }
+
+/* Màn hình 981-1100px: thanh menu khi đăng nhập có nhiều mục (thêm HLV) nên thu khoảng cách để không tràn ngang */
+@media (min-width: 981px) and (max-width: 1100px) {
+    .nb__in { gap: 14px; }
+    .nb__links { margin-left: 0; }
+    .nb__links a { padding: 8px 8px; font-size: .88rem; }
+    .nb__btn { padding: 0 14px; }
+}
 
 /* Điện thoại / máy tính bảng nhỏ: menu thu gọn thành nút ☰, mở ra thành bảng thả xuống */
 @media (max-width: 980px) {

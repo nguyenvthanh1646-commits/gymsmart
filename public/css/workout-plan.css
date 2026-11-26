@@ -31,7 +31,7 @@
     transition: border-color .15s var(--ui-ease), background .15s var(--ui-ease), color .15s var(--ui-ease);
 }
 .wp-seg__item span:hover { border-color: var(--color-accent); }
-.wp-seg__item input:checked + span { background: var(--gs-ink, #0b1020); border-color: var(--gs-ink, #0b1020); color: #fff; }
+.wp-seg__item input:checked + span { background: var(--gs-ink, var(--ink)); border-color: var(--gs-ink, var(--ink)); color: #fff; }
 .wp-field__group { margin: 10px 0 6px; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-muted); }
 .wp-field__group:first-of-type { margin-top: 0; }
 .wp-field__hint { margin: 10px 0 0; font-size: .8rem; color: var(--color-text-muted); }
@@ -48,7 +48,7 @@
 /* Thông báo trạng thái (dùng chung với js/workout-plan.js) */
 .workout-plan__message { margin: 0 0 12px; font-size: .92rem; }
 .workout-plan__message:empty { display: none; }
-.workout-plan__message--error { color: #b42318; }
+.workout-plan__message--error { color: var(--danger-text); }
 
 /* ===== Thống kê ===== */
 .wp-stats { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
@@ -57,7 +57,7 @@
 .wp-stat__value { font-size: 1.75rem; line-height: 1.2; font-weight: 800; font-variant-numeric: tabular-nums; }
 .wp-stat__value small { font-size: .85rem; font-weight: 600; color: var(--color-text-muted); }
 .wp-stat__sub { font-size: .82rem; color: var(--color-text-muted); }
-.wp-stat--main { color: #fff; border: 0; background: linear-gradient(135deg, #0b1020, #1d2748); box-shadow: 0 14px 30px rgba(11, 16, 32, .22); }
+.wp-stat--main { color: #fff; border: 0; background: linear-gradient(135deg, var(--ink), #1d2748); box-shadow: 0 14px 30px rgba(11, 16, 32, .22); }
 .wp-stat--main .wp-stat__label, .wp-stat--main .wp-stat__sub, .wp-stat--main .wp-stat__value small { color: rgba(255, 255, 255, .72); }
 
 /* ===== Thanh 7 ngày ===== */
@@ -85,7 +85,7 @@
 /* ===== Một ngày ===== */
 .wp-panel { display: none; }
 .wp-panel.is-active { display: block; }
-.wp-panel__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 14px; margin-bottom: 4px; border-bottom: 1px solid var(--ui-line); }
+.wp-panel__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 14px; margin-bottom: 4px; border-bottom: 1px solid var(--ui-line); }
 .wp-panel__title { margin: 0; font-size: 1.2rem; }
 .wp-panel__meta { margin: 4px 0 0; font-size: .88rem; color: var(--color-text-muted); }
 .wp-rest { padding: 36px 8px; text-align: center; }
@@ -99,7 +99,7 @@
 .wp-ex__row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto auto; align-items: center; gap: 14px; }
 .wp-ex__num {
     width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center;
-    background: var(--ui-accent-soft); color: var(--ui-accent-dark, #e8480f); font-weight: 800; font-size: .9rem;
+    background: var(--ui-accent-soft); color: var(--ui-accent-dark, var(--accent-dark)); font-weight: 800; font-size: .9rem;
 }
 .wp-ex__info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .wp-ex__name { font-weight: 700; color: var(--color-text); text-decoration: none; overflow-wrap: anywhere; }
@@ -120,19 +120,19 @@
 .wp-log-btn:hover, .wp-log-btn[aria-expanded="true"] { border-color: var(--color-accent); color: var(--color-accent); }
 
 /* ===== Ghi log ===== */
-.wp-log__msg { margin: 10px 0 0; font-size: .88rem; font-weight: 600; color: #067647; }
+.wp-log__msg { margin: 10px 0 0; font-size: .88rem; font-weight: 600; color: var(--ok-text); }
 .wp-log__msg:empty { display: none; }
-.wp-log__msg.is-error { color: #b42318; }
+.wp-log__msg.is-error { color: var(--danger-text); }
 .wp-log { margin: 12px 0 0 46px; padding: 14px; border-radius: 14px; background: #f8f9fc; border: 1px solid var(--ui-line); }
 .wp-log__last { margin: 0 0 12px; font-size: .88rem; color: var(--color-text-muted); }
-.wp-log__badge { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 6px; background: var(--gs-ink, #0b1020); color: #fff; font-size: .72rem; font-weight: 700; }
-.wp-log__up { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 6px; background: #ecfdf3; color: #067647; font-size: .78rem; font-weight: 700; }
+.wp-log__badge { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 6px; background: var(--gs-ink, var(--ink)); color: #fff; font-size: .72rem; font-weight: 700; }
+.wp-log__up { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 6px; background: var(--ok-soft); color: var(--ok-text); font-size: .78rem; font-weight: 700; }
 .wp-log__form { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
 .wp-log__field { display: flex; flex-direction: column; gap: 4px; font-size: .75rem; font-weight: 600; color: var(--color-text-muted); }
 .wp-log__field input { width: 96px; height: 40px; padding: 0 10px; border: 1px solid #d5dbe8; border-radius: 10px; font: inherit; font-size: .95rem; text-align: center; }
 .wp-log__field input:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; border-color: transparent; }
 .wp-log__submit { min-height: 40px; }
-.wp-log__submit.is-done { background: #067647; border-color: #067647; }
+.wp-log__submit.is-done { background: var(--ok-text); border-color: var(--ok-text); }
 
 /* ===== Chế độ chỉnh sửa (B11) ===== */
 .workout-plan__edit, .workout-plan__edit-only { display: none; }
@@ -145,8 +145,8 @@
 .wp-edit input[type="number"] { width: 64px; height: 38px; padding: 0 6px; border: 1px solid #d5dbe8; border-radius: 8px; font: inherit; text-align: center; }
 .wp-edit select { flex: 1 1 200px; width: auto; height: 38px; max-width: 100%; padding: 0 10px; border: 1px solid #d5dbe8; border-radius: 8px; font: inherit; background: #fff; }
 .wp-edit .btn { min-height: 38px; padding: 0 14px; }
-.wp-edit__remove { color: #b42318; }
-.workout-plan--editing #workout-plan-toggle-edit { background: var(--gs-ink, #0b1020); border-color: var(--gs-ink, #0b1020); }
+.wp-edit__remove { color: var(--danger-text); }
+.workout-plan--editing #workout-plan-toggle-edit { background: var(--gs-ink, var(--ink)); border-color: var(--gs-ink, var(--ink)); }
 
 /* ===== Cột phải ===== */
 .wp-vol { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -158,7 +158,7 @@
 }
 .wp-vol__bar::after { content: ""; position: absolute; top: 0; bottom: 0; left: var(--mark); width: 2px; background: rgba(11, 16, 32, .35); }
 .wp-vol__value { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
-.wp-rules ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; font-size: .9rem; color: #344054; }
+.wp-rules ul { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; font-size: .9rem; color: var(--text-2); }
 
 /* ===== Máy tính bảng ===== */
 @media (max-width: 980px) {
@@ -194,3 +194,4 @@
     .wp-edit select { flex: 1 1 100%; }
     .wp-create__foot .btn { width: 100%; }
 }
+.wp-start { flex: none; min-height: 44px; }   /* nút Bắt đầu tập: mở chế độ Đang tập của ngày này */

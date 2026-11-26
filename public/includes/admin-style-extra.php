@@ -21,10 +21,10 @@
 .adm-data{margin-top:10px;font-size:.88rem;color:var(--adm-muted)}
 .adm-data table{width:100%;border-collapse:collapse;margin-top:6px}
 .adm-data td,.adm-data th{padding:4px 8px;border-top:1px solid var(--adm-line);text-align:left}
-.adm-hint-box{background:#fffaeb;border:1px solid #fedf89;color:#93370d;border-radius:10px;padding:12px 16px;margin-bottom:16px}
+.adm-hint-box{background:var(--warn-soft);border:1px solid #fedf89;color:var(--warn-text);border-radius:10px;padding:12px 16px;margin-bottom:16px}
 .adm-b-FILE{background:#f1f5f9;color:#475569}
 .adm-b-PUBLISHED{background:#f0fdf4;color:#166534}
-.adm-b-DRAFT{background:#fffaeb;color:#93370d}
+.adm-b-DRAFT{background:var(--warn-soft);color:var(--warn-text)}
 .adm-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .adm-form-grid .adm-field--full{grid-column:1/-1}
 .adm-code{font-family:ui-monospace,Consolas,monospace;font-size:14px}

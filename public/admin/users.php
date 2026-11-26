@@ -16,14 +16,52 @@ handleUserAction($pdo, '/admin/users.php', '/admin/users.php');
 $flash = takeFlash();
 $selfId = (int)$_SESSION['user_id'];
 
-$users = $pdo->query(
+// Tìm kiếm, lọc vai trò và phân trang làm ở máy chủ (GET ?q=&role=&page=), để trang không phải tải toàn bộ tài khoản
+const USERS_PER_PAGE = 20;
+$q = mb_substr(trim((string)($_GET['q'] ?? '')), 0, 100);
+$roleFilter = in_array($_GET['role'] ?? '', ['USER', 'COACH', 'EXPERT', 'ADMIN'], true) ? $_GET['role'] : '';
+$page = max(1, (int)filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['default' => 1]]));
+
+$where = [];
+$params = [];
+if ($q !== '') {
+    // Thoát ký tự đặc biệt của LIKE (%, _) để người dùng gõ "50%" không thành mẫu tìm kiếm
+    $like = '%' . addcslashes($q, '%_\\') . '%';
+    $where[] = '(full_name LIKE ? OR email LIKE ?)';
+    array_push($params, $like, $like);
+}
+if ($roleFilter !== '') {
+    $where[] = 'role = ?';
+    $params[] = $roleFilter;
+}
+$whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';   // chỉ ghép các đoạn cố định ở trên, giá trị đi qua dấu ?
+
+$countStmt = $pdo->prepare("SELECT COUNT(*) FROM users $whereSql"); // audit:ok
+$countStmt->execute($params);
+$total = (int)$countStmt->fetchColumn();
+$allUsers = (int)$pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
+$pages = max(1, (int)ceil($total / USERS_PER_PAGE));
+$page = min($page, $pages);
+$offset = ($page - 1) * USERS_PER_PAGE;
+
+// LIMIT/OFFSET là số nguyên do ta tự tính (đã ép kiểu int), không đến từ chuỗi người dùng
+$stmt = $pdo->prepare(
     "SELECT id, full_name, email, role, created_at,
             CASE WHEN age IS NOT NULL AND height_cm IS NOT NULL AND weight_kg IS NOT NULL
                   AND gender IS NOT NULL AND activity_level IS NOT NULL
                   AND experience_level IS NOT NULL AND goal IS NOT NULL
                  THEN 1 ELSE 0 END AS profile_done
-     FROM users ORDER BY id DESC"
-)->fetchAll();
+     FROM users $whereSql ORDER BY id DESC LIMIT " . (int)USERS_PER_PAGE . ' OFFSET ' . (int)$offset // audit:ok
+);
+$stmt->execute($params);
+$users = $stmt->fetchAll();
+$filtering = $q !== '' || $roleFilter !== '';
+
+/** Link sang trang khác nhưng giữ nguyên bộ lọc đang dùng. */
+function usersPageLink(int $n, string $q, string $role): string
+{
+    return '/admin/users.php?' . http_build_query(array_filter(['q' => $q, 'role' => $role, 'page' => $n], fn($v) => $v !== '' && $v !== 1));
+}
 
 $pageTitle = 'Quản lý người dùng';
 include __DIR__ . '/../includes/header.php';
@@ -48,19 +86,23 @@ include __DIR__ . '/../includes/admin-nav.php';
     <?php endif; ?>
 
     <div class="adm-panel">
-        <div class="adm-tools adm-tools--2">
-            <input class="adm-input" type="search" id="adm-q" placeholder="Tìm theo tên hoặc email..." aria-label="Tìm người dùng">
-            <select class="adm-select" id="adm-role" aria-label="Lọc theo vai trò">
+        <form class="adm-tools" method="get" action="/admin/users.php">
+            <input class="adm-input" type="search" name="q" value="<?= htmlspecialchars($q) ?>" maxlength="100" placeholder="Tìm theo tên hoặc email..." aria-label="Tìm người dùng">
+            <select class="adm-select" name="role" id="adm-role" aria-label="Lọc theo vai trò">
                 <option value="">Mọi vai trò</option>
-                <option value="USER">USER</option>
-                <option value="COACH">COACH (HLV)</option>
-                <option value="ADMIN">ADMIN</option>
+                <?php foreach (['USER' => 'USER', 'COACH' => 'COACH (HLV)', 'EXPERT' => 'EXPERT (chuyên gia)', 'ADMIN' => 'ADMIN'] as $value => $label): ?>
+                    <option value="<?= $value ?>"<?= $roleFilter === $value ? ' selected' : '' ?>><?= $label ?></option>
+                <?php endforeach; ?>
             </select>
+            <button type="submit" class="adm-btn">Lọc</button>
+        </form>
+        <div class="adm-count">
+            <?= htmlspecialchars($filtering ? "Tìm thấy $total / $allUsers tài khoản" : "Tổng: $allUsers tài khoản") ?>
+            <?php if ($filtering): ?> · <a class="adm-link" href="/admin/users.php">Bỏ lọc</a><?php endif; ?>
         </div>
-        <div class="adm-count" id="adm-count">Tổng: <?= count($users) ?> tài khoản</div>
 
         <?php if (empty($users)): ?>
-            <div class="adm-empty">Chưa có tài khoản nào.</div>
+            <div class="adm-empty"><?= $filtering ? 'Không có tài khoản nào khớp.' : 'Chưa có tài khoản nào.' ?></div>
         <?php else: ?>
         <table class="adm-table">
             <thead>
@@ -69,8 +111,7 @@ include __DIR__ . '/../includes/admin-nav.php';
             <tbody id="adm-rows">
             <?php foreach ($users as $u): ?>
                 <?php $isSelf = (int)$u['id'] === $selfId; ?>
-                <tr data-search="<?= htmlspecialchars(mb_strtolower($u['full_name'] . ' ' . $u['email'])) ?>"
-                    data-role="<?= htmlspecialchars($u['role']) ?>">
+                <tr>
                     <td class="adm-cell-id adm-id">#<?= (int)$u['id'] ?></td>
                     <td class="adm-cell-name adm-name">
                         <a class="adm-link" href="/admin/user-detail.php?id=<?= (int)$u['id'] ?>"><?= htmlspecialchars($u['full_name']) ?></a>
@@ -110,7 +151,15 @@ include __DIR__ . '/../includes/admin-nav.php';
             <?php endforeach; ?>
             </tbody>
         </table>
-        <div class="adm-empty" id="adm-none" hidden>Không có tài khoản nào khớp.</div>
+        <?php if ($pages > 1): ?>
+            <div class="adm-pager">
+                <span>Trang <?= (int)$page ?> / <?= (int)$pages ?></span>
+                <div>
+                    <?php if ($page > 1): ?><a class="adm-btn adm-btn-ghost adm-btn-sm" href="<?= htmlspecialchars(usersPageLink($page - 1, $q, $roleFilter)) ?>">&larr; Trước</a><?php endif; ?>
+                    <?php if ($page < $pages): ?><a class="adm-btn adm-btn-ghost adm-btn-sm" href="<?= htmlspecialchars(usersPageLink($page + 1, $q, $roleFilter)) ?>">Sau &rarr;</a><?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
         <?php endif; ?>
     </div>
 </div>
@@ -133,29 +182,9 @@ include __DIR__ . '/../includes/admin-nav.php';
 
 <script>
 (function () {
-    function plain(s) {
-        return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
-    }
-    var q = document.getElementById('adm-q');
+    // Đổi vai trò trong ô lọc thì gửi form luôn, đỡ phải bấm "Lọc"
     var role = document.getElementById('adm-role');
-    var rows = document.querySelectorAll('#adm-rows tr');
-    var count = document.getElementById('adm-count');
-    var none = document.getElementById('adm-none');
-
-    function applyFilter() {
-        var text = plain(q.value.trim());
-        var shown = 0;
-        rows.forEach(function (tr) {
-            var ok = plain(tr.dataset.search).indexOf(text) !== -1 && (!role.value || tr.dataset.role === role.value);
-            tr.hidden = !ok;
-            if (ok) shown++;
-        });
-        count.textContent = shown === rows.length ? 'Tổng: ' + rows.length + ' tài khoản'
-                                                  : 'Hiển thị ' + shown + ' / ' + rows.length + ' tài khoản';
-        if (none) none.hidden = shown !== 0;
-    }
-    q.addEventListener('input', applyFilter);
-    role.addEventListener('input', applyFilter);
+    role.addEventListener('change', function () { role.form.submit(); });
 
     // Hộp xác nhận
     var dialog = document.getElementById('adm-dialog');

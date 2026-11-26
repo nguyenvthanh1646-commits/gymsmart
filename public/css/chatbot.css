@@ -12,22 +12,22 @@
 
 .gc {
     --gc-panel: #0f1730;       /* nền khung */
-    --gc-body: #0b1020;        /* nền vùng tin nhắn */
+    --gc-body: var(--ink);        /* nền vùng tin nhắn */
     --gc-surface: #1a2444;     /* tin của bot, chip, thẻ */
     --gc-surface-2: #222e55;   /* khi rê chuột */
     --gc-text: #eef1fa;
     --gc-mute: #b4bfda;
     --gc-line: rgba(255, 255, 255, .13);
-    --gc-a: #ff5a1f;
-    --gc-a2: #ff8a3d;
+    --gc-a: var(--accent);
+    --gc-a2: var(--accent-2);
     --gc-accent-text: #ffb27a; /* chữ màu nhấn trên nền tối */
     --gc-soft: rgba(255, 138, 61, .16);
-    --gc-head-bg: linear-gradient(120deg, #ff8a3d, #ff5a1f);
-    --gc-head-text: #0b1020;   /* chữ tối trên cam đạt từ 6:1; chữ trắng chỉ đạt 3,12:1 */
-    --gc-me-bg: linear-gradient(135deg, #ff8a3d, #ff5a1f);
-    --gc-me-text: #0b1020;
-    --gc-send-bg: linear-gradient(135deg, #ff8a3d, #ff5a1f);
-    --gc-send-text: #0b1020;
+    --gc-head-bg: linear-gradient(120deg, var(--accent-2), var(--accent));
+    --gc-head-text: var(--ink);   /* chữ tối trên cam đạt từ 6:1; chữ trắng chỉ đạt 3,12:1 */
+    --gc-me-bg: linear-gradient(135deg, var(--accent-2), var(--accent));
+    --gc-me-text: var(--ink);
+    --gc-send-bg: linear-gradient(135deg, var(--accent-2), var(--accent));
+    --gc-send-text: var(--ink);
     --gc-focus: #ffb27a;
     --gc-gap: 16px;
     --gc-ease: cubic-bezier(.2, .7, .2, 1);
@@ -67,7 +67,7 @@
 .gc button.gc-fab:hover { transform: scale(1.06); }
 .gc button.gc-fab:active { transform: scale(.95); }
 .gc-fab__face { position: absolute; inset: 0; display: grid; place-items: center; border-radius: 16px; box-shadow: 0 8px 22px rgba(0, 0, 0, .4); }
-.gc--admin .gc-fab__face { background: linear-gradient(135deg, #263066, #0b1020); box-shadow: 0 8px 22px rgba(0, 0, 0, .4), inset 0 0 0 1.5px rgba(139, 123, 255, .55); }
+.gc--admin .gc-fab__face { background: linear-gradient(135deg, #263066, var(--ink)); box-shadow: 0 8px 22px rgba(0, 0, 0, .4), inset 0 0 0 1.5px rgba(139, 123, 255, .55); }
 .gc-fab__logo { width: 100%; height: 100%; border-radius: 16px; }
 .gc-fab__glyph { width: 36px; height: 36px; color: #fff; }
 .gc-fab__badge { position: absolute; top: -6px; right: -6px; display: flex; align-items: center; height: 18px; padding: 0 5px; border-radius: 8px; background: var(--gc-a); color: #fff; }
@@ -108,7 +108,7 @@
 .gc--admin .gc-av--lg { padding: 5px; background: rgba(139, 123, 255, .3); box-shadow: 0 0 0 2px rgba(139, 123, 255, .5); color: #fff; }
 .gc-head__txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .gc-head__txt strong { display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 800; line-height: 1.2; }
-.gc-tag { font-style: normal; font-size: .62rem; font-weight: 800; letter-spacing: .08em; padding: 2px 6px; border-radius: 6px; background: #8b7bff; color: #0b1020; }
+.gc-tag { font-style: normal; font-size: .62rem; font-weight: 800; letter-spacing: .08em; padding: 2px 6px; border-radius: 6px; background: #8b7bff; color: var(--ink); }
 .gc-status { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: .78rem; font-weight: 600; }
 .gc-status > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gc-status__dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }

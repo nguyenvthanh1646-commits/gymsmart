@@ -3,7 +3,7 @@
  * coach-nav.php — thanh điều hướng của khu HLV (/coach/), cùng kiểu với khu quản trị (dùng class adm-nav của admin-style.php),
  * nhãn "HLV". Trong /coach/ navbar người dùng bị ẩn (xem navbar.php) nên thanh này có logo, tên và Đăng xuất.
  * Dùng: $coachNavActive = 'clients'; include __DIR__ . '/../includes/coach-nav.php';
- * Giá trị: 'dashboard' | 'clients' | 'messages' | 'profile'
+ * Giá trị: 'dashboard' | 'clients' | 'messages' | 'sessions' | 'templates' | 'profile'
  */
 require_once __DIR__ . '/logo.php';
 $coachNavActive = $coachNavActive ?? '';
@@ -11,6 +11,8 @@ $coachNavItems = [
     'dashboard' => ['/coach/dashboard.php', 'Tổng quan'],
     'clients'   => ['/coach/clients.php', 'Học viên'],
     'messages'  => ['/coach/messages.php', 'Tin nhắn'],
+    'sessions'  => ['/coach/sessions.php', 'Lịch hẹn'],
+    'templates' => ['/coach/templates.php', 'Mẫu lịch'],
     'profile'   => ['/coach/profile.php', 'Hồ sơ HLV'],
 ];
 $coachNavInitial = '?';
@@ -29,6 +31,7 @@ if ($coachNavParts) {
         </div>
         <div class="adm-nav-right">
             <a class="adm-nav-site" href="/exercises.php">Xem trang người dùng &#8599;</a>
+            <?php include __DIR__ . '/notif-bell.php'; // chuông thông báo (A-44) ?>
             <span class="adm-nav-av" title="<?= htmlspecialchars((string)($_SESSION['full_name'] ?? '')) ?>"><?= htmlspecialchars($coachNavInitial) ?></span>
             <a class="adm-nav-out" href="/api/logout.php">Đăng xuất</a>
         </div>

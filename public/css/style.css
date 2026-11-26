@@ -3,23 +3,15 @@
    và include thêm trong trang .php tương ứng, không sửa trực tiếp file này
    trừ khi thay đổi style dùng CHUNG toàn hệ thống. */
 
+/* Màu, bo góc, bóng, font: định nghĩa DUY NHẤT ở :root của ui.css (bộ token chuẩn, docs/UI_UX_PROMPT.md mục 3).
+   Ở đây chỉ còn vài biến cũ mà ui.css không có, giữ nguyên giá trị để không đổi giao diện các trang đang dùng. */
 :root {
-    --color-accent: #ff5a1f;      /* màu nhấn chính — đổi tại đây để áp dụng toàn site */
     --color-accent-hover: #e64a0f;
     --color-accent-soft: rgba(255, 90, 31, 0.18);
-    --color-text: #1a1a1a;
-    --color-text-muted: #6b7280;
-    --color-bg: #f9fafb;
-    --color-surface: #ffffff;
-    --color-border: #e5e7eb;
-    --radius: 10px;
-    --font-main: 'Inter', 'Be Vietnam Pro', sans-serif;
     --color-error: #d93025;
     --color-error-bg: #fdecea;
     --color-success: #1e8e3e;
     --color-success-bg: #e6f4ea;
-    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
-    --shadow-md: 0 4px 14px rgba(16, 24, 40, 0.08);
     --transition: 0.18s ease;
 }
 

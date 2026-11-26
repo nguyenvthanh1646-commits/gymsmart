@@ -1,0 +1,43 @@
+/* consult.css — tư vấn sức khỏe từ chuyên gia (A-55): consult*.php, expert-apply.php, /expert/. Dùng kèm coach.css. */
+.hq-sos { margin-bottom: var(--s-4, 16px); }
+.hq-sos b { display: inline; }
+
+.hq-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.hq-item { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; padding: 12px 14px;
+    border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.hq-item__main { display: grid; gap: 3px; min-width: 0; flex: 1 1 260px; }
+.hq-item__main a { font-weight: 700; color: var(--text); text-decoration: none; overflow-wrap: anywhere; }
+.hq-item__main a:hover { color: var(--accent-dark, var(--accent)); text-decoration: underline; }
+.hq-item__main small { color: var(--text-muted); font-size: 13px; }
+.hq-item__side { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.hq-thread { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.hq-msg { max-width: 760px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.hq-msg p { margin: 6px 0 0; overflow-wrap: anywhere; line-height: 1.55; }
+.hq-msg__meta { font-size: 13px; color: var(--text-muted); }
+.hq-msg__meta b { color: var(--text); }
+.hq-msg--expert { border-left: 4px solid var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.hq-msg.is-me { margin-left: auto; }
+
+.hq-snap { margin: 10px 0 0; padding: 10px 12px; border: 1px dashed var(--line); border-radius: var(--r); font-size: 14px; white-space: pre-line; }
+.hq-snap b { display: block; margin-bottom: 4px; }
+.hq-flags { margin: 10px 0 0; font-size: 14px; }
+
+.hq-reply { display: grid; gap: 8px; margin-top: var(--s-4, 16px); }
+.hq-reply textarea { width: 100%; min-height: 120px; box-sizing: border-box; }
+
+.hq-experts { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.hq-expert { display: grid; gap: 8px; align-content: start; padding: 16px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.hq-expert h3 { margin: 0; font-size: 17px; }
+.hq-expert p { margin: 0; font-size: 14px; }
+.hq-expert__meta { color: var(--text-muted); font-size: 13px; }
+.hq-verified { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--success-text, #067647); }
+
+.hq-close { display: grid; gap: 8px; }
+.hq-close fieldset { margin: 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.hq-close label { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; cursor: pointer; }
+.hq-close input[type=radio] { width: 18px; height: 18px; accent-color: var(--accent); }
+
+@media (max-width: 480px) {
+    .hq-msg.is-me { margin-left: 0; }
+}

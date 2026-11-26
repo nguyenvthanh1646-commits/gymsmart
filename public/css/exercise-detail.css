@@ -22,7 +22,7 @@
 .exd__body p { margin: 0; }
 .exd__steps, .exd__mistakes { margin: 0; padding-left: 1.3em; display: grid; gap: 8px; }
 .exd__steps li::marker { font-weight: 700; color: var(--color-accent); }
-.exd__mistakes li::marker { color: #b42318; }
+.exd__mistakes li::marker { color: var(--danger-text); }
 
 .exd__side { position: sticky; top: 88px; }
 .exd__fig { margin: 0; padding: 16px; }
@@ -38,3 +38,12 @@
     .exd__side { position: static; }
     .exd__fig { max-width: 420px; }
 }
+
+/* Kỷ lục cá nhân và bài tương đương khi thiếu dụng cụ (A-47) */
+.exd-pr { margin: 0 0 var(--s-4); padding: 10px 14px; border-radius: var(--r); background: var(--ok-soft); color: var(--ok-text); }
+.exd-pr b { color: #054f31; }
+.exd-equiv__hint { margin: 0 0 var(--s-2); color: var(--text-muted); font-size: 14px; }
+.exd-equiv { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-2); }
+.exd-equiv li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2); padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); }
+.exd-equiv a { display: inline-flex; align-items: center; min-height: 32px; color: var(--text); font-weight: 600; }
+.exd-equiv a:hover { color: var(--accent-dark); }

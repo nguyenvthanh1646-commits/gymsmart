@@ -74,8 +74,8 @@ Khi sửa một file API thì giữ đúng kiểu trả về của file đó, v�
 
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
-| GET | `/exercises` | User | Danh sách bài tập, filter query param |
-| GET | `/exercises/{id}` | User | Chi tiết 1 bài tập |
+| GET | `/exercises` | Khách + User (từ A-45) | Danh sách bài tập, filter query param |
+| GET | `/exercises/{id}` | Khách + User (từ A-45) | Chi tiết 1 bài tập |
 | POST | `/exercises` | Admin | Tạo bài tập mới |
 | PUT | `/exercises/{id}` | Admin | Sửa bài tập |
 | DELETE | `/exercises/{id}` | Admin | Xóa bài tập |
@@ -132,6 +132,25 @@ Khi sửa một file API thì giữ đúng kiểu trả về của file đó, v�
 | POST | `/workout-logs` | User | Ghi nhận 1 lần tập (check-in) |
 | GET | `/workout-logs?from=&to=` | User | Lịch sử tập theo khoảng ngày |
 | DELETE | `/workout-logs/{id}` | User | Xóa 1 log (nhập nhầm) |
+
+**Triển khai thật (PHP thuần):**
+
+| Method | File | Quyền | Mô tả |
+|---|---|---|---|
+| POST | `api/log-workout.php` | User + CSRF | Ghi 1 bài (`row_id`, `exercise_id`, `sets`, `reps`, `weight`) |
+| POST | `api/log-session.php` | User + CSRF | Chế độ "Đang tập": lưu cả buổi một lần (A-41) |
+
+**POST `api/log-session.php`** (form, kèm `csrf_token`), chỉ gửi các set đã đánh dấu xong:
+```
+rows[0][row_id]=92
+rows[0][sets][0][weight]=20   rows[0][sets][0][reps]=8
+rows[0][sets][1][weight]=20   rows[0][sets][1][reps]=7
+```
+- Máy chủ tự gộp các set của một bài thành MỘT dòng `workout_logs` (`summarizeSessionSets()`): tạ nặng nhất, số set ở mức tạ đó, số lặp thấp nhất ở mức tạ đó. Không tin số đã gộp từ trình duyệt.
+- Giới hạn: tối đa 20 bài, 10 set mỗi bài; tạ 0-500 kg, lặp 1-100; không trùng `row_id`. `row_id` phải thuộc lịch ACTIVE của chính người đăng nhập.
+- Lưu trong một transaction: một bài lỗi thì không lưu bài nào.
+- Từ A-47 kết quả có thêm `records`: kỷ lục mới đạt trong buổi (so kỷ lục trước và sau khi lưu; bài lần đầu tập không tính), mỗi phần tử `{ name, weight, reps, oldWeight, oldReps }`.
+- Trả về `{ "success": true, "saved": 1, "message": "Đã lưu 1 bài vào nhật ký." }`; lỗi 401 / 403 (CSRF) / 404 (dòng lịch không thuộc bạn) / 405 / 422 / 500 dạng `{ "success": false, "message": "..." }`.
 
 **POST `/workout-logs`**
 ```json
@@ -228,6 +247,20 @@ Không có module bài viết riêng. Ảnh, video và hướng dẫn nằm ngay
 
 ## 8. Chatbot AI
 
+**Triển khai thật (PHP thuần, A-13 và A-42):**
+
+| Method | File | Quyền | Mô tả |
+|---|---|---|---|
+| POST | `api/chatbot.php` | User + header `X-CSRF-Token` | Gửi câu hỏi (JSON `message`, `mode`, `history`, `personalize`), nhận `{ reply, links }` |
+| GET | `api/chatbot-history.php` | User | Cuộc trò chuyện mới nhất đã lưu: `{ success, data: [{ who: me|bot, text, at }] }` (tối đa 40 tin) |
+| POST | `api/chatbot-history.php` | User + `X-CSRF-Token` | JSON `{ "action": "new" }` mở cuộc mới; `{ "action": "clear" }` xóa toàn bộ lịch sử của chính mình |
+
+- Chỉ chế độ người tập được lưu lịch sử (bảng `chatbot_sessions`, `chatbot_messages`), giữ 5 cuộc gần nhất. Trợ lý quản trị và trợ lý HLV không lưu.
+- `personalize: true` (công tắc "Dùng hồ sơ của tôi"): máy chủ thêm hồ sơ, mục tiêu dinh dưỡng, lịch tập, buổi hôm nay kèm mức tạ gợi ý, nhật ký 7 ngày và số đo 30 ngày vào prompt (`includes/chat-context.php`). Không gửi tên, email, ghi chú.
+- Giới hạn: 1 câu mỗi 3 giây và 30 câu mỗi giờ theo session, thêm 30 câu mỗi giờ theo TÀI KHOẢN (đếm trong `chatbot_messages`), quá thì 429 `RATE_HOUR` / `RATE_GAP`.
+
+Thiết kế REST ban đầu (để tham khảo, không triển khai):
+
 | Method | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
 | POST | `/chatbot/sessions` | User | Tạo phiên chat mới |
@@ -269,9 +302,42 @@ Phần lớn thao tác là **form POST thẳng vào trang** (có CSRF, Post/Redi
 | `/coach/client-nutrition.php?id=` | COACH | protein_g, carbs_g, fat_g (máy chủ tính kcal = 4P + 4C + 9F; 1200-5000 kcal; protein 0,8-3,3 g/kg; chất béo ≥ 0,5 g/kg) |
 | `/coach/profile.php` | COACH | hồ sơ HLV + `accepting` |
 
+**Mở rộng (`a-36`, cần `sql/coach_extras.sql`):**
+
+| Method | Đường dẫn | Ghi chú |
+|---|---|---|
+| GET | `/api/nutrition-history.php?client_id=` | Như `body-metrics`: người gọi là COACH (đọc DB) + quan hệ ACTIVE, sai thì 404 |
+| GET | `/api/coach-messages.php` | Thêm `data.seenUpTo` = id lớn nhất trong tin của mình mà bên kia đã đọc (hiện "Đã xem") |
+| POST | `/api/chatbot.php` | `mode = coach` + `client_id` (tùy chọn): chỉ COACH (đọc DB), `client_id` phải là học viên ACTIVE, sai thì 403; `client_id` sai kiểu 400 |
+| GET | `/admin/certificate.php?id=<id đơn>` | Chỉ ADMIN. Trả file chứng chỉ (`Content-Type` theo đuôi đã kiểm tra, `nosniff`), tên file lạ trong DB → 404 |
+| POST | `/coach/client-plan.php?id=&view=draft` | `draft_copy`, `draft_update` / `draft_replace` / `draft_remove` / `draft_add` (cùng tham số với sửa lịch), `draft_publish`, `draft_discard`. `generate` giờ tạo bản nháp |
+| POST | `/coach/client.php?id=` | `feedback_edit` (feedback_id, content), `feedback_delete` (feedback_id) |
+| GET | `/my-coach.php?history=<relation_id>` | Học viên xem lại tin nhắn, nhận xét của quan hệ ĐÃ KẾT THÚC của chính mình, sai thì 404 |
+| POST | `/coach-apply.php` | Thêm `certificate_file` (multipart, JPG/PNG/WebP/PDF ≤ 3 MB, kiểm tra nội dung bằng finfo) |
+
 Khi đang có HLV, `POST /api/workout-plan-generate.php` và `/api/workout-plan-edit.php` của học viên trả **403** `{success:false, message:"Lịch tập đang do HLV ... quản lý..."}` (trừ khi HLV đã duyệt yêu cầu sửa còn hạn).
 
 ---
+
+## 9b. Tổng kết tuần bằng AI (A-46)
+
+| Method | File | Quyền | Mô tả |
+|---|---|---|---|
+| POST | `report.php` (form) | User + `csrf_token` | AI viết tổng kết tuần vừa xong từ số liệu thật, lưu bảng `weekly_summaries`, rồi chuyển về `report.php#tong-ket` (Post/Redirect/Get, kết quả báo bằng flash) |
+
+- Tối đa 1 lần mỗi 24 giờ cho mỗi tuần; tuần không có buổi tập hay lần cân nào thì không gọi AI.
+- Chỉ gửi số liệu tổng hợp (không tên, email, ghi chú). Lỗi AI hiện câu thân thiện (`aiFriendlyError()`), chi tiết chỉ ghi log máy chủ.
+
+## 10. Thông báo (A-44) — triển khai thật
+
+| Method | File | Quyền | Mô tả |
+|---|---|---|---|
+| GET | `api/notifications.php` | User | `{ success, data: { unread, items: [{ id, type, title, body, link, read, created_at }] } }`, 15 cái mới nhất; `?count=1` chỉ trả `unread` |
+| POST | `api/notifications.php` | User + `csrf_token` | `action=read&id=` đánh dấu đã đọc 1 thông báo, trả `{ success, link }`; `action=read_all` trả `{ success, updated }` |
+| GET/POST | `notifications.php` (trang) | User | Danh sách đầy đủ 20 cái/trang, dùng được khi tắt JavaScript |
+
+- Chỉ đọc / đánh dấu được thông báo của chính mình (`user_id` từ session). Id của người khác trả 404.
+- Nội dung luôn hiển thị bằng `htmlspecialchars` (PHP) hoặc `textContent` (JS); `link` chỉ nhận đường dẫn nội bộ (`notifSafeLink()`).
 
 ## Mã lỗi chung (HTTP status)
 

@@ -6,6 +6,8 @@
  *
  * - Chỉ hiện khi đã đăng nhập (api/chatbot.php cũng yêu cầu đăng nhập).
  * - Trong khu /admin/ → "Trợ lý quản trị" (số liệu hệ thống, nội dung còn thiếu, soạn nháp bài tập).
+ *   Trong khu /coach/ (vai trò COACH) → "Trợ lý HLV"; ở trang về một học viên (?id=) thì gửi kèm client_id,
+ *   máy chủ kiểm tra lại quyền trước khi đưa dữ liệu học viên vào prompt (includes/coach-ai.php).
  *   Ở các trang còn lại → "GymSmart AI" (huấn luyện viên ảo cho người tập).
  * - Phần chữ nằm trong mảng $cfg bên dưới, muốn đổi câu chào/gợi ý thì sửa ở đây.
  * - Giao diện: css/chatbot.css. Hành vi: js/chatbot.js. Logo vẽ SVG sẵn trong file này (không cần ảnh).
@@ -20,6 +22,9 @@ define('GS_CHATBOT_WIDGET', true);
 require_once __DIR__ . '/csrf.php';
 
 $gcAdmin = (($_SESSION['role'] ?? '') === 'ADMIN') && strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') === 0;
+$gcCoach = (($_SESSION['role'] ?? '') === 'COACH') && strpos($_SERVER['SCRIPT_NAME'] ?? '', '/coach/') === 0;
+// Trang về một học viên (/coach/client*.php?id=, /coach/messages.php?id=): chỉ là gợi ý, máy chủ vẫn kiểm tra quan hệ ACTIVE
+$gcClient = $gcCoach ? filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) : false;
 
 // Lấy TÊN (từ cuối trong họ tên Việt Nam) để chào
 $gcParts = preg_split('/\s+/u', trim((string)($_SESSION['full_name'] ?? '')), -1, PREG_SPLIT_NO_EMPTY);
@@ -47,22 +52,77 @@ if ($gcAdmin) {
         'footer'   => 'Chỉ thấy số liệu tổng hợp, không tự sửa dữ liệu.',
         'personalize' => false,
     ];
+} elseif ($gcCoach) {
+    $cfg = [
+        'mode'     => 'coach',
+        'title'    => 'Trợ lý HLV',
+        'subtitle' => $gcClient ? 'Đang xem 1 học viên' : 'Tổng quan học viên',
+        'nudge'    => $gcClient ? 'Cần gợi ý chỉnh lịch cho học viên này?' : 'Hỏi về các học viên của bạn',
+        'welcome'  => 'Chào ' . ($gcName ?: 'bạn') . '! Mình là trợ lý cho HLV. ' . ($gcClient
+            ? 'Mình đã đọc hồ sơ, lịch, nhật ký 14 ngày và số đo của học viên đang mở để gợi ý cách điều chỉnh. Mình không thấy email và không tự sửa dữ liệu.'
+            : 'Mình xem được tóm tắt các học viên đang tập với bạn. Mở hồ sơ một học viên để mình gợi ý chi tiết hơn.'),
+        'chips'    => $gcClient ? [
+            ['icon' => '📈', 'text' => 'Học viên này tiến bộ thế nào 2 tuần qua?'],
+            ['icon' => '🛠️', 'text' => 'Nên chỉnh lịch tập ra sao?'],
+            ['icon' => '🍽️', 'text' => 'Mục tiêu calo và macro có hợp lý không?'],
+            ['icon' => '✍️', 'text' => 'Soạn giúp lời nhận xét cho buổi gần nhất'],
+        ] : [
+            ['icon' => '🚩', 'text' => 'Học viên nào cần chú ý tuần này?'],
+            ['icon' => '📋', 'text' => 'Gợi ý cách nhắc học viên tập đều hơn'],
+        ],
+        'tabs'     => [['id' => 'chat', 'label' => 'Hỏi đáp', 'placeholder' => 'Hỏi về học viên, lịch tập...']],
+        'footer'   => 'Chỉ gợi ý, HLV tự quyết định. Không thay thế tư vấn y tế.',
+        'personalize' => false,
+        'clientId' => $gcClient ?: null,
+    ];
 } else {
+    // Chip gợi ý theo trang đang mở (D1). Câu hỏi về dữ liệu riêng chỉ trả lời cụ thể khi bật "Dùng hồ sơ của tôi".
+    $gcPage = basename($_SERVER['SCRIPT_NAME'] ?? '');
+    $gcChips = [
+        ['icon' => '🥩', 'text' => 'Mỗi ngày tôi nên ăn bao nhiêu protein?'],
+        ['icon' => '💪', 'text' => 'Gợi ý bài tập cho ngực'],
+        ['icon' => '🔥', 'text' => 'TDEE là gì và tính thế nào?'],
+        ['icon' => '📅', 'text' => 'Người mới nên tập mấy buổi mỗi tuần?'],
+    ];
+    if (in_array($gcPage, ['workout-plan.php', 'workout-session.php'], true)) {
+        $gcChips = [
+            ['icon' => '🏋️', 'text' => 'Hôm nay tôi tập gì và nên dùng mức tạ nào?'],
+            ['icon' => '📈', 'text' => 'Khi nào thì tôi nên tăng tạ?'],
+            ['icon' => '⏱️', 'text' => 'Vì sao nên nghỉ 3-4 phút giữa các set nặng?'],
+            ['icon' => '🔁', 'text' => 'Không có máy tập thì đổi sang bài nào tương đương?'],
+        ];
+    } elseif ($gcPage === 'nutrition.php') {
+        $gcChips = [
+            ['icon' => '🍳', 'text' => 'Gợi ý bữa phụ có khoảng 30 g đạm'],
+            ['icon' => '🎯', 'text' => 'Mục tiêu calo hiện tại có hợp với tôi không?'],
+            ['icon' => '🍚', 'text' => 'Ngày nghỉ có cần ăn ít tinh bột hơn không?'],
+        ];
+    } elseif ($gcPage === 'progress.php') {
+        $gcChips = [
+            ['icon' => '⚖️', 'text' => 'Cân nặng của tôi 30 ngày qua thay đổi thế nào?'],
+            ['icon' => '📏', 'text' => 'Vì sao cân không giảm nhưng vòng eo giảm?'],
+            ['icon' => '🗓️', 'text' => 'Nên cân vào lúc nào trong ngày cho chính xác?'],
+        ];
+    } elseif ($gcPage === 'exercise-detail.php' && isset($exercise) && is_array($exercise) && !empty($exercise['name'])) {
+        $gcExName = mb_substr((string)$exercise['name'], 0, 60);
+        $gcChips = [
+            ['icon' => '⚠️', 'text' => 'Lỗi thường gặp khi tập ' . $gcExName . ' là gì?'],
+            ['icon' => '🔁', 'text' => 'Bài nào thay được ' . $gcExName . ' nếu thiếu dụng cụ?'],
+            ['icon' => '🎯', 'text' => $gcExName . ' tác động nhóm cơ nào?'],
+        ];
+    }
     $cfg = [
         'mode'     => 'user',
         'title'    => 'GymSmart AI',
         'subtitle' => 'Huấn luyện viên ảo',
         'nudge'    => 'Thắc mắc về tập luyện? Hỏi mình nhé',
         'welcome'  => 'Chào ' . ($gcName ?: 'bạn') . '! Mình là GymSmart AI. Mình giải đáp về tập luyện, kỹ thuật bài tập và dinh dưỡng bằng tiếng Việt. Bạn muốn bắt đầu từ đâu?',
-        'chips'    => [
-            ['icon' => '🥩', 'text' => 'Mỗi ngày tôi nên ăn bao nhiêu protein?'],
-            ['icon' => '💪', 'text' => 'Gợi ý bài tập cho ngực'],
-            ['icon' => '🔥', 'text' => 'TDEE là gì và tính thế nào?'],
-            ['icon' => '📅', 'text' => 'Người mới nên tập mấy buổi mỗi tuần?'],
-        ],
+        'chips'    => $gcChips,
         'tabs'     => [['id' => 'chat', 'label' => 'Hỏi đáp', 'placeholder' => 'Hỏi về tập luyện, dinh dưỡng...']],
         'footer'   => 'Chỉ để tham khảo, không thay thế tư vấn y tế.',
         'personalize' => true,
+        // Lịch sử hội thoại lưu trên máy chủ (chỉ chế độ người tập), xem includes/chat-history.php
+        'historyUrl' => '/api/chatbot-history.php',
     ];
 }
 $cfg['endpoint'] = '/api/chatbot.php';
@@ -122,7 +182,7 @@ $cfg['uid']      = (int)($_SESSION['user_id'] ?? 0);   // để mỗi tài kho�
                 <?php endif; ?>
             </div>
             <div class="gc-head__txt">
-                <strong><?= htmlspecialchars($cfg['title']) ?><?php if ($gcAdmin): ?> <em class="gc-tag">ADMIN</em><?php endif; ?></strong>
+                <strong><?= htmlspecialchars($cfg['title']) ?><?php if ($gcAdmin): ?> <em class="gc-tag">ADMIN</em><?php elseif ($gcCoach): ?> <em class="gc-tag">HLV</em><?php endif; ?></strong>
                 <span class="gc-status" id="gc-status"><i class="gc-status__dot"></i><span id="gc-status-text"><?= htmlspecialchars($cfg['subtitle']) ?></span></span>
             </div>
             <button class="gc-ibtn" id="gc-reset" type="button" title="Cuộc trò chuyện mới" aria-label="Bắt đầu cuộc trò chuyện mới">
@@ -159,11 +219,14 @@ $cfg['uid']      = (int)($_SESSION['user_id'] ?? 0);   // để mỗi tài kho�
         </form>
         <div class="gc-foot">
             <?php if ($cfg['personalize']): ?>
-                <label class="gc-switch" title="Gửi mục tiêu, trình độ, chiều cao, cân nặng tới Google Gemini để trả lời sát hơn. Tên và email không được gửi.">
+                <label class="gc-switch" title="Gửi hồ sơ (mục tiêu, trình độ, chiều cao, cân nặng), lịch tập, nhật ký 7 ngày và số đo 30 ngày tới Google Gemini để trả lời theo số liệu thật. Tên, email và ghi chú không được gửi.">
                     <input type="checkbox" id="gc-pers">
                     <span class="gc-switch__track" aria-hidden="true"></span>
                     <span>Dùng hồ sơ của tôi</span>
                 </label>
+            <?php endif; ?>
+            <?php if (!empty($cfg['historyUrl'])): ?>
+                <button type="button" class="gc-mini gc-clear" id="gc-clear" title="Xóa mọi cuộc trò chuyện đã lưu trên máy chủ">Xóa lịch sử</button>
             <?php endif; ?>
             <span class="gc-count" id="gc-count" aria-hidden="true">0/<?= (int)$cfg['maxLen'] ?></span>
             <span class="gc-foot__note"><?= htmlspecialchars($cfg['footer']) ?></span>

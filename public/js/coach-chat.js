@@ -56,6 +56,7 @@
         }
         var el = document.createElement('div');
         el.className = 'ch-msg' + (m.mine ? ' is-me' : '');
+        el.dataset.id = m.id;
         el.textContent = m.content;
         var t = document.createElement('time');
         t.dateTime = m.at.replace(' ', 'T');
@@ -87,6 +88,19 @@
         }
     }
 
+    // "Đã xem": chỉ ghi dưới tin CỦA MÌNH mới nhất mà bên kia đã đọc (giống các ứng dụng nhắn tin phổ biến)
+    var seen = document.createElement('p');
+    seen.className = 'ch-seen';
+    seen.textContent = 'Đã xem';
+    var lastSeen = 0;
+    function markSeen(upTo) {
+        lastSeen = upTo;
+        // Chỉ hiện khi tin mới nhất của mình đã được đọc (bên kia đọc hết tin của mình)
+        var lastMine = Array.from(log.querySelectorAll('.ch-msg.is-me')).pop();
+        if (!lastMine || +lastMine.dataset.id > upTo) { seen.remove(); return; }
+        lastMine.after(seen);
+    }
+
     function poll() {
         clearTimeout(timer);
         if (document.hidden) return;              // tab ẩn: không hỏi, chờ visibilitychange
@@ -98,6 +112,7 @@
         }).then(function (r) {
             if (r.ok && r.body.success) {
                 render(r.body.data.messages);
+                markSeen(r.body.data.seenUpTo || 0);
                 setStatus('');
                 timer = setTimeout(poll, POLL_MS);
                 return;
@@ -158,6 +173,7 @@
                         input.style.height = '';
                         updateCounter();
                         render([r.body.item]);
+                        markSeen(lastSeen);   // tin vừa gửi chưa ai đọc: bỏ chữ "Đã xem" ở tin cũ
                         setStatus('');
                     } else if (r.code === 404) {
                         closeChat(r.body.message || 'Cuộc trò chuyện đã kết thúc.');

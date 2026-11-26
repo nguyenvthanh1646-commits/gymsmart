@@ -1,10 +1,12 @@
 <?php
 // public/exercise-detail.php - Trang chi tiết bài tập (D1)
 require_once __DIR__ . '/includes/auth.php';
-requireLogin(); // giống exercises.php: xem thư viện bài tập cần đăng nhập
+// Khách xem được (A-45): giống exercises.php, chỉ đọc.
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/video.php';
 require_once __DIR__ . '/includes/functions.php'; // exerciseImageSrc()
+require_once __DIR__ . '/includes/workout-plan.php'; // WORKOUT_EXERCISE_ROLES (vai trò để tìm bài tương đương)
+require_once __DIR__ . '/includes/equipment-db.php';  // dụng cụ, bài tương đương, kỷ lục (A-47)
 
 $exercise = false; // mặc định: chưa có bài tập nào
 
@@ -60,6 +62,17 @@ if ($exercise) {
     $related = $stmt->fetchAll(PDO::FETCH_ASSOC); // mảng rỗng nếu không có bài nào
 }
 
+// Bài tương đương khi thiếu dụng cụ (cùng vai trò, khác dụng cụ) và kỷ lục của chính người đang đăng nhập (A-47)
+$equivalents = [];
+$myRecord = null;
+if ($exercise) {
+    $equivalents = equivalentExercises((int)$exercise['id'], exerciseLibraryWithEquipment($pdo), WORKOUT_EXERCISE_ROLES);
+    if (isLoggedIn()) {
+        $myRecord = personalRecords(recordLogs($pdo, (int)$_SESSION['user_id'], [(int)$exercise['id']]))[(int)$exercise['id']] ?? null;
+    }
+}
+$roleLabel = $exercise ? (WORKOUT_ROLE_LABELS[WORKOUT_EXERCISE_ROLES[(int)$exercise['id']] ?? ''] ?? null) : null;
+
 if (!$exercise) {
     http_response_code(404); // báo cho trình duyệt là không tìm thấy
 }
@@ -99,10 +112,12 @@ include __DIR__ . '/includes/header.php';
                 <span class="tag"><?= htmlspecialchars($muscle) ?></span>
                 <span class="tag"><?= htmlspecialchars($typeLabels[$exercise['type']] ?? $exercise['type']) ?></span>
                 <span class="tag tag--<?= htmlspecialchars($exercise['difficulty']) ?>"><?= htmlspecialchars($difficultyLabels[$exercise['difficulty']] ?? $exercise['difficulty']) ?></span>
+                <?php if (array_key_exists('equipment', $exercise)): ?><span class="tag tag--equip"><?= htmlspecialchars(equipmentLabel($exercise['equipment'])) ?></span><?php endif; ?>
             </div>
         </div>
     </div>
 
+    <?php $guestCtaText = 'Muốn tập bài này theo lịch và được gợi ý mức tạ mỗi buổi? Tạo tài khoản miễn phí.'; include __DIR__ . '/includes/guest-cta.php'; // chỉ hiện với khách ?>
     <div class="exd">
         <div class="exd__main">
             <?php if ($embedUrl !== null): // chỉ hiện khung video khi có video hợp lệ ?>
@@ -121,6 +136,11 @@ include __DIR__ . '/includes/header.php';
             <?php endif; ?>
 
             <div class="card exd__body">
+                <?php if ($myRecord): ?>
+                    <p class="exd-pr"><b>Kỷ lục của bạn:</b>
+                        <?= $myRecord['kind'] === 'weight' ? htmlspecialchars(rtrim(rtrim(number_format($myRecord['weight'], 1, ',', '.'), '0'), ',')) . ' kg × ' . (int)$myRecord['reps'] . ' lặp' : (int)$myRecord['reps'] . ' lặp (không tạ)' ?>,
+                        ngày <?= htmlspecialchars(date('d/m/Y', strtotime($myRecord['date']))) ?></p>
+                <?php endif; ?>
                 <h2>Mô tả</h2>
                 <!-- nl2br đổi xuống dòng thành <br>; phải escape trước rồi mới nl2br -->
                 <p><?= nl2br(htmlspecialchars($exercise['description'] ?? '')) ?></p>
@@ -139,6 +159,16 @@ include __DIR__ . '/includes/header.php';
                     <ul class="exd__mistakes">
                         <?php foreach ($mistakes as $m): ?>
                             <li><?= htmlspecialchars($m) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+
+                <?php if ($equivalents): ?>
+                    <h2>Thiếu dụng cụ? Bài tương đương</h2>
+                    <p class="exd-equiv__hint"><?= $roleLabel !== null ? 'Cùng tác động ' . htmlspecialchars(mb_strtolower($roleLabel)) . ', chỉ khác dụng cụ.' : 'Cùng nhóm cơ, khác dụng cụ.' ?> Dễ có dụng cụ xếp trước.</p>
+                    <ul class="exd-equiv">
+                        <?php foreach ($equivalents as $e): ?>
+                            <li><a href="/exercise-detail.php?id=<?= (int)$e['id'] ?>"><?= htmlspecialchars($e['name']) ?></a><span class="tag tag--equip"><?= htmlspecialchars($e['label']) ?></span></li>
                         <?php endforeach; ?>
                     </ul>
                 <?php endif; ?>

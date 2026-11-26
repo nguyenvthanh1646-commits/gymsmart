@@ -62,6 +62,8 @@ function handleUserAction(PDO $pdo, string $redirectOther, string $redirectOnDel
                 $_SESSION['flash'] = ['error', 'Tài khoản này đã có vai trò đó rồi.'];
             } elseif ($user['role'] === 'COACH') {
                 $_SESSION['flash'] = ['error', 'Tài khoản này đang là huấn luyện viên. Hãy thu hồi vai trò HLV trước.'];
+            } elseif ($user['role'] === 'EXPERT') {
+                $_SESSION['flash'] = ['error', 'Tài khoản này đang là chuyên gia sức khỏe. Hãy thu hồi ở mục Chuyên gia trước.'];
             } elseif ($newRole === 'ADMIN' && coachTablesReady($pdo) && coachOpenRelationForClient($pdo, $target) !== null) {
                 $_SESSION['flash'] = ['error', 'Người này đang có (hoặc đang chờ) huấn luyện viên. Họ cần kết thúc trước khi lên ADMIN.'];
             } else {

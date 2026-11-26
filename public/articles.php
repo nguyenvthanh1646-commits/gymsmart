@@ -7,7 +7,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/articles.php';
 
-requireLogin();
+// Khách đọc được bài viết (A-45). articleRecordRead() tự bỏ qua khi chưa đăng nhập nên không ghi gì cho khách.
 
 $categories = articleCategories();
 $all = loadArticles();
@@ -32,6 +32,7 @@ include __DIR__ . '/includes/header.php';
         </div>
         <span class="pg-count"><b><?= count($articles) ?></b> bài viết</span>
     </div>
+    <?php $guestCtaText = 'Tạo tài khoản miễn phí để có lịch tập, mục tiêu calo theo cơ thể bạn và hỏi GymSmart AI về các bài viết này.'; include __DIR__ . '/includes/guest-cta.php'; // chỉ hiện với khách ?>
 
     <?php if (!empty($mustRead) && $cat === ''): ?>
         <section class="ar-mustlist">

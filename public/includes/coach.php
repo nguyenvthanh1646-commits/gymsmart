@@ -191,6 +191,42 @@ function coachNum($n, int $decimals = 0): string
     return number_format((float)$n, $decimals, ',', '.');
 }
 
+/**
+ * Một nhận xét trên trang hồ sơ học viên của HLV: nội dung + trạng thái đã xem/đã sửa + (nếu $canEdit) ô sửa và nút xóa.
+ * Form gửi về $self với action = feedback_edit | feedback_delete; máy chủ kiểm tra nhận xét thuộc HLV này (coachOwnFeedback).
+ */
+function coachFeedbackItem(array $f, string $self, string $label, bool $canEdit): string
+{
+    $id = (int)$f['id'];
+    $meta = [];
+    if (!empty($f['updated_at'])) {
+        $meta[] = 'đã sửa ' . coachTimeAgo($f['updated_at']);
+    }
+    $meta[] = $f['read_at'] ? 'học viên đã xem' : 'chưa xem';
+    ob_start(); ?>
+    <div class="ch-quote cc-fbitem">
+        <b><?= htmlspecialchars($label) ?>:</b> <?= htmlspecialchars($f['content']) ?>
+        <small class="adm-sub">(<?= htmlspecialchars(implode(', ', $meta)) ?>)</small>
+        <?php if ($canEdit): ?>
+            <details class="cc-fb">
+                <summary>Sửa hoặc xóa</summary>
+                <form method="post" action="<?= htmlspecialchars($self) ?>">
+                    <?= csrfField() ?><input type="hidden" name="action" value="feedback_edit"><input type="hidden" name="feedback_id" value="<?= (int)$id ?>">
+                    <label class="ch-sr" for="fbe-<?= (int)$id ?>">Sửa nhận xét</label>
+                    <textarea class="adm-textarea" id="fbe-<?= (int)$id ?>" name="content" maxlength="<?= COACH_FEEDBACK_MAX ?>" required><?= htmlspecialchars($f['content']) ?></textarea>
+                    <button type="submit" class="adm-btn adm-btn-sm" data-busy-text="Đang lưu…">Lưu</button>
+                </form>
+                <form method="post" action="<?= htmlspecialchars($self) ?>" data-confirm="Xóa nhận xét này? Học viên sẽ không thấy nữa.">
+                    <?= csrfField() ?><input type="hidden" name="action" value="feedback_delete"><input type="hidden" name="feedback_id" value="<?= (int)$id ?>">
+                    <button type="submit" class="adm-btn adm-btn-danger adm-btn-sm">Xóa nhận xét</button>
+                </form>
+            </details>
+        <?php endif; ?>
+    </div>
+    <?php
+    return (string)ob_get_clean();
+}
+
 /** Chữ cái đầu của TÊN (từ cuối trong họ tên Việt Nam) để vẽ avatar tròn khi chưa có ảnh. */
 function coachInitial(string $fullName): string
 {

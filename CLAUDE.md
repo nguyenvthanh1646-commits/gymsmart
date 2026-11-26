@@ -31,7 +31,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Document root phải là `public/`.** Mọi link/redirect dùng đường dẫn tuyệt đối (`/login.php`, `/css/...`), nên mở thẳng `localhost/gymsmart-starter/...` sẽ hỏng. `config.php` nằm ở **gốc repo** (ngoài `public/`), được nạp qua `public/includes/db.php` bằng `__DIR__ . '/../../config.php'`.
 
-- **Trang** (`public/*.php`, `public/admin/*.php`): mỗi file là 1 tính năng. Mở đầu bằng `require includes/auth.php` (tự bật session với cookie an toàn) rồi `requireLogin()` / `requireAdmin()`, nạp `includes/db.php` (tạo biến `$pdo`), gọi hàm từ `includes/*`, rồi include `header.php` → `navbar.php` → HTML → `footer.php`. Đặt `$pageTitle` trước khi include `header.php` (có thể đặt thêm `$pageCss` để nạp CSS riêng trong `<head>`). CSS/JS riêng từng trang nằm ở `public/css/<feature>.css`, `public/js/<feature>.js`. Trang chủ của khách nằm ở `includes/home-guest.php`; bảng điều khiển sau đăng nhập nằm ở `includes/home-user.php` và `includes/dash-*.php`, dữ liệu từ `includes/dashboard.php`.
+- **Trang** (`public/*.php`, `public/admin/*.php`): mỗi file là 1 tính năng. Mở đầu bằng `require includes/auth.php` (tự bật session với cookie an toàn) rồi `requireLogin()` / `requireAdmin()` (riêng 4 trang chỉ đọc `exercises.php`, `exercise-detail.php`, `articles.php`, `article.php` cho khách xem, có dải mời đăng ký `includes/guest-cta.php`; danh sách trang công khai nằm trong `tools/audit.php`), nạp `includes/db.php` (tạo biến `$pdo`), gọi hàm từ `includes/*`, rồi include `header.php` → `navbar.php` → HTML → `footer.php`. Đặt `$pageTitle` trước khi include `header.php` (có thể đặt thêm `$pageCss` để nạp CSS riêng trong `<head>`). CSS/JS riêng từng trang nằm ở `public/css/<feature>.css`, `public/js/<feature>.js`. Trang chủ của khách nằm ở `includes/home-guest.php`; bảng điều khiển sau đăng nhập nằm ở `includes/home-user.php` và `includes/dash-*.php`, dữ liệu từ `includes/dashboard.php`.
 - **API** (`public/api/*.php`): trả JSON cho `fetch()`. Có **2 kiểu đang tồn tại**:
   - Kiểu mới (GET, chỉ đọc): dùng `includes/api.php` → `apiBoot()` (chỉ GET, bắt buộc đăng nhập → 401 JSON, biến exception thành 500 JSON), trả `{success, data}` / `{success:false, error}`. Xem `body-metrics.php`, `nutrition-history.php`.
   - Kiểu cũ (POST): tự kiểm tra method/session và trả `{success, message}` (`log-workout.php`, `workout-plan-*.php`, `chatbot.php`). Khi sửa file nào thì giữ đúng kiểu của file đó, vì JS phía trang đang đọc đúng key đó.
@@ -39,7 +39,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Logic nghiệp vụ tách khỏi HTML, nằm trong `public/includes/`**, và phần thuật toán được giữ **thuần, không đụng DB** để test được:
   - `workout-plan.php`: thuật toán gợi ý lịch tập thuần (`generateWorkoutPlan()`, các hằng `WORKOUT_SPLITS`, `WORKOUT_GOALS`, `WORKOUT_LEVELS`, `WORKOUT_EXERCISE_ROLES` gắn **id bài tập cố định** theo `seed_exercises_v2.sql`). `workout-plan-db.php` là lớp truy vấn PDO đi kèm.
   - `tdee.php` (BMR Mifflin-St Jeor / TDEE / macro), `meal-plan.php`, `admin-users.php`, `audit-log.php` (ghi `admin_audit_log` cho thao tác admin).
-  - `ai.php`: gọi Gemini, đọc hằng tùy chọn qua `aiConst()` (`AI_API_KEY`, `AI_MODEL`, `AI_MODEL_FALLBACK`, `AI_CA_BUNDLE`, `AI_BASE_URL`, `AI_TIMEOUT`, `AI_TOTAL_TIMEOUT`), trả lỗi có mã; chi tiết kỹ thuật chỉ ghi log server, không gửi về trình duyệt. `api/chatbot.php` nhét dữ liệu user và bài tập liên quan (RAG theo từ khóa trên bảng `exercises`) vào prompt.
+  - `health.php` (G2): kiểm tra sức khỏe hệ thống cho `admin/health.php` (PHP, extension, bảng thiếu so với `schema.sql` kèm tên file bổ sung cần chạy, múi giờ PHP/MySQL, khóa Gemini chỉ báo đã/chưa cấu hình, thư mục ghi file) và sao lưu database `healthWriteBackup()` cho `admin/backup.php` (POST + CSRF + ô xác nhận, ghi nhật ký `system.backup`). Hàm thuần test ở `test-health.php`.
+  - `equipment.php` (thuần, test ở `test-equipment.php`): nhãn dụng cụ, `equivalentExercises()` (bài cùng vai trò khác dụng cụ, dễ có dụng cụ trước), `personalRecords()` / `recordsImproved()` (kỷ lục cá nhân). `equipment-db.php` là phần truy vấn, tự bỏ qua khi DB cũ chưa có cột `equipment`.
+  - `weekly-summary.php`: tổng kết tuần bằng AI (D2). `weeklyStats()` và `weeklyPrompt()` là hàm thuần (test ở `test-weekly.php`), AI chỉ viết lời từ đúng số liệu đó; lưu ở bảng `weekly_summaries`, hiển thị và tạo (POST + CSRF) ở `report.php`.
+  - `achievements.php`: chuỗi tuần tập đều (`achWeeklyStreak()`), huy hiệu cột mốc (`achMilestones()`), tóm tắt tháng (`achMonthSummary()`); thuần, test ở `test-achievements.php`. Trang `report.php` (Báo cáo & thành tích, in / lưu PDF bằng hộp in của trình duyệt), `export-my-data.php` (người dùng tải CSV của chính mình), `includes/csv.php` (BOM UTF-8 + chống CSV injection, dùng chung với `admin/export.php`).
+  - `meal-log.php`: nhật ký ăn (C1). Hàm thuần `mealPortion()`, `userFoodError()`, `mealDaySummary()` (test ở `test-meal-log.php`); trang `food-log.php`. Chỉ dùng số liệu có sẵn trong `foodCatalog()` hoặc người dùng tự nhập theo nhãn, không tự thêm số liệu món ăn không có nguồn.
+  - `progression.php`: gợi ý mức tạ buổi sau từ nhật ký (`suggestProgression()`, tăng tải kép: đạt mức lặp trên 2 buổi liền cùng mức tạ thì tăng) và gộp set của chế độ Đang tập (`summarizeSessionSets()`). Thuần, test ở `test-progression.php`. Trang `workout-session.php` (chế độ Đang tập) lưu cả buổi qua `api/log-session.php`.
+  - `ai.php`: gọi Gemini, đọc hằng tùy chọn qua `aiConst()` (`AI_API_KEY`, `AI_MODEL`, `AI_MODEL_FALLBACK`, `AI_CA_BUNDLE`, `AI_BASE_URL`, `AI_TIMEOUT`, `AI_TOTAL_TIMEOUT`), trả lỗi có mã; chi tiết kỹ thuật chỉ ghi log server, không gửi về trình duyệt. `api/chatbot.php` nhét dữ liệu user và bài tập liên quan (RAG theo từ khóa trên bảng `exercises`) vào prompt. Khi bật "Dùng hồ sơ của tôi", `includes/chat-context.php` thêm lịch tập, buổi hôm nay kèm mức tạ gợi ý, nhật ký 7 ngày, số đo 30 ngày (phần định dạng `formatTrainingContext()` là hàm thuần, test ở `test-chat.php`). Lịch sử chat lưu ở bảng `chatbot_*` qua `includes/chat-history.php` và `api/chatbot-history.php`.
 - **Bảo mật dùng chung:** `csrf.php` (`csrfField()` trong form, `verifyCsrf()` khi nhận POST, lỗi thì `showCsrfError()`), `error-page.php` (`showError()`), `header.php` gửi các header bảo vệ. Quy trình rà soát nằm ở `SECURITY_CHECKLIST.md`.
 - **Bài viết:** lấy từ 2 nguồn, gộp trong `includes/articles.php` → `loadArticles()`:
   1. File: mỗi bài là 1 file `public/content/articles/<slug>.php` trả về mảng (định dạng khối `content` ghi ở comment đầu `includes/articles.php`). Ảnh bìa và hình minh họa là SVG trong `public/img/articles/`. `sources` chỉ được ghi nghiên cứu có thật, đã kiểm tra PMID/DOI (xem `docs/nghien-cuu-da-xac-minh.md`).
@@ -50,10 +56,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **Quy tắc quyền:** mọi trang/API của HLV gọi `requireCoach()` (đọc lại vai trò từ DB) và với dữ liệu một học viên thì `requireCoachClient()` / `canCoachAccessClient()` (quan hệ `ACTIVE` + vai trò vẫn là `COACH`). Không tin id trên URL. HLV không đọc email/mật khẩu học viên.
   - **Khóa tự sửa:** khi đang có HLV, học viên không tự sửa lịch tập/dinh dưỡng (`coachSelfEditState()`); muốn sửa phải gửi yêu cầu, HLV duyệt thì mở khóa 24 giờ.
   - Thao tác quan trọng của HLV ghi chung bảng `admin_audit_log` với mã `coach.*`.
+  - **Đánh giá HLV (A-49):** `includes/coach-reviews.php` (quy tắc đủ điều kiện là hàm thuần, test ở `test-coach-reviews.php`), ô đánh giá `includes/coach-review-card.php` ở `my-coach.php`, điểm trung bình ở `coaches.php` và bảng điều khiển HLV, ADMIN xử lý vi phạm ở `admin/coach-reviews.php`.
+  - **Giá tập, buổi thử, lịch hẹn, gói (A-54):** `includes/coach-billing-rules.php` (thuần: kiểm tra giá, báo giá gói, khung giờ đặt, máy trạng thái buổi, `coachBillingSummary()` tính buổi thử / gói buổi / gói tháng và khóa) + `includes/coach-billing.php` (truy vấn). Trang `coach/sessions.php`, tab `my-coach.php?tab=sessions`, form giá ở `coach/profile.php`. Không có cổng thanh toán: HLV bấm "Đã nhận tiền". Hết buổi thì `coachBillingAssert()` / `coachBillingLocked()` chặn giao lịch, đặt dinh dưỡng, nhận xét (tin nhắn vẫn được). Test ở `test-coach-billing.php`.
+  - **Mẫu lịch (A-48):** `includes/coach-templates.php` + trang `coach/templates.php`; lưu mẫu ở `coach/client-plan.php` ("Lưu làm mẫu"). Giao mẫu kiểm tra lại quan hệ ACTIVE cho TỪNG học viên được chọn. Test ở `test-coach-templates.php`.
+- **Tư vấn sức khỏe từ chuyên gia (vai trò `EXPERT`, A-55):** người dùng nộp đơn (`expert-apply.php`, bắt buộc số chứng chỉ hành nghề + file chứng chỉ), ADMIN duyệt / thu hồi (`admin/expert-applications.php`, `admin/experts.php`, file ở `admin/expert-certificate.php`). Người dùng hỏi riêng theo chủ đề (`consult.php`, `consult-ask.php`, `consult-question.php`); chuyên gia nhận và trả lời ở khu `/expert/` (`includes/expert-nav.php`). `includes/expert-rules.php` (thuần: kiểm tra đơn / câu hỏi, nhận dấu hiệu cấp cứu `healthRedFlags()`, máy trạng thái `healthNextStatus()`, số liệu chia sẻ), `includes/expert-db.php` (truy vấn), `includes/expert.php` (`requireExpert()`, khung nhắc gọi 115). Câu hỏi là dữ liệu riêng tư: chỉ người hỏi và chuyên gia đúng chủ đề / đã nhận xem được, ADMIN không đọc. Chuyên gia không chẩn đoán xác định, không kê đơn. Test ở `test-expert.php`; 3 chuyên gia mẫu bằng `tools/seed-experts.php`.
+- **Thông báo (chuông, A-44):** `includes/notifications.php` (`notify()`, đọc/đánh dấu đã đọc), gọi ngay trong các hàm của `coach-db.php` khi có sự kiện (nhận xét, tin nhắn, yêu cầu, duyệt đơn...). Chuông là `includes/notif-bell.php` (gắn ở `navbar.php`, `coach-nav.php`, `admin-nav.php`), JS `js/notifications.js`, API `api/notifications.php`, trang `notifications.php`. Thêm sự kiện mới thì gọi `notify()` trong cùng transaction với thao tác chính.
 
 ### Database và file SQL
 
-`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `article_reads.sql`, `body_metrics.sql`, `nutrition_preferences.sql`, `password_resets.sql`, `split_types.sql`, `users_avatar.sql`, `coach_features.sql`). `coach_features.sql` dùng cú pháp `ADD COLUMN IF NOT EXISTS` của MariaDB (XAMPP). Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
+`sql/schema.sql` là bảng gốc. Các file khác trong `sql/` là **file bổ sung chạy riêng một lần**, chưa chắc đã được gộp vào `schema.sql` (`admin_features.sql`, `article_reads.sql`, `body_metrics.sql`, `nutrition_preferences.sql`, `password_resets.sql`, `split_types.sql`, `users_avatar.sql`, `coach_features.sql`, `coach_extras.sql`, `body_metrics_fix.sql`, `notifications.sql`, `weekly_summaries.sql`, `exercise_equipment.sql`, `coach_templates.sql`, `coach_reviews.sql`, `meal_logs.sql`, `coach_billing.sql`, `coach_bank.sql`, `health_experts.sql`). `exercise_equipment.sql` vừa thêm cột vừa điền dụng cụ cho 40 bài, nên phải chạy lại SAU `seed_exercises_v2.sql` (install.php đã xếp đúng). Mọi file bổ sung đều **chạy lại nhiều lần vẫn an toàn** (dùng cú pháp `IF NOT EXISTS` của MariaDB/XAMPP), nên database cũ chỉ cần `php tools/install.php --upgrade`. Thêm file bổ sung mới thì nhớ thêm tên vào hằng `MIGRATIONS` trong `tools/install.php`. Thêm bảng/cột thì tạo file `sql/<tên>.sql` riêng, dùng `IF NOT EXISTS` khi có thể, rồi cập nhật `docs/ERD.md`. Dữ liệu bài tập hiện tại là `seed_exercises_v2.sql` (40 bài, **xóa sạch và nạp lại** bảng `exercises`). Đổi id bài tập sẽ làm hỏng `WORKOUT_EXERCISE_ROLES` và các test.
 
 ## Phạm vi tính năng
 
@@ -72,7 +83,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Đã loại bỏ:** chat tự do user-user, community/forum.
 
-**Đã làm thêm ngoài kế hoạch ban đầu:** bài viết kiến thức có trích nghiên cứu, khu admin (người dùng, bài tập, bài viết, nhật ký hoạt động, thống kê, xuất CSV), quên/đặt lại mật khẩu, ảnh đại diện, **phân hệ Huấn luyện viên**. Trạng thái từng việc xem `TASKS.md`.
+**Đã làm thêm ngoài kế hoạch ban đầu:** bài viết kiến thức có trích nghiên cứu, khu admin (người dùng, bài tập, bài viết, nhật ký hoạt động, thống kê, xuất CSV), quên/đặt lại mật khẩu, ảnh đại diện, **phân hệ Huấn luyện viên**, **tư vấn sức khỏe từ chuyên gia** (hỏi đáp riêng, không phải diễn đàn). Trạng thái từng việc xem `TASKS.md`.
 
 ## Quy ước code (PHP/JS thuần)
 
@@ -133,7 +144,11 @@ php -S localhost:8000 -t public
 php test-workout-plan.php       # thuật toán lịch tập, dữ liệu từ test-exercises-fixture.php (không cần DB)
 php test-workout-plan-db.php    # lớp workout-plan-db.php trên SQLite in-memory (cần pdo_sqlite)
 php test-dashboard.php          # hàm thuần và lớp đọc DB của bảng điều khiển (phần DB cần pdo_sqlite)
+php tools/test-coach-http.php   # kịch bản HLV + giá tập + tư vấn sức khỏe qua HTTP (200 bước): tự tạo DB gymsmart_test_hlv + máy chủ :8099 rồi xóa; cần MySQL đang chạy, không đụng DB thật
 php test-coach.php              # phân hệ HLV: đơn đăng ký, quan hệ, quyền xem, khóa tự sửa, macro, tin nhắn (phần DB cần pdo_sqlite)
+php test-coach-billing.php      # giá tập, buổi thử, lịch hẹn, gói, khóa khi hết buổi (phần DB cần pdo_sqlite)
+php test-expert.php             # tư vấn sức khỏe: đơn chuyên gia, câu hỏi, dấu hiệu cấp cứu, quyền xem, nhận / trả lại / đóng (phần DB cần pdo_sqlite)
+php test-health.php             # trang Sức khỏe hệ thống: đọc bảng từ schema.sql, trạng thái chung, câu INSERT sao lưu (không cần DB)
 php test-nutrition.php          # nhịp mục tiêu, ngày tập/nghỉ, tiến độ cân nặng, loại trừ thực phẩm, lịch 7 ngày (phần lưu lựa chọn cần pdo_sqlite)
 
 # Lint 1 file
@@ -144,6 +159,16 @@ php tools/audit.php public
 
 # Kiểm tra vì sao chatbot không trả lời (cURL, khóa API, model, SSL). Có gọi thật tới Gemini
 php tools/chatbot-check.php
+
+# Dựng database một lệnh (thay cho import từng file trong phpMyAdmin). DB đã có bảng thì tự dừng, không ghi đè
+php tools/install.php                 # tạo DB_NAME: schema.sql + 40 bài tập + ảnh/video
+php tools/install.php --upgrade       # DB cũ: chạy lại mọi file bổ sung trong sql/ (không mất dữ liệu)
+php tools/install.php --db=gymsmart_demo --fresh --demo   # DB thử riêng kèm tài khoản thử @gymsmart.test
+php tools/seed-coaches.php            # 5 HLV mẫu (3 nam, 2 nữ) kèm giá, mật khẩu Coach@12345; chạy lại chỉ cập nhật, không tạo trùng
+php tools/seed-experts.php            # 3 chuyên gia sức khỏe MẪU (không có chứng chỉ, hiện nhãn "hồ sơ mẫu"), mật khẩu Expert@12345
+
+# Chạy mọi test một lệnh, in bảng tổng kết (--http thêm kịch bản HLV qua HTTP, cần MySQL)
+php tools/run-tests.php
 ```
 
 Không có bước build, không có bundler, không dùng Composer/npm. Chart.js được lưu sẵn ở `public/js/lib/chart.umd.min.js` (không tải qua CDN).
@@ -152,7 +177,8 @@ Không có bước build, không có bundler, không dùng Composer/npm. Chart.j
 
 **Database:** dùng XAMPP/MAMP (có sẵn phpMyAdmin), hoặc cài phpMyAdmin riêng nếu dùng MySQL độc lập.
 - Tạo database `gymsmart` qua giao diện phpMyAdmin
-- Tab **Import** → chọn `sql/schema.sql`, rồi `sql/seed_exercises_v2.sql`, rồi các file bổ sung trong `sql/` (xem mục "Database và file SQL")
+- Tab **Import** → chọn `sql/schema.sql`, rồi `sql/seed_exercises_v2.sql`, rồi các file bổ sung trong `sql/` (xem mục "Database và file SQL"). Cách nhanh hơn: `php tools/install.php` (tạo mới) hoặc `php tools/install.php --upgrade` (DB cũ)
+- Múi giờ: `includes/db.php` đặt PHP và phiên MySQL cùng `Asia/Ho_Chi_Minh` (đổi bằng hằng `APP_TIMEZONE` trong `config.php`). Công cụ dòng lệnh trỏ được sang DB khác bằng biến môi trường `GYMSMART_DB` (trang web luôn dùng `DB_NAME`)
 - Khi sửa cấu trúc bảng trực tiếp trên phpMyAdmin, **nhớ export lại và cập nhật `sql/schema.sql`** để cả nhóm đồng bộ (tab Export → chọn format SQL)
 
 ## Quy trình Git của nhóm

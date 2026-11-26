@@ -42,6 +42,14 @@ if ($ready && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $v = validateCoachApplication($_POST);
             $errors = $v['errors'];
             $old = $v['data'] + ['specialties_list' => explode(',', $v['data']['specialties'])];
+            if (!$errors && coachExtrasReady($pdo)) {
+                // File chứng chỉ (không bắt buộc): chỉ lưu khi các ô khác đã hợp lệ, để khỏi để lại file rác
+                try {
+                    $v['data']['certificate_file'] = coachStoreCertificate($_FILES['certificate_file'] ?? null, $userId);
+                } catch (CoachException $e) {
+                    $errors['certificate_file'] = $e->getMessage();
+                }
+            }
             if (!$errors) {
                 coachSubmitApplication($pdo, $userId, $v['data']);
                 coachFlash('ok', 'Đã gửi đơn. Quản trị viên sẽ xem xét và trả lời trên trang này.');
@@ -51,6 +59,10 @@ if ($ready && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } catch (CoachException $e) {
         $errors['_form'] = $e->getMessage();
+        // Đã lưu file chứng chỉ mà nộp đơn thất bại (ví dụ bấm gửi 2 lần): xóa file để không để lại rác
+        if (isset($v['data']['certificate_file']) && coachCertNameOk($v['data']['certificate_file'])) {
+            @unlink(coachCertDir() . '/' . $v['data']['certificate_file']);
+        }
     }
 }
 
@@ -164,6 +176,7 @@ include __DIR__ . '/includes/header.php';
                     <dt>Kinh nghiệm</dt><dd><?= (int)$latest['experience_years'] ?> năm</dd>
                     <dt>Nhận tối đa</dt><dd><?= (int)$latest['max_clients'] ?> học viên</dd>
                     <?php if ($latest['certifications'] !== ''): ?><dt>Chứng chỉ</dt><dd><?= htmlspecialchars($latest['certifications']) ?></dd><?php endif; ?>
+                    <?php if (!empty($latest['certificate_file'])): ?><dt>File đính kèm</dt><dd>Đã gửi 1 file chứng chỉ</dd><?php endif; ?>
                 </dl>
                 <form method="post" action="/coach-apply.php" class="form-actions" data-confirm="Rút đơn đăng ký HLV? Bạn có thể nộp lại sau.">
                     <?= csrfField() ?>
@@ -187,7 +200,7 @@ include __DIR__ . '/includes/header.php';
                 <div class="alert alert--error" role="alert">Vui lòng kiểm tra lại <?= count($errors) ?> mục được đánh dấu bên dưới.</div>
             <?php endif; ?>
 
-            <form class="card" method="post" action="/coach-apply.php" novalidate>
+            <form class="card" method="post" action="/coach-apply.php" enctype="multipart/form-data" novalidate>
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="submit">
 
@@ -240,6 +253,15 @@ include __DIR__ . '/includes/header.php';
                         <span class="ch-count" data-count="certifications" aria-live="polite"></span>
                         <?= fieldError($errors, 'certifications') ?>
                     </div>
+                    <?php if (coachExtrasReady($pdo)): ?>
+                    <div class="field<?= isset($errors['certificate_file']) ? ' is-invalid' : '' ?>">
+                        <label for="certificate_file">Ảnh hoặc file PDF chứng chỉ (không bắt buộc)</label>
+                        <input type="hidden" name="MAX_FILE_SIZE" value="<?= COACH_CERT_MAX_BYTES ?>">
+                        <input id="certificate_file" name="certificate_file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf"<?= invalidAttr($errors, 'certificate_file') ?>>
+                        <small>JPG, PNG, WebP hoặc PDF, tối đa 3 MB. Chỉ quản trị viên xem được, học viên không thấy file này.<?= $errors ? ' Nếu đơn báo lỗi, hãy chọn lại file.' : '' ?></small>
+                        <?= fieldError($errors, 'certificate_file') ?>
+                    </div>
+                    <?php endif; ?>
                 </fieldset>
 
                 <fieldset class="form-sec">

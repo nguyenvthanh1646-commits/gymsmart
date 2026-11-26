@@ -32,7 +32,7 @@
     var tabsEl = $('gc-tabs'), persBox = $('gc-pers');
 
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var KEY = 'gc:' + cfg.mode + ':' + cfg.uid;          // khóa lưu lịch sử
+    var KEY = 'gc:' + cfg.mode + ':' + cfg.uid + (cfg.clientId ? ':' + cfg.clientId : '');   // khóa lưu lịch sử (HLV: riêng từng học viên)
     var DRAFT_KEY = 'gc:draft:' + cfg.uid;               // bản nháp bài tập chờ điền vào form
     var NUDGE_KEY = 'gc:nudged';
 
@@ -370,6 +370,7 @@
         input.value = ''; autosize(); setBusy(true); showTyping();
 
         var payload = { message: text, mode: cfg.mode, task: task, history: hist, personalize: !!(persBox && persBox.checked) };
+        if (cfg.clientId) { payload.client_id = cfg.clientId; }   // chế độ HLV: máy chủ kiểm tra lại quyền xem học viên này
         var ctrl = new AbortController();
         var current = { ctrl: ctrl, reason: '' };
         request = current;
@@ -477,13 +478,36 @@
     nudge.addEventListener('click', openPanel);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && state.open) { closePanel(); } });
 
-    $('gc-reset').addEventListener('click', function () {
-        if (state.busy) { return; }
+    // ---------- Lịch sử lưu trên máy chủ (chỉ chế độ người tập, cfg.historyUrl) ----------
+    function historyPost(action) {
+        if (!cfg.historyUrl) { return Promise.resolve(null); }
+        return fetch(cfg.historyUrl, {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, 'Accept': 'application/json' },
+            body: JSON.stringify({ action: action })
+        }).then(function (res) { return res.json(); }).catch(function () { return null; });
+    }
+    function clearView() {
         state.msgs = []; drop(KEY);
         while (body.firstChild) { body.removeChild(body.firstChild); }
         hero = null; follow = null; state.lastText = ''; showHero();
+    }
+
+    $('gc-reset').addEventListener('click', function () {
+        if (state.busy) { return; }
+        clearView();
+        historyPost('new');                                // máy chủ mở cuộc trò chuyện mới, cuộc cũ vẫn giữ
         input.focus({ preventScroll: true });
     });
+    var clearBtn = $('gc-clear');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+            if (state.busy || !window.confirm('Xóa mọi cuộc trò chuyện đã lưu với GymSmart AI? Không hoàn tác được.')) { return; }
+            historyPost('clear').then(function (r) {
+                if (r && r.success) { clearView(); showToast('Đã xóa lịch sử chat.'); } else { showToast('Chưa xóa được, bạn thử lại sau.'); }
+            });
+        });
+    }
 
     // ---------- Kéo, đổi cỡ, phóng to (chỉ máy tính; điện thoại luôn dùng khung gần toàn màn hình) ----------
     var GEO_KEY = 'gc:geo:' + cfg.mode;
@@ -686,6 +710,25 @@
         showFollow();
     } else {
         showHero();
+        // Tab mới chưa có gì: lấy cuộc trò chuyện gần nhất đã lưu trên máy chủ (mở máy khác vẫn thấy)
+        if (cfg.historyUrl) {
+            fetch(cfg.historyUrl, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+                .then(function (res) { return res.ok ? res.json() : null; })
+                .then(function (r) {
+                    // Người dùng đã kịp gõ hỏi trong lúc chờ thì thôi, không chen lịch sử cũ vào
+                    if (!r || !r.success || !Array.isArray(r.data) || !r.data.length || state.msgs.length) { return; }
+                    hideHero();
+                    r.data.forEach(function (m) {
+                        var msg = { who: m.who === 'me' ? 'me' : 'bot', text: String(m.text || ''), at: Number(m.at) || 0 };
+                        state.msgs.push(msg);
+                        renderMsg(msg, false);
+                    });
+                    persist();
+                    if (state.msgs[state.msgs.length - 1].who === 'me') { state.lastText = state.msgs[state.msgs.length - 1].text; }
+                    showFollow();
+                })
+                .catch(function () { /* không tải được lịch sử: vẫn chat bình thường */ });
+        }
     }
     refreshSend();
 

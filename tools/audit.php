@@ -17,7 +17,8 @@ if (!is_dir($root)) {
 }
 
 // Trang công khai, không cần đăng nhập
-$publicPages = ['index.php', 'login.php', 'register.php', 'logout.php', 'forgot-password.php', 'reset-password.php'];
+$publicPages = ['index.php', 'login.php', 'register.php', 'logout.php', 'forgot-password.php', 'reset-password.php',
+    'exercises.php', 'exercise-detail.php', 'articles.php', 'article.php'];   // 4 trang cuối: khách xem được (A-45), chỉ đọc
 
 $findings = []; // [mức, file, số dòng, mô tả]
 
@@ -39,9 +40,13 @@ foreach ($it as $file) {
     $lines = explode("\n", $code);
 
     // ----- 1. Trang chưa chặn người chưa đăng nhập -----
-    if (!$inInc && !in_array($base, $publicPages, true)
-        && !preg_match('/requireLogin\s*\(|requireAdmin\s*\(|requireCoach\s*\(/', $code)) {
-        add($findings, 'CAO', $path, 1, 'Không thấy requireLogin()/requireAdmin()/requireCoach(): người chưa đăng nhập có vào được không?');
+    // API trả JSON không dùng requireLogin() (hàm đó chuyển hướng sang trang HTML) mà tự trả 401:
+    // chấp nhận apiBoot() hoặc đoạn kiểm tra $_SESSION['user_id'] / isLoggedIn() có mã 401 ngay sau đó.
+    $apiGuard = strpos($path, '/api/') !== false
+        && preg_match('/apiBoot\s*\(|(empty\(\s*\$_SESSION\[.user_id.\]\s*\)|!\s*isLoggedIn\s*\(\s*\))\s*\)\s*\{[\s\S]{0,200}?401/', $code);
+    if (!$inInc && !in_array($base, $publicPages, true) && !$apiGuard
+        && !preg_match('/requireLogin\s*\(|requireAdmin\s*\(|requireCoach\s*\(|requireExpert\s*\(/', $code)) {
+        add($findings, 'CAO', $path, 1, 'Không thấy requireLogin()/requireAdmin()/requireCoach()/requireExpert(): người chưa đăng nhập có vào được không?');
     }
 
     // ----- 2. Trang admin phải có requireAdmin -----
@@ -52,6 +57,10 @@ foreach ($it as $file) {
     // ----- 2b. Trang khu HLV phải có requireCoach (đọc lại vai trò trong DB) -----
     if (strpos($path, '/coach/') !== false && !preg_match('/requireCoach\s*\(/', $code)) {
         add($findings, 'CAO', $path, 1, 'Nằm trong /coach/ nhưng không có requireCoach().');
+    }
+    // ----- 2b'. Trang khu chuyên gia sức khỏe phải có requireExpert (A-55) -----
+    if (strpos($path, '/expert/') !== false && !preg_match('/requireExpert\s*\(/', $code)) {
+        add($findings, 'CAO', $path, 1, 'Nằm trong /expert/ nhưng không có requireExpert().');
     }
     // ----- 2c. Trang HLV xem dữ liệu một học viên phải kiểm tra quan hệ ACTIVE -----
     if (strpos($path, '/coach/') !== false && preg_match('/\$_GET\[.id.\]/', $code) && !preg_match('/requireCoachClient\s*\(|coachActiveRelationId\s*\(|canCoachAccessClient\s*\(/', $code)) {

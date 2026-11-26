@@ -141,11 +141,11 @@ function avatarProcess(array $file, int $userId): array
 $baseCols = 'full_name, email, age, height_cm, weight_kg, gender, activity_level, experience_level, goal';
 $avatarReady = true; // false nếu bảng users chưa có cột avatar (chưa import sql/users_avatar.sql)
 try {
-    $stmt = $pdo->prepare("SELECT $baseCols, avatar FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT $baseCols, avatar FROM users WHERE id = ?");  // audit:ok ($baseCols là chuỗi hằng viết ở trên, id đi qua dấu ?)
     $stmt->execute([$userId]);
 } catch (PDOException $e) {
     $avatarReady = false;
-    $stmt = $pdo->prepare("SELECT $baseCols FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT $baseCols FROM users WHERE id = ?");  // audit:ok (như trên)
     $stmt->execute([$userId]);
 }
 $user = $stmt->fetch();

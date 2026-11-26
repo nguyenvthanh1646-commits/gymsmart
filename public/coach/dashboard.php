@@ -8,6 +8,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/coach.php';
+require_once __DIR__ . '/../includes/coach-reviews.php';   // ô Đánh giá từ học viên (A-49)
 
 requireCoach();
 coachHandleCoachAction($pdo, '/coach/dashboard.php');
@@ -19,9 +20,16 @@ $profile = coachProfile($pdo, $coachId);
 $counts  = coachDashboardCounts($pdo, $coachId, $today);
 $pending = coachPendingRequests($pdo, $coachId);
 $clients = coachActiveClients($pdo, $coachId);
+$reviewsOn = coachReviewsReady($pdo);
+$myRating = $reviewsOn ? (coachRatingSummary($pdo, [$coachId])[$coachId] ?? null) : null;
+$myReviews = $reviewsOn ? coachReviewsForCoach($pdo, $coachId, 3) : [];
 $seats   = $profile ? coachSeatsLeft((int)$profile['max_clients'], (int)$profile['active_clients']) : 0;
 $since7  = date('Y-m-d', strtotime($today . ' -6 days'));
-$attention = array_values(array_filter($clients, fn($c) => $c['last_log'] === null || $c['last_log'] < $since7 || (int)$c['unread'] > 0 || (int)$c['change_requests'] > 0));
+$compliance = coachComplianceFor($pdo, array_column($clients, 'client_id'), $today);
+$billCounts = coachBillingCounts($pdo, $coachId);   // việc ở trang Lịch hẹn (A-54); DB chưa nâng cấp thì toàn 0
+// Cần chú ý: chưa tập 7 ngày, tập thiếu so với lịch tuần này (dưới 100%), có tin chưa đọc hoặc xin sửa
+$behind = fn($c) => ($compliance[(int)$c['client_id']]['percent'] ?? 100) < 100;
+$attention = array_values(array_filter($clients, fn($c) => $c['last_log'] === null || $c['last_log'] < $since7 || $behind($c) || (int)$c['unread'] > 0 || (int)$c['change_requests'] > 0));
 
 $pageTitle = 'Khu huấn luyện viên';
 $pageCss = ['/css/coach.css'];
@@ -52,6 +60,18 @@ $ico = function (string $inner): string {
         <div class="adm-toast adm-toast-<?= $flash[0] === 'ok' ? 'ok' : 'error' ?>" role="status"><?= htmlspecialchars($flash[1]) ?></div>
     <?php endif; ?>
 
+    <?php if ($billCounts['orders'] + $billCounts['requests'] + $billCounts['to_mark'] > 0): ?>
+        <div class="adm-hint-box" style="margin-bottom:16px" role="status">
+            <b>Lịch hẹn cần bạn xử lý:</b>
+            <?= implode(' · ', array_filter([
+                $billCounts['requests'] ? (int)$billCounts['requests'] . ' buổi chờ xác nhận' : '',
+                $billCounts['to_mark'] ? (int)$billCounts['to_mark'] . ' buổi đã qua chưa đánh dấu' : '',
+                $billCounts['orders'] ? (int)$billCounts['orders'] . ' đơn chờ xác nhận tiền' : '',
+            ])) ?>.
+            <a class="adm-link" href="/coach/sessions.php">Mở Lịch hẹn</a>
+        </div>
+    <?php endif; ?>
+
     <div class="adm-stats">
         <div class="adm-stat"><?= $ico('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.7-3.4 3.3-5.2 6.5-5.2s5.8 1.8 6.5 5.2M16 4.8a3.5 3.5 0 010 6.4M18 14.8c2 .6 3.1 2.3 3.5 5.2"/>') ?><div><div class="adm-stat-num"><?= (int)$counts['clients'] ?></div><div class="adm-stat-label">Học viên đang tập</div></div></div>
         <div class="adm-stat <?= $counts['pending'] > 0 ? 'adm-stat-warn' : '' ?>"><?= $ico('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>') ?><div><div class="adm-stat-num"><?= (int)$counts['pending'] ?></div><div class="adm-stat-label">Yêu cầu chờ duyệt</div></div></div>
@@ -77,6 +97,7 @@ $ico = function (string $inner): string {
                                         <?= $p['goal'] ? ' · ' . htmlspecialchars(COACH_GOAL_LABELS[$p['goal']] ?? $p['goal']) : '' ?>
                                         <?= $p['experience_level'] ? ' · ' . htmlspecialchars(COACH_LEVEL_LABELS[$p['experience_level']] ?? '') : '' ?>
                                         · gửi <?= htmlspecialchars(mb_strtolower(coachTimeAgo($p['created_at']))) ?>
+                                        <?php if ($stale = coachPendingStaleDays($p['created_at'], coachNow())): ?><span class="ch-badge ch-badge--danger">Đã chờ <?= (int)$stale ?> ngày</span><?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -103,7 +124,7 @@ $ico = function (string $inner): string {
             <?php if (!$clients): ?>
                 <p class="adm-sub">Bạn chưa có học viên nào. Duyệt yêu cầu bên trái để bắt đầu.</p>
             <?php elseif (!$attention): ?>
-                <p class="adm-sub">Mọi học viên đều tập đều trong 7 ngày qua và không có tin chưa đọc. Tốt lắm!</p>
+                <p class="adm-sub">Mọi học viên đều tập đủ buổi theo lịch tuần này và không có tin chưa đọc. Tốt lắm!</p>
             <?php else: ?>
                 <ul class="adm-list">
                     <?php foreach ($attention as $c): ?>
@@ -114,6 +135,7 @@ $ico = function (string $inner): string {
                                 </small></span>
                             <span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
                                 <?php if ($c['last_log'] === null || $c['last_log'] < $since7): ?><span class="ch-badge ch-badge--warn">Chưa tập 7 ngày</span><?php endif; ?>
+                                <?php if ($behind($c)): $cp = $compliance[(int)$c['client_id']]; ?><span class="ch-badge ch-badge--danger">Tuần này <?= (int)$cp['done'] ?>/<?= (int)$cp['planned_so_far'] ?> buổi</span><?php endif; ?>
                                 <?php if ((int)$c['unread'] > 0): ?><span class="ch-badge ch-badge--info"><?= (int)$c['unread'] ?> tin mới</span><?php endif; ?>
                                 <?php if ((int)$c['change_requests'] > 0): ?><span class="ch-badge ch-badge--accent">Xin sửa</span><?php endif; ?>
                             </span>
@@ -123,6 +145,24 @@ $ico = function (string $inner): string {
             <?php endif; ?>
         </section>
     </div>
+
+    <?php if ($reviewsOn): ?>
+        <section class="adm-panel adm-card-pad" style="margin-top:16px" aria-labelledby="h-reviews">
+            <h2 id="h-reviews">Đánh giá từ học viên</h2>
+            <?php if (!$myRating): ?>
+                <p class="adm-sub">Chưa có đánh giá. Học viên đánh giá được sau khi tập cùng bạn đủ 14 ngày và có ghi buổi tập.</p>
+            <?php else: ?>
+                <p class="ch-rating" style="font-size:16px"><span class="ch-stars" aria-hidden="true">★</span> <b><?= htmlspecialchars(number_format($myRating['avg'], 1, ',', '')) ?></b>/5 · <?= (int)$myRating['count'] ?> đánh giá</p>
+                <ul class="ch-reviews">
+                    <?php foreach ($myReviews as $rv): ?>
+                        <li><span class="ch-stars" aria-label="<?= (int)$rv['rating'] ?> trên 5 sao"><?= str_repeat('★', $rv['rating']) . str_repeat('☆', 5 - $rv['rating']) ?></span>
+                            <b><?= htmlspecialchars($rv['name']) ?></b> <span class="adm-sub"><?= htmlspecialchars(date('d/m/Y', strtotime($rv['date']))) ?></span>
+                            <?php if ($rv['comment'] !== ''): ?><p><?= htmlspecialchars($rv['comment']) ?></p><?php endif; ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
 </div>
 <script src="/js/coach.js"></script>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

@@ -5,6 +5,7 @@
  *
  *   GET /api/nutrition-history.php
  *   GET /api/nutrition-history.php?from=2026-09-01&to=2026-09-30
+ *   GET /api/nutrition-history.php?client_id=12   → HLV xem của học viên đang tập với mình (khu /coach/), sai thì 404
  *
  * Thành công (200):
  *   { "success": true,
@@ -21,6 +22,16 @@ require_once __DIR__ . '/../includes/db.php';
 apiBoot();   // chỉ GET + bắt buộc đăng nhập (JSON 401)
 $userId = (int)$_SESSION['user_id'];
 [$from, $to] = apiDateRange();
+
+// HLV xem của học viên: cùng cách kiểm tra với api/body-metrics.php (vai trò COACH trong DB + quan hệ ACTIVE)
+if (isset($_GET['client_id'])) {
+    require_once __DIR__ . '/../includes/coach-db.php';
+    $clientId = filter_var($_GET['client_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+    if ($clientId === false || !coachTablesReady($pdo) || coachActiveRelationId($pdo, $userId, $clientId) === null) {
+        apiError(404, 'Không tìm thấy học viên này trong danh sách của bạn.');
+    }
+    $userId = $clientId;
+}
 
 $sql = 'SELECT calculated_date, tdee_kcal, target_kcal, protein_g, carbs_g, fat_g
         FROM nutrition_targets WHERE user_id = ?';

@@ -3,7 +3,7 @@
  * admin-nav.php — thanh điều hướng riêng của khu quản trị (khác menu của người dùng).
  * Trong khu quản trị, navbar người dùng được ẩn (xem navbar.php) nên thanh này có luôn logo, tên và nút Đăng xuất.
  * Dùng: $admNavActive = 'exercises'; include __DIR__ . '/../includes/admin-nav.php';
- * Giá trị $admNavActive: 'dashboard' | 'exercises' | 'users' | 'coaches' | 'articles' | 'stats' | 'audit'
+ * Giá trị $admNavActive: 'dashboard' | 'exercises' | 'users' | 'coaches' | 'experts' | 'articles' | 'stats' | 'audit' | 'health'
  */
 require_once __DIR__ . '/logo.php';
 $admNavActive = $admNavActive ?? '';
@@ -12,9 +12,11 @@ $admNavItems = [
     'exercises' => ['/admin/exercises.php', 'Bài tập'],
     'users'     => ['/admin/users.php', 'Người dùng'],
     'coaches'   => ['/admin/coaches.php', 'HLV'],
+    'experts'   => ['/admin/experts.php', 'Chuyên gia'],
     'articles'  => ['/admin/articles.php', 'Bài viết'],
     'stats'     => ['/admin/stats.php', 'Thống kê'],
     'audit'     => ['/admin/audit-log.php', 'Nhật ký'],
+    'health'    => ['/admin/health.php', 'Hệ thống'],
 ];
 ?>
 <?php
@@ -35,6 +37,7 @@ if ($admParts && $admParts[0] !== '') {
         </div>
         <div class="adm-nav-right">
             <a class="adm-nav-site" href="/exercises.php">Xem trang người dùng &#8599;</a>
+            <?php include __DIR__ . '/notif-bell.php'; // chuông thông báo (A-44) ?>
             <span class="adm-nav-av" title="<?= htmlspecialchars((string)($_SESSION['full_name'] ?? '')) ?>"><?= htmlspecialchars($admInitial) ?></span>
             <a class="adm-nav-out" href="/api/logout.php">Đăng xuất</a>
         </div>
