@@ -105,6 +105,39 @@ check('Ngoài gói tháng → dùng buổi thử trước, rồi tới gói bu�
 check('Hết mọi quyền → null', coachPickBilling(['trial_left' => 0, 'pack_left' => 0], [], '2027-01-05') === null);
 check('Dòng giá công khai', coachPriceLine(300000, 2400000) === '300.000đ/buổi · 2.400.000đ/tháng' && coachPriceLine(null, null) === '');
 
+// ===================== VIETQR (A-56): TÀI KHOẢN NHẬN CHUYỂN KHOẢN =====================
+$okBank = ['bank_bin' => '970436', 'bank_account' => '0123456789', 'bank_holder' => '  nguyen   van an '];
+$b = validateCoachBank($okBank);
+check('TK hợp lệ: tên chủ TK gộp khoảng trắng, đổi in hoa', $b['errors'] === [] && $b['data'] === ['bank_bin' => '970436', 'bank_account' => '0123456789', 'bank_holder' => 'NGUYEN VAN AN']);
+check('Để trống cả 3 ô = xóa TK (toàn null, không lỗi)', validateCoachBank(['bank_bin' => '', 'bank_account' => ' ', 'bank_holder' => ''])
+    === ['data' => ['bank_bin' => null, 'bank_account' => null, 'bank_holder' => null], 'errors' => []]);
+check('Không gửi 3 ô = xóa TK', validateCoachBank([])['errors'] === [] && validateCoachBank([])['data']['bank_bin'] === null);
+$b = validateCoachBank(['bank_bin' => '', 'bank_account' => '0123456789', 'bank_holder' => '']);
+check('Chỉ điền số TK → báo thiếu ngân hàng và chủ TK, data toàn null', isset($b['errors']['bank_bin'], $b['errors']['bank_holder']) && !isset($b['errors']['bank_account']) && $b['data']['bank_account'] === null);
+check('BIN ngoài whitelist → lỗi', isset(validateCoachBank(['bank_bin' => '123456'] + $okBank)['errors']['bank_bin']));
+check('BIN dạng mảng (sửa form) → lỗi, không cảnh báo PHP', isset(validateCoachBank(['bank_bin' => ['970436']] + $okBank)['errors']['bank_bin']));
+check('Số TK 5 chữ số → lỗi', isset(validateCoachBank(['bank_account' => '12345'] + $okBank)['errors']['bank_account']));
+check('Số TK 20 chữ số → lỗi', isset(validateCoachBank(['bank_account' => str_repeat('1', 20)] + $okBank)['errors']['bank_account']));
+check('Số TK 6 và 19 chữ số → hợp lệ', validateCoachBank(['bank_account' => '123456'] + $okBank)['errors'] === []
+    && validateCoachBank(['bank_account' => str_repeat('9', 19)] + $okBank)['errors'] === []);
+check('Số TK có chữ cái → lỗi', isset(validateCoachBank(['bank_account' => '12ab5678'] + $okBank)['errors']['bank_account']));
+check('Số TK gõ có khoảng trắng / gạch ngang được bỏ', validateCoachBank(['bank_account' => '0123 456-789'] + $okBank)['data']['bank_account'] === '0123456789');
+check('Số TK chữ số Ả Rập-Ấn (٣) → lỗi', isset(validateCoachBank(['bank_account' => '٣٣٣٣٣٣٣'] + $okBank)['errors']['bank_account']));
+check('Tên chủ TK có dấu → lỗi, không tự bỏ dấu', isset(validateCoachBank(['bank_holder' => 'Nguyễn Văn An'] + $okBank)['errors']['bank_holder']));
+check('Tên chủ TK có chữ số → lỗi', isset(validateCoachBank(['bank_holder' => 'NGUYEN VAN A1'] + $okBank)['errors']['bank_holder']));
+check('Tên chủ TK 50 ký tự hợp lệ, 51 ký tự lỗi', validateCoachBank(['bank_holder' => str_repeat('A', 50)] + $okBank)['errors'] === []
+    && isset(validateCoachBank(['bank_holder' => str_repeat('A', 51)] + $okBank)['errors']['bank_holder']));
+check('Che số TK: chỉ còn 4 số cuối', coachMaskAccount('0123456789') === '****6789');
+check('Whitelist: mọi mã BIN là đúng 6 chữ số', count(array_filter(array_keys(COACH_BANKS), fn($k) => preg_match('/^\d{6}$/', (string)$k) === 1)) === count(COACH_BANKS));
+
+$qr = coachVietQrUrl('970436', '0123456789', 'NGUYEN VAN AN', 1200000, 42);
+check('URL VietQR đúng mẫu, khoảng trắng mã hóa %20', $qr === 'https://img.vietqr.io/image/970436-0123456789-compact2.png?amount=1200000&addInfo=GS42&accountName=NGUYEN%20VAN%20AN');
+check('Dữ liệu lưu bị sửa (chèn &amount=1) → không tạo URL', coachVietQrUrl('970436', '123&amount=1', 'NGUYEN VAN AN', 1200000, 42) === null
+    && coachVietQrUrl('970436', '0123456789', 'A&amount=1', 1200000, 42) === null);
+check('BIN lạ / số tiền 0 / mã đơn 0 → không tạo URL', coachVietQrUrl('111111', '0123456789', 'A', 1000, 1) === null
+    && coachVietQrUrl('970436', '0123456789', 'A', 0, 1) === null && coachVietQrUrl('970436', '0123456789', 'A', 1000, 0) === null);
+check('Nội dung chuyển khoản GS + mã đơn', coachTransferNote(7) === 'GS7');
+
 // ===================== PHẦN 2: LỚP DB TRÊN SQLITE =====================
 if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     echo "[BỎ QUA] Không có pdo_sqlite nên không chạy phần DB\n";
@@ -112,7 +145,7 @@ if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
     $pdo->exec("CREATE TABLE users (id INTEGER PRIMARY KEY, full_name TEXT, role TEXT, avatar TEXT)");
     $pdo->exec("CREATE TABLE coach_profiles (user_id INTEGER PRIMARY KEY, headline TEXT DEFAULT '', max_clients INT DEFAULT 10, accepting INT DEFAULT 1,
-        price_per_session INT, price_per_month INT, trial_sessions INT NOT NULL DEFAULT 1, payment_note TEXT NOT NULL DEFAULT '', updated_at TEXT)");
+        price_per_session INT, price_per_month INT, trial_sessions INT NOT NULL DEFAULT 1, payment_note TEXT NOT NULL DEFAULT '', bank_bin TEXT, bank_account TEXT, bank_holder TEXT, updated_at TEXT)");
     $pdo->exec("CREATE TABLE coach_clients (id INTEGER PRIMARY KEY AUTOINCREMENT, coach_id INT, client_id INT, status TEXT, request_note TEXT DEFAULT '',
         trial_sessions INT, created_at TEXT, accepted_at TEXT, ended_at TEXT, ended_by INT,
         open_client_id INT GENERATED ALWAYS AS (CASE WHEN status IN ('PENDING', 'ACTIVE') THEN client_id END) STORED UNIQUE)");
@@ -238,6 +271,21 @@ if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     check('HLV lưu giá: chỉ bán theo tháng', coachPricing($pdo, 3) === ['price_per_session' => null, 'price_per_month' => 1800000, 'trial_sessions' => 3, 'payment_note' => '']);
     check('Tài khoản không phải HLV không lưu giá được', errOf(fn() => coachSavePricing($pdo, 4, ['price_per_session' => 1000, 'price_per_month' => null, 'trial_sessions' => 1, 'payment_note' => ''])) !== null);
     check('Bảng giá nhiều HLV', coachPricingMap($pdo, [2, 3, 99])[3]['price_per_month'] === 1800000 && !isset(coachPricingMap($pdo, [99])[99]));
+    // Tài khoản nhận chuyển khoản (A-56)
+    check('DB có cột ngân hàng: coachBankReady() = true', coachBankReady($pdo));
+    check('HLV chưa ghi TK → coachBankInfo() = null', coachBankInfo($pdo, 3) === null);
+    coachSaveBank($pdo, 3, validateCoachBank(['bank_bin' => '970422', 'bank_account' => '9704220001', 'bank_holder' => 'tran thi ba'])['data']);
+    check('HLV lưu TK rồi đọc lại', coachBankInfo($pdo, 3) === ['bank_bin' => '970422', 'bank_account' => '9704220001', 'bank_holder' => 'TRAN THI BA']);
+    check('Lưu TK không đụng giá', coachPricing($pdo, 3)['price_per_month'] === 1800000);
+    $pdo->exec('INSERT INTO coach_profiles (user_id) VALUES (4)');   // dòng hồ sơ sót lại của người đã bị thu hồi vai trò HLV
+    coachSaveBank($pdo, 4, ['bank_bin' => '970422', 'bank_account' => '111111111', 'bank_holder' => 'X']);
+    check('Tài khoản không phải HLV không lưu được TK', coachBankInfo($pdo, 4) === null);
+    coachSaveBank($pdo, 3, validateCoachBank([])['data']);
+    check('Để trống 3 ô → xóa TK', coachBankInfo($pdo, 3) === null
+        && $pdo->query('SELECT bank_bin FROM coach_profiles WHERE user_id = 3')->fetchColumn() === null);
+    $old = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $old->exec('CREATE TABLE coach_profiles (user_id INTEGER PRIMARY KEY, payment_note TEXT)');
+    check('DB chưa chạy coach_bank.sql: không lỗi, coachBankInfo() = null', !coachBankReady($old) && coachBankInfo($old, 1) === null);
 }
 
 echo $fails === 0 ? "TẤT CẢ ĐỀU PASS\n" : "CÓ $fails TEST SAI\n";

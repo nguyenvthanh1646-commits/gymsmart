@@ -431,3 +431,15 @@ Chạy `php tools/test-coach-http.php`: 118 bước, gồm toàn bộ bảng tr�
 | Tên chứa `<script>` | Hiện đúng chữ ở trang Huấn luyện viên, tin nhắn, nhận xét (htmlspecialchars) |
 | Tài khoản vừa bị thu hồi vai trò HLV gửi form | `requireCoach()` chặn; câu UPDATE tên còn kèm điều kiện `role = 'COACH'` |
 | Gửi kèm `user_id` của người khác | Không có tác dụng: id luôn lấy từ session |
+
+### Thanh toán bằng mã VietQR (A-56)
+
+| Thử | Kết quả đúng |
+|---|---|
+| HLV gửi form giá với `bank_bin=123456` (sửa bằng F12), số TK `12ab56`, số TK 5 hoặc 20 chữ số | Báo lỗi đúng ô, không lưu gì (cả giá) |
+| Tên chủ TK `Nguyễn Văn A`, `NGUYEN  VAN A1`, 51 ký tự | Có dấu / có số / quá dài → báo lỗi; khoảng trắng thừa và chữ thường được chuẩn hóa thành `NGUYEN VAN A` |
+| Gửi form giá không có CSRF token | Trang lỗi CSRF, không lưu |
+| Học viên có đơn PENDING mở tab Lịch hẹn và gói, F12 > Network | Ảnh từ `img.vietqr.io` có `amount` đúng số tiền đơn, `addInfo=GS<mã đơn>`; Console không có "Refused to load the image" |
+| Học viên khác / học viên chưa có đơn chờ / HLV khác mở trang | Không thấy mã QR hay số tài khoản của HLV này |
+| Sửa `bank_account` trong DB thành `123&amount=1` rồi mở đơn | Không hiện mã QR (kiểm tra lại trước khi ghép), quay về hướng dẫn chữ |
+| Nhật ký hoạt động sau khi HLV lưu tài khoản | Chỉ ghi `****` + 4 số cuối, không ghi đủ số tài khoản |

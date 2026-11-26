@@ -122,6 +122,7 @@ include __DIR__ . '/../includes/coach-nav.php';
                         <div class="ch-feed__meta">
                             <b><?= htmlspecialchars($o['client_name']) ?></b>
                             <span><?= htmlspecialchars(coachOrderLabel($o['kind'], (int)$o['quantity'])) ?> · <b><?= htmlspecialchars(coachMoney((int)$o['amount'])) ?></b></span>
+                            <span>nội dung CK <b><?= htmlspecialchars(coachTransferNote((int)$o['id'])) ?></b></span>
                             <span>chọn <?= htmlspecialchars(mb_strtolower(coachTimeAgo($o['created_at']))) ?></span>
                         </div>
                         <div class="adm-actions" style="margin-top:10px;justify-content:flex-start;flex-wrap:wrap">

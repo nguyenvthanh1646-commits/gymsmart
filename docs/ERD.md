@@ -270,6 +270,9 @@ erDiagram
         int price_per_month "NULL = không bán theo tháng"
         tinyint trial_sessions "buổi thử miễn phí 1-3"
         varchar payment_note "chỉ học viên đang tập thấy"
+        char bank_bin "A-56: mã BIN ngân hàng, NULL = chưa có TK"
+        varchar bank_account "A-56: 6-19 chữ số"
+        varchar bank_holder "A-56: in hoa không dấu"
         tinyint accepting "1 = đang nhận học viên"
         datetime created_at
         datetime updated_at
@@ -544,6 +547,18 @@ Lịch hẹn từng buổi (60 phút). Học viên đặt (`REQUESTED`), HLV xá
 Đơn mua gói: `SESSIONS` (gói 1/4/8/12 buổi) hoặc `MONTH` (gói 1/3 tháng, mỗi tháng 30 ngày, đặt buổi không giới hạn). Giá chụp lại lúc tạo đơn. `PENDING` → `PAID` khi HLV bấm "Đã nhận tiền" (gói tháng được điền `starts_on`/`ends_on`, nối tiếp gói tháng trước nếu còn hạn), hoặc → `CANCELLED` (học viên tự hủy, HLV hủy kèm lý do, hoặc quan hệ kết thúc). `open_rel` + UNIQUE: mỗi quan hệ tối đa 1 đơn đang chờ.
 
 **Khóa khi hết buổi:** không có gói tháng còn hạn hôm nay, hết buổi thử, hết buổi trong gói và không còn buổi nào đang giữ chỗ → HLV tạm không giao lịch, đặt dinh dưỡng, nhận xét được (kiểm tra ở máy chủ: `coachBillingAssert()` / `coachBillingLocked()`); tin nhắn vẫn dùng được. Mua gói và HLV xác nhận tiền thì mở lại.
+
+## Thanh toán bằng mã VietQR (`sql/coach_bank.sql`, đã gộp vào `schema.sql`, A-56)
+
+Code: quy tắc thuần ở `includes/coach-billing-rules.php` (`COACH_BANKS`, `validateCoachBank()`, `coachVietQrUrl()`), truy vấn `coachBankInfo()` / `coachSaveBank()` ở `includes/coach-billing.php`; test `test-coach-billing.php`. Vẫn **không có cổng thanh toán**: mã QR chỉ điền sẵn thông tin chuyển khoản, HLV vẫn bấm "Đã nhận tiền" như A-54.
+
+| Thay đổi | Ý nghĩa |
+|---|---|
+| `coach_profiles.bank_bin` | Mã BIN ngân hàng (6 chữ số). Chỉ nhận mã trong whitelist `COACH_BANKS` (đối chiếu với danh sách công khai `api.vietqr.io/v2/banks`) |
+| `coach_profiles.bank_account` | Số tài khoản, chỉ chữ số, 6-19 ký tự |
+| `coach_profiles.bank_holder` | Tên chủ tài khoản, chữ in hoa không dấu, tối đa 50 ký tự (không tự bỏ dấu, gõ có dấu thì báo lỗi) |
+
+3 cột cùng có giá trị hoặc cùng NULL; NULL = HLV chưa ghi tài khoản, học viên thấy `payment_note` như cũ. Khi có đủ, học viên **có đơn `PENDING` của chính mình** (tab Lịch hẹn và gói ở `my-coach.php`) thấy ảnh `https://img.vietqr.io/image/{bin}-{acc}-compact2.png?amount={amount}&addInfo=GS{order_id}&accountName={holder}`: `amount` lấy từ `coach_orders.amount`, mọi phần đi qua `rawurlencode()` và kiểm tra lại ngay trước khi ghép. HLV thấy nội dung `GS{order_id}` ở từng đơn chờ để đối chiếu sao kê. Ảnh do img.vietqr.io vẽ, nên trình duyệt của học viên gửi số TK, tên chủ TK và số tiền tới dịch vụ đó (thẻ `<img>` có `referrerpolicy="no-referrer"`, CSP `img-src` thêm `https://img.vietqr.io`).
 
 ## Tư vấn sức khỏe từ chuyên gia (`sql/health_experts.sql`, đã gộp vào `schema.sql`, A-55)
 

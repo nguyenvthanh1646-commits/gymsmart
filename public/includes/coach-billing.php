@@ -82,6 +82,48 @@ function coachSavePricing(PDO $pdo, int $coachId, array $data): void
     }
 }
 
+/** Database đã chạy sql/coach_bank.sql chưa (A-56: cột bank_bin, bank_account, bank_holder). Chưa thì ẩn phần VietQR. */
+function coachBankReady(PDO $pdo): bool
+{
+    static $ready = [];
+    $key = spl_object_id($pdo);
+    if (!isset($ready[$key])) {
+        try {
+            $pdo->query('SELECT bank_bin, bank_account, bank_holder FROM coach_profiles WHERE 1 = 0');
+            $ready[$key] = true;
+        } catch (PDOException $e) {
+            $ready[$key] = false;
+        }
+    }
+    return $ready[$key];
+}
+
+/**
+ * Tài khoản nhận chuyển khoản của HLV: ['bank_bin','bank_account','bank_holder'] hoặc null khi chưa có / DB chưa nâng cấp.
+ * Thông tin riêng tư: chỉ gọi cho chính HLV (trang Hồ sơ) hoặc học viên đang có đơn chờ với HLV đó (my-coach.php).
+ */
+function coachBankInfo(PDO $pdo, int $coachId): ?array
+{
+    if (!coachBankReady($pdo)) {
+        return null;
+    }
+    $st = $pdo->prepare('SELECT bank_bin, bank_account, bank_holder FROM coach_profiles WHERE user_id = ?');
+    $st->execute([$coachId]);
+    $r = $st->fetch(PDO::FETCH_ASSOC);
+    if ($r === false || $r['bank_bin'] === null || $r['bank_account'] === null || $r['bank_holder'] === null) {
+        return null;
+    }
+    return ['bank_bin' => (string)$r['bank_bin'], 'bank_account' => (string)$r['bank_account'], 'bank_holder' => (string)$r['bank_holder']];
+}
+
+/** HLV lưu / xóa tài khoản nhận chuyển khoản ($data đã qua validateCoachBank; toàn null = xóa). */
+function coachSaveBank(PDO $pdo, int $coachId, array $data): void
+{
+    $pdo->prepare("UPDATE coach_profiles SET bank_bin = ?, bank_account = ?, bank_holder = ?
+                   WHERE user_id = ? AND user_id IN (SELECT id FROM users WHERE role = 'COACH')")
+        ->execute([$data['bank_bin'], $data['bank_account'], $data['bank_holder'], $coachId]);
+}
+
 // =====================================================================
 // 2. TRẠNG THÁI QUYỀN TẬP CỦA MỘT QUAN HỆ
 // =====================================================================

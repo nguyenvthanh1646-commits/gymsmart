@@ -299,6 +299,11 @@
 .ch-pack small { color: var(--text-muted); font-size: 13px; }
 .ch-pack__price { font-weight: 700; white-space: nowrap; }
 .ch-pay-note { font-size: 14px; overflow-wrap: anywhere; }
+/* A-56: mã VietQR cho đơn chờ thanh toán (my-coach.php). Nền trắng cố định để app ngân hàng quét được cả khi giao diện tối */
+.ch-qr { margin: var(--s-3) 0 var(--s-2); text-align: center; }
+.ch-qr img { display: block; width: 100%; max-width: 260px; height: auto; margin: 0 auto 6px; background: #fff; border-radius: 12px; padding: 6px; }
+.ch-qr__info { margin-bottom: var(--s-3); }
+.ch-qr__info dd { overflow-wrap: anywhere; }
 .ch-inline-form summary { list-style: none; cursor: pointer; }
 .ch-inline-form summary::-webkit-details-marker { display: none; }
 .ch-inline-form[open] form { display: grid; gap: 6px; margin-top: 8px; min-width: min(260px, 100%); }

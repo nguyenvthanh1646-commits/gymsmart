@@ -4,6 +4,8 @@
  * Dùng chung hàm kiểm tra với mẫu đơn (validateCoachApplication, không cần tick cam kết).
  * Số học viên tối đa không được nhỏ hơn số học viên đang tập (không đuổi học viên bằng cách hạ con số).
  * Form riêng "Giá và buổi tập thử" (action=pricing, A-54): giá 1 buổi / 1 tháng, 1-3 buổi thử miễn phí, hướng dẫn thanh toán.
+ * Cùng form đó (A-56): tài khoản nhận chuyển khoản (ngân hàng trong whitelist COACH_BANKS, số TK, chủ TK) để học viên
+ * có đơn chờ thấy mã VietQR. Kiểm tra ở PHP bằng validateCoachBank(), lưu chung transaction với giá.
  */
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
@@ -15,6 +17,8 @@ $profile = coachProfile($pdo, $coachId);
 $errors = [];
 $billingOn = coachBillingReady($pdo);
 $pricing = $billingOn ? coachPricing($pdo, $coachId) : null;
+$bankOn = $billingOn && coachBankReady($pdo);   // A-56: DB đã chạy sql/coach_bank.sql
+$bank = $bankOn ? coachBankInfo($pdo, $coachId) : null;
 $priceErrors = [];
 $priceInput = null;   // giá trị vừa gửi khi có lỗi, để điền lại
 
@@ -26,11 +30,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'prici
     require_once __DIR__ . '/../includes/audit-log.php';
     $pv = validateCoachPricing($_POST);
     $priceErrors = $pv['errors'];
+    // A-56: tài khoản nhận chuyển khoản nằm chung form giá; phần nào lỗi thì không lưu phần nào
+    $bv = $bankOn ? validateCoachBank($_POST) : ['data' => null, 'errors' => []];
+    $priceErrors += $bv['errors'];
     if (!$priceErrors) {
         try {
-            coachSavePricing($pdo, $coachId, $pv['data']);
+            coachTx($pdo, function () use ($pdo, $coachId, $pv, $bv) {
+                coachSavePricing($pdo, $coachId, $pv['data']);
+                if ($bv['data'] !== null) {
+                    coachSaveBank($pdo, $coachId, $bv['data']);
+                }
+            });
+            $bankLog = '';
+            if ($bv['data'] !== null) {   // không ghi đủ số tài khoản vào nhật ký, chỉ 4 số cuối
+                $bankLog = $bv['data']['bank_bin'] !== null
+                    ? ', TK ' . COACH_BANKS[$bv['data']['bank_bin']] . ' ' . coachMaskAccount($bv['data']['bank_account'])
+                    : ', không có TK ngân hàng';
+            }
             auditLog($pdo, 'coach.pricing', 'coach', $coachId, 'Đặt giá: ' . (coachPriceLine($pv['data']['price_per_session'], $pv['data']['price_per_month']) ?: 'không bán')
-                . ', ' . $pv['data']['trial_sessions'] . ' buổi thử');
+                . ', ' . $pv['data']['trial_sessions'] . ' buổi thử' . $bankLog);
             coachFlash('ok', 'Đã lưu giá. Giá mới áp dụng cho đơn mua gói từ bây giờ; số buổi thử mới áp dụng cho học viên gửi yêu cầu sau này.');
         } catch (CoachException $e) {
             coachFlash('error', $e->getMessage());
@@ -40,7 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'prici
     }
     $priceInput = ['price_per_session' => is_string($_POST['price_per_session'] ?? null) ? $_POST['price_per_session'] : '',
                    'price_per_month' => is_string($_POST['price_per_month'] ?? null) ? $_POST['price_per_month'] : '',
-                   'trial_sessions' => $pv['data']['trial_sessions'], 'payment_note' => $pv['data']['payment_note']];
+                   'trial_sessions' => $pv['data']['trial_sessions'], 'payment_note' => $pv['data']['payment_note'],
+                   // điền lại đúng chữ vừa gõ (đã chuẩn hóa nhẹ), kể cả khi sai, để HLV sửa tiếp
+                   'bank_bin' => is_string($_POST['bank_bin'] ?? null) ? $_POST['bank_bin'] : '',
+                   'bank_account' => is_string($_POST['bank_account'] ?? null) ? $_POST['bank_account'] : '',
+                   'bank_holder' => coachNormalizeHolder($_POST['bank_holder'] ?? '')];
 } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf()) {
         showCsrfError();
@@ -183,6 +205,9 @@ include __DIR__ . '/../includes/coach-nav.php';
             'price_per_month'   => $pricing['price_per_month'] !== null ? number_format($pricing['price_per_month'], 0, ',', '.') : '',
             'trial_sessions'    => $pricing['trial_sessions'],
             'payment_note'      => $pricing['payment_note'],
+            'bank_bin'          => $bank['bank_bin'] ?? '',
+            'bank_account'      => $bank['bank_account'] ?? '',
+            'bank_holder'       => $bank['bank_holder'] ?? '',
         ];
     ?>
     <form class="adm-panel" id="gia" method="post" action="/coach/profile.php" style="margin-top:16px" novalidate>
@@ -225,6 +250,40 @@ include __DIR__ . '/../includes/coach-nav.php';
                 <?= fe($priceErrors, 'payment_note') ?>
             </div>
         </div>
+        <?php if ($bankOn): ?>
+        <div class="adm-form-section">
+            <h2>Tài khoản nhận chuyển khoản (mã VietQR)</h2>
+            <p class="adm-hint" style="margin-top:0">Khi có đủ 3 ô, học viên có đơn chờ thanh toán thấy mã VietQR đã điền sẵn số tiền của đơn và nội dung <b><?= htmlspecialchars(COACH_QR_PREFIX) ?>&lt;mã đơn&gt;</b>, quét bằng app ngân hàng là chuyển được. Tiền vào thẳng tài khoản của bạn, GymSmart không thu hộ; bạn vẫn bấm "Đã nhận tiền" như cũ. Chỉ học viên có đơn chờ với bạn mới thấy. Để trống cả 3 ô nếu không muốn dùng mã QR.</p>
+            <div class="adm-grid">
+                <div class="adm-field">
+                    <label for="bank_bin">Ngân hàng</label>
+                    <select class="adm-select" id="bank_bin" name="bank_bin"<?= isset($priceErrors['bank_bin']) ? ' aria-invalid="true" aria-describedby="err-bank_bin"' : '' ?>>
+                        <option value="">Chưa chọn</option>
+                        <?php foreach (COACH_BANKS as $bin => $bankName): ?>
+                            <option value="<?= htmlspecialchars($bin) ?>"<?= (string)$pv['bank_bin'] === $bin ? ' selected' : '' ?>><?= htmlspecialchars($bankName) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?= fe($priceErrors, 'bank_bin') ?>
+                </div>
+                <div class="adm-field">
+                    <label for="bank_account">Số tài khoản</label>
+                    <input class="adm-input" id="bank_account" name="bank_account" inputmode="numeric" autocomplete="off"
+                           minlength="<?= COACH_BANK_ACCOUNT_MIN ?>" maxlength="<?= COACH_BANK_ACCOUNT_MAX ?>" pattern="[0-9]{<?= COACH_BANK_ACCOUNT_MIN ?>,<?= COACH_BANK_ACCOUNT_MAX ?>}"
+                           value="<?= htmlspecialchars((string)$pv['bank_account']) ?>"<?= isset($priceErrors['bank_account']) ? ' aria-invalid="true" aria-describedby="err-bank_account"' : '' ?>>
+                    <p class="adm-hint">Chỉ chữ số, <?= COACH_BANK_ACCOUNT_MIN ?>–<?= COACH_BANK_ACCOUNT_MAX ?> ký tự.</p>
+                    <?= fe($priceErrors, 'bank_account') ?>
+                </div>
+                <div class="adm-field">
+                    <label for="bank_holder">Tên chủ tài khoản</label>
+                    <input class="adm-input" id="bank_holder" name="bank_holder" autocomplete="off" maxlength="<?= COACH_BANK_HOLDER_MAX ?>"
+                           placeholder="NGUYEN VAN A" style="text-transform:uppercase"
+                           value="<?= htmlspecialchars((string)$pv['bank_holder']) ?>"<?= isset($priceErrors['bank_holder']) ? ' aria-invalid="true" aria-describedby="err-bank_holder"' : '' ?>>
+                    <p class="adm-hint">In hoa không dấu, đúng như tên trên tài khoản ngân hàng.</p>
+                    <?= fe($priceErrors, 'bank_holder') ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
         <div class="adm-bar">
             <button type="submit" class="adm-btn" data-busy-text="Đang lưu…">Lưu giá</button>
         </div>

@@ -139,6 +139,11 @@ Các nhánh xếp chồng, merge theo thứ tự: `a-34-nang-cap-dinh-duong` →
   - Thanh menu thêm mục "Tư vấn", nút "Khu chuyên gia"; khu quản trị thêm mục "Chuyên gia"; `tools/audit.php` thêm luật trang `/expert/` phải có `requireExpert()`
   - Test: `test-expert.php` (66 bước), thêm phần E vào kịch bản HTTP (30 bước, tổng 185). Đã thử DB cũ chưa chạy file SQL: các trang báo "chưa bật", không lỗi
   - 3 chuyên gia mẫu (`tools/seed-experts.php`): không có file chứng chỉ nên hiện nhãn "Hồ sơ mẫu, chưa kiểm tra chứng chỉ", nơi công tác và số chứng chỉ ghi rõ là mẫu
+- [x] A-56 Thanh toán gói HLV bằng mã VietQR (`a-56-vietqr`, cần thêm `sql/coach_bank.sql`)
+  - HLV ghi tài khoản nhận chuyển khoản trong form giá ở `coach/profile.php`: chọn ngân hàng từ whitelist `COACH_BANKS` (33 mã BIN, đối chiếu với `api.vietqr.io/v2/banks`), số TK chỉ chữ số 6-19 ký tự, tên chủ TK in hoa không dấu ≤ 50 ký tự (có dấu thì báo lỗi, không tự bỏ dấu). Kiểm tra ở PHP, CSRF, lưu chung transaction với giá; nhật ký chỉ ghi 4 số cuối
+  - Học viên có đơn PENDING (tab Buổi tập & gói) thấy ảnh mã VietQR của img.vietqr.io: số tiền lấy từ `coach_orders.amount`, nội dung `GS<mã đơn>`, mọi phần `rawurlencode` + kiểm tra lại trước khi ghép, `htmlspecialchars` khi in; kèm dòng chữ để chuyển tay. HLV chưa có TK (hoặc dữ liệu lưu không hợp lệ) thì hiện `payment_note` như cũ. HLV thấy `GS<mã đơn>` ở đơn chờ để đối chiếu
+  - CSP `img-src` thêm `https://img.vietqr.io`. Không đổi logic xác nhận tiền: HLV vẫn bấm "Đã nhận tiền"
+  - Test: thêm 28 bước ở `test-coach-billing.php` (128), 15 bước ở kịch bản HTTP (tổng 200)
 
 ---
 

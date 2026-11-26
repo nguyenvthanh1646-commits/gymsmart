@@ -4,7 +4,8 @@
  *   ?tab=overview (mặc định): HLV hiện tại, trạng thái khóa lịch tập/dinh dưỡng, yêu cầu xin sửa, ngừng tập
  *   ?tab=feedback: nhận xét của HLV (mở tab thì đánh dấu đã đọc)
  *   ?tab=messages: nhắn tin với HLV (js/coach-chat.js ↔ api/coach-messages.php, api/coach-message-send.php)
- *   ?tab=sessions: buổi tập và gói (A-54): đặt lịch hẹn, hủy buổi, xem buổi thử còn lại, chọn mua gói, lịch sử thanh toán
+ *   ?tab=sessions: buổi tập và gói (A-54): đặt lịch hẹn, hủy buổi, xem buổi thử còn lại, chọn mua gói, lịch sử thanh toán;
+ *                  đơn đang chờ hiện mã VietQR nếu HLV đã ghi tài khoản ngân hàng (A-56), không thì hiện hướng dẫn chữ
  * Mọi dữ liệu lấy theo $_SESSION['user_id']; quan hệ lấy bằng coachOpenRelationForClient(), không nhận id từ URL.
  */
 require_once __DIR__ . '/includes/auth.php';
@@ -442,9 +443,31 @@ include __DIR__ . '/includes/header.php';
                         <p class="ch-small" style="margin:0 0 6px"><span class="ch-badge ch-badge--warn">Chờ HLV xác nhận tiền</span></p>
                         <p style="margin:0"><b><?= htmlspecialchars(coachOrderLabel($pendingOrder['kind'], (int)$pendingOrder['quantity'])) ?></b> · <b><?= htmlspecialchars(coachMoney((int)$pendingOrder['amount'])) ?></b></p>
                         <p class="ch-small ch-muted">Thanh toán trực tiếp cho HLV <?= htmlspecialchars($rel['coach_name']) ?> rồi chờ HLV bấm xác nhận. GymSmart không thu tiền hộ.</p>
+                        <?php
+                        // A-56: mã VietQR. Đơn này lấy từ quan hệ ACTIVE của chính người đang đăng nhập ($relId từ $_SESSION),
+                        // số tiền lấy từ DB; coachVietQrUrl() kiểm tra lại mọi giá trị, sai thì trả null và hiện hướng dẫn chữ như cũ.
+                        $payBank = coachBankInfo($pdo, $coachId);
+                        $qrUrl = $payBank !== null
+                            ? coachVietQrUrl($payBank['bank_bin'], $payBank['bank_account'], $payBank['bank_holder'], (int)$pendingOrder['amount'], (int)$pendingOrder['id'])
+                            : null;
+                        ?>
+                        <?php if ($qrUrl !== null): ?>
+                            <figure class="ch-qr">
+                                <img src="<?= htmlspecialchars($qrUrl) ?>" width="260" loading="lazy" referrerpolicy="no-referrer"
+                                     alt="Mã VietQR chuyển <?= htmlspecialchars(coachMoney((int)$pendingOrder['amount'])) ?> tới <?= htmlspecialchars(COACH_BANKS[$payBank['bank_bin']]) ?>, nội dung <?= htmlspecialchars(coachTransferNote((int)$pendingOrder['id'])) ?>">
+                                <figcaption class="ch-small ch-muted">Quét bằng app ngân hàng. Kiểm tra đúng tên chủ tài khoản trước khi chuyển.</figcaption>
+                            </figure>
+                            <dl class="ch-kv ch-qr__info">
+                                <dt>Ngân hàng</dt><dd><?= htmlspecialchars(COACH_BANKS[$payBank['bank_bin']]) ?></dd>
+                                <dt>Số tài khoản</dt><dd><?= htmlspecialchars($payBank['bank_account']) ?></dd>
+                                <dt>Chủ tài khoản</dt><dd><?= htmlspecialchars($payBank['bank_holder']) ?></dd>
+                                <dt>Số tiền</dt><dd><?= htmlspecialchars(coachMoney((int)$pendingOrder['amount'])) ?></dd>
+                                <dt>Nội dung</dt><dd><b><?= htmlspecialchars(coachTransferNote((int)$pendingOrder['id'])) ?></b></dd>
+                            </dl>
+                        <?php endif; ?>
                         <?php if ($relPricing['payment_note'] !== '' && $relPricing['payment_note'] !== null): ?>
                             <div class="ch-quote ch-pay-note"><b>Hướng dẫn của HLV:</b><br><?= nl2br(htmlspecialchars((string)$relPricing['payment_note'])) ?></div>
-                        <?php else: ?>
+                        <?php elseif ($qrUrl === null): ?>
                             <p class="ch-small ch-muted">HLV chưa ghi hướng dẫn thanh toán, hãy hỏi HLV qua tab Tin nhắn.</p>
                         <?php endif; ?>
                         <form method="post" action="/my-coach.php?tab=sessions" data-confirm="Hủy đơn mua gói này?" style="margin-top:var(--s-3)">

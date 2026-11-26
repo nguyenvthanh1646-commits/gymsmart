@@ -385,3 +385,148 @@ function coachPriceLine(?int $perSession, ?int $perMonth): string
     }
     return implode(' · ', $parts);
 }
+
+// =====================================================================
+// TÀI KHOẢN NHẬN CHUYỂN KHOẢN VÀ MÃ VIETQR (A-56)
+// =====================================================================
+// HLV ghi ngân hàng + số TK + tên chủ TK; học viên có đơn đang chờ thấy ảnh mã VietQR (do img.vietqr.io vẽ)
+// đã điền sẵn số tiền của đơn và nội dung "GS<mã đơn>". Không có cổng thanh toán: HLV vẫn tự bấm "Đã nhận tiền".
+
+const COACH_BANK_ACCOUNT_MIN = 6;                 // số tài khoản: chỉ chữ số, 6-19 ký tự
+const COACH_BANK_ACCOUNT_MAX = 19;
+const COACH_BANK_HOLDER_MAX = 50;                 // tên chủ TK: chữ in hoa không dấu, tối đa 50 ký tự
+const COACH_QR_PREFIX = 'GS';                     // nội dung chuyển khoản = GS + mã đơn, để HLV đối chiếu sao kê
+
+/**
+ * Danh sách ngân hàng được chọn (whitelist): mã BIN (mã ngân hàng của NAPAS) => tên ngắn.
+ * Đối chiếu ngày 26/11/2026 với danh sách công khai https://api.vietqr.io/v2/banks (các dòng có transferSupported = 1).
+ * Thêm ngân hàng mới thì phải kiểm tra lại mã ở đúng nguồn đó, không tự đoán.
+ */
+const COACH_BANKS = [
+    '970436' => 'Vietcombank',
+    '970415' => 'VietinBank',
+    '970418' => 'BIDV',
+    '970405' => 'Agribank',
+    '970407' => 'Techcombank',
+    '970422' => 'MB Bank',
+    '970416' => 'ACB',
+    '970432' => 'VPBank',
+    '970423' => 'TPBank',
+    '970403' => 'Sacombank',
+    '970441' => 'VIB',
+    '970443' => 'SHB',
+    '970437' => 'HDBank',
+    '970448' => 'OCB',
+    '970426' => 'MSB',
+    '970440' => 'SeABank',
+    '970431' => 'Eximbank',
+    '970449' => 'LPBank',
+    '970428' => 'Nam A Bank',
+    '970409' => 'Bac A Bank',
+    '970425' => 'ABBANK',
+    '970412' => 'PVcomBank',
+    '970427' => 'VietABank',
+    '970452' => 'Kienlongbank',
+    '970419' => 'NCB',
+    '970438' => 'BaoViet Bank',
+    '970433' => 'VietBank',
+    '970454' => 'Viet Capital Bank (BVBank)',
+    '970400' => 'Saigonbank',
+    '970430' => 'PGBank',
+    '546034' => 'CAKE by VPBank',
+    '546035' => 'Ubank by VPBank',
+    '963388' => 'Timo',
+];
+
+/** Số tài khoản hợp lệ: chỉ chữ số 0-9, dài 6-19. */
+function coachBankAccountValid($acc): bool
+{
+    return is_string($acc) && preg_match('/^[0-9]{' . COACH_BANK_ACCOUNT_MIN . ',' . COACH_BANK_ACCOUNT_MAX . '}$/', $acc) === 1;
+}
+
+/** Tên chủ TK hợp lệ: các từ chữ A-Z in hoa, cách nhau đúng 1 khoảng trắng, tối đa 50 ký tự. */
+function coachBankHolderValid($holder): bool
+{
+    return is_string($holder) && strlen($holder) <= COACH_BANK_HOLDER_MAX && preg_match('/^[A-Z]+( [A-Z]+)*$/', $holder) === 1;
+}
+
+/**
+ * Chuẩn hóa tên chủ TK người dùng gõ: bỏ khoảng trắng 2 đầu, gộp khoảng trắng liền nhau, đổi a-z thành A-Z.
+ * KHÔNG tự bỏ dấu tiếng Việt (tự bỏ có thể ra tên khác tên trên tài khoản): còn dấu thì validateCoachBank() báo lỗi.
+ * strtoupper() từ PHP 8.2 chỉ đổi chữ ASCII, nên "ễ" vẫn giữ nguyên và bị bắt lỗi.
+ */
+function coachNormalizeHolder($raw): string
+{
+    if (!is_string($raw)) {
+        return '';
+    }
+    return strtoupper(trim(preg_replace('/\s+/u', ' ', $raw) ?? ''));
+}
+
+/**
+ * Kiểm tra phần "Tài khoản nhận chuyển khoản" trong form giá.
+ * Để trống cả 3 ô = xóa tài khoản (data toàn null). Điền 1-2 ô = báo thiếu ô còn lại.
+ * Trả về ['data' => ['bank_bin' => ?string, 'bank_account' => ?string, 'bank_holder' => ?string], 'errors' => [tên ô => lỗi]].
+ */
+function validateCoachBank(array $in): array
+{
+    $bin = is_string($in['bank_bin'] ?? null) ? trim($in['bank_bin']) : '';
+    $acc = is_string($in['bank_account'] ?? null) ? str_replace([' ', '-', '.'], '', trim($in['bank_account'])) : '';
+    $holder = coachNormalizeHolder($in['bank_holder'] ?? '');
+    $data = ['bank_bin' => null, 'bank_account' => null, 'bank_holder' => null];
+
+    if ($bin === '' && $acc === '' && $holder === '') {
+        return ['data' => $data, 'errors' => []];
+    }
+    $errors = [];
+    if ($bin === '') {
+        $errors['bank_bin'] = 'Chọn ngân hàng.';
+    } elseif (!array_key_exists($bin, COACH_BANKS)) {
+        $errors['bank_bin'] = 'Ngân hàng không có trong danh sách.';
+    }
+    if ($acc === '') {
+        $errors['bank_account'] = 'Nhập số tài khoản.';
+    } elseif (!coachBankAccountValid($acc)) {
+        $errors['bank_account'] = 'Số tài khoản chỉ gồm chữ số, dài ' . COACH_BANK_ACCOUNT_MIN . '–' . COACH_BANK_ACCOUNT_MAX . ' ký tự.';
+    }
+    if ($holder === '') {
+        $errors['bank_holder'] = 'Nhập tên chủ tài khoản.';
+    } elseif (mb_strlen($holder) > COACH_BANK_HOLDER_MAX) {
+        $errors['bank_holder'] = 'Tên chủ tài khoản tối đa ' . COACH_BANK_HOLDER_MAX . ' ký tự.';
+    } elseif (!coachBankHolderValid($holder)) {
+        $errors['bank_holder'] = 'Tên chủ tài khoản viết in hoa không dấu, chỉ gồm chữ cái và khoảng trắng, ví dụ NGUYEN VAN A.';
+    }
+    if (!$errors) {
+        $data = ['bank_bin' => $bin, 'bank_account' => $acc, 'bank_holder' => $holder];
+    }
+    return ['data' => $data, 'errors' => $errors];
+}
+
+/** Che số tài khoản khi ghi nhật ký / hiện tóm tắt: "0123456789" → "****6789". */
+function coachMaskAccount(string $acc): string
+{
+    return '****' . substr($acc, -4);
+}
+
+/** Nội dung chuyển khoản của một đơn: "GS123". */
+function coachTransferNote(int $orderId): string
+{
+    return COACH_QR_PREFIX . $orderId;
+}
+
+/**
+ * Đường dẫn ảnh mã VietQR cho một đơn. Kiểm tra lại MỌI giá trị ngay trước khi ghép (không tin dữ liệu đã lưu),
+ * mỗi phần đi qua rawurlencode() để ký tự lạ không chèn thêm tham số được. Khi in ra HTML vẫn phải htmlspecialchars().
+ * Trả về null nếu có giá trị không hợp lệ → trang hiện hướng dẫn thanh toán dạng chữ như cũ.
+ */
+function coachVietQrUrl($bin, $acc, $holder, int $amount, int $orderId): ?string
+{
+    if (!is_string($bin) || !array_key_exists($bin, COACH_BANKS) || !coachBankAccountValid($acc)
+        || !coachBankHolderValid($holder) || $amount <= 0 || $orderId <= 0) {
+        return null;
+    }
+    return 'https://img.vietqr.io/image/' . rawurlencode($bin) . '-' . rawurlencode($acc) . '-compact2.png'
+        . '?amount=' . rawurlencode((string)$amount)
+        . '&addInfo=' . rawurlencode(coachTransferNote($orderId))
+        . '&accountName=' . rawurlencode($holder);
+}

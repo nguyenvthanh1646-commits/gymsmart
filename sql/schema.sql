@@ -290,6 +290,9 @@ CREATE TABLE IF NOT EXISTS coach_profiles (
     price_per_month INT UNSIGNED NULL,              -- A-54: giá 1 tháng (VNĐ), NULL = không bán theo tháng
     trial_sessions TINYINT UNSIGNED NOT NULL DEFAULT 1, -- A-54: số buổi tập thử miễn phí (1-3)
     payment_note VARCHAR(300) NOT NULL DEFAULT '',  -- A-54: hướng dẫn thanh toán, chỉ học viên đang tập thấy
+    bank_bin CHAR(6) NULL,                          -- A-56: mã BIN ngân hàng (whitelist COACH_BANKS), NULL = chưa có TK
+    bank_account VARCHAR(19) NULL,                  -- A-56: số tài khoản, chỉ chữ số 6-19 ký tự
+    bank_holder VARCHAR(50) NULL,                   -- A-56: tên chủ TK in hoa không dấu (hiện trên mã VietQR)
     accepting TINYINT(1) NOT NULL DEFAULT 1,        -- 1 = đang nhận học viên mới
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

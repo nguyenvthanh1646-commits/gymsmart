@@ -295,7 +295,7 @@ foreach (glob($root . '/storage/certificates/c' . $u3 . '-*') as $f) {
 @unlink($png); @unlink($fake); @unlink($big);
 
 // =====================================================================
-section('D. Giá tập, buổi thử, lịch hẹn, gói (A-54): hết buổi bị khóa → mua gói → HLV xác nhận tiền → mở khóa');
+section('D. Giá tập, buổi thử, lịch hẹn, gói (A-54) + mã VietQR (A-56): hết buổi bị khóa → mua gói → HLV xác nhận tiền → mở khóa');
 // =====================================================================
 // Dữ liệu thử: HLV 1 bán 300.000đ/buổi, 2.400.000đ/tháng, 2 buổi thử; học viên 1 đã tập 1 buổi thử, còn 1 buổi thử đã xác nhận ngày mai.
 reseed();
@@ -322,6 +322,24 @@ check('Lưu giá 350.000đ/buổi, 3 buổi thử', (int)q('SELECT price_per_ses
     && (int)q('SELECT trial_sessions FROM coach_profiles WHERE user_id = ?', [$c1]) === 3 && $coach1->has('Đã lưu giá'));
 check('Học viên cũ giữ số buổi thử đã chụp (2), không thành 3', (int)q('SELECT trial_sessions FROM coach_clients WHERE id = ?', [$rel1]) === 2);
 check('Nhật ký hoạt động ghi coach.pricing', (int)q("SELECT COUNT(*) FROM admin_audit_log WHERE action = 'coach.pricing' AND admin_id = ?", [$c1]) === 1);
+
+// VietQR (A-56): tài khoản nhận chuyển khoản nằm chung form giá
+$coach1->get('/coach/profile.php');
+check('Form giá có phần tài khoản VietQR (danh sách ngân hàng viết sẵn)', $coach1->has('name="bank_bin"') && $coach1->has('value="970436"') && $coach1->has('name="bank_holder"'));
+$bankBad = ['bank_bin' => '123456', 'bank_account' => '12ab56', 'bank_holder' => 'Nguyễn Văn HLV', 'price_per_session' => '400.000'];
+$coach1->post('/coach/profile.php', ['csrf_token' => $coach1->csrf()] + $bankBad + $priceForm);
+check('TK sai (BIN lạ, số TK có chữ, tên có dấu): báo đủ 3 lỗi, không lưu cả giá', $coach1->code === 200
+    && $coach1->has('Ngân hàng không có trong danh sách') && $coach1->has('Số tài khoản chỉ gồm chữ số') && $coach1->has('in hoa không dấu')
+    && q('SELECT bank_bin FROM coach_profiles WHERE user_id = ?', [$c1]) === null && (int)q('SELECT price_per_session FROM coach_profiles WHERE user_id = ?', [$c1]) === 350000);
+check('Gửi lại form lỗi: tên chủ TK điền lại đúng chữ đã gõ (đã escape)', $coach1->has('value="NGUYễN VăN HLV"'));
+$coach1->post('/coach/profile.php', ['bank_bin' => '970436', 'bank_account' => '0123456789', 'bank_holder' => 'NGUYEN VAN HLV', 'price_per_session' => '350.000'] + $priceForm);
+check('Lưu TK không có CSRF: 403, không lưu', $coach1->code === 403 && q('SELECT bank_bin FROM coach_profiles WHERE user_id = ?', [$c1]) === null);
+$coach1->get('/coach/profile.php');
+$coach1->postFollow('/coach/profile.php', ['csrf_token' => $coach1->csrf(), 'bank_bin' => '970436', 'bank_account' => '0123 456 789', 'bank_holder' => '  nguyen  van hlv ', 'price_per_session' => '350.000'] + $priceForm);
+check('Lưu TK hợp lệ: số TK bỏ khoảng trắng, tên in hoa', q('SELECT bank_bin FROM coach_profiles WHERE user_id = ?', [$c1]) === '970436'
+    && q('SELECT bank_account FROM coach_profiles WHERE user_id = ?', [$c1]) === '0123456789' && q('SELECT bank_holder FROM coach_profiles WHERE user_id = ?', [$c1]) === 'NGUYEN VAN HLV');
+check('Nhật ký chỉ ghi 4 số cuối của TK', (int)q("SELECT COUNT(*) FROM admin_audit_log WHERE action = 'coach.pricing' AND detail LIKE '%****6789%'") === 1
+    && (int)q("SELECT COUNT(*) FROM admin_audit_log WHERE detail LIKE '%0123456789%'") === 0);
 
 $u1web->get('/my-coach.php?tab=sessions');
 check('Học viên mở tab Buổi tập & gói: thấy quyền tập và buổi sắp tới', $u1web->code === 200 && $u1web->has('Quyền tập của bạn') && $u1web->has('còn 0/2') && $u1web->has('Đã xác nhận'));
@@ -373,6 +391,24 @@ $u1web->postFollow('/my-coach.php?tab=sessions', ['csrf_token' => $u1web->csrf()
 $oid = (int)q("SELECT id FROM coach_orders WHERE coach_client_id = ? AND status = 'PENDING'", [$rel1]);
 check('Học viên chọn gói 4 buổi: đơn chờ 1.400.000đ, thấy hướng dẫn thanh toán', $oid > 0 && (int)q('SELECT amount FROM coach_orders WHERE id = ?', [$oid]) === 1400000
     && $u1web->has('Chuyển khoản thử 0000'));
+$qrSrc = 'src="https://img.vietqr.io/image/970436-0123456789-compact2.png?amount=1400000&amp;addInfo=GS' . $oid . '&amp;accountName=NGUYEN%20VAN%20HLV"';
+check('Đơn chờ: hiện ảnh VietQR đúng số tiền của đơn, nội dung GS<mã đơn>, URL đã escape', $u1web->has($qrSrc) && $u1web->has('referrerpolicy="no-referrer"'));
+check('Đơn chờ: có dòng chữ chuyển tay (số TK, chủ TK, nội dung)', $u1web->has('0123456789') && $u1web->has('NGUYEN VAN HLV') && $u1web->has('<b>GS' . $oid . '</b>'));
+$ch = curl_init(T_BASE . '/login.php');
+curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_HEADER => true, CURLOPT_NOBODY => true]);
+$hdr = (string)curl_exec($ch);
+curl_close($ch);
+check('CSP img-src cho phép img.vietqr.io', preg_match('/^Content-Security-Policy:.*img-src[^;]*https:\/\/img\.vietqr\.io/mi', $hdr) === 1);
+check('HLV thấy nội dung CK GS<mã đơn> ở đơn chờ', $coach1->get('/coach/sessions.php')->has('nội dung CK <b>GS' . $oid . '</b>'));
+check('Người chưa có HLV không thấy TK của HLV 1', !$u3web->get('/my-coach.php?tab=sessions')->has('0123456789') && !$u3web->has('img.vietqr.io'));
+$u2web = (new Web('d-u2'))->login('hlv.user2@gymsmart.test');
+check('Học viên đang chờ HLV khác không thấy TK của HLV 1', !$u2web->get('/my-coach.php?tab=sessions')->has('0123456789'));
+check('HLV khác không thấy TK của HLV 1', !$coach2->get('/coach/sessions.php')->has('0123456789') && !$coach2->has('NGUYEN VAN HLV') && !$coach2->get('/coach/profile.php')->has('NGUYEN VAN HLV'));
+db()->prepare('UPDATE coach_profiles SET bank_account = ? WHERE user_id = ?')->execute(['123&amount=1', $c1]);
+$u1web->get('/my-coach.php?tab=sessions');
+check('Số TK trong DB bị sửa bậy: không hiện QR, quay về hướng dẫn chữ', !$u1web->has('img.vietqr.io') && $u1web->has('Chuyển khoản thử 0000'));
+db()->prepare('UPDATE coach_profiles SET bank_account = ? WHERE user_id = ?')->execute(['0123456789', $c1]);
+$u1web->get('/my-coach.php?tab=sessions');
 $u1web->postFollow('/my-coach.php?tab=sessions', ['csrf_token' => $u1web->csrf(), 'action' => 'order_create', 'pack' => 'MONTH:1']);
 check('Đơn thứ hai khi đang chờ: bị chặn', $u1web->has('đơn chờ') && (int)q('SELECT COUNT(*) FROM coach_orders') === 1);
 $coach2->get('/coach/sessions.php');
@@ -387,6 +423,7 @@ check('HLV 1 bấm "Đã nhận tiền": đơn PAID, ghi nhật ký', q('SELECT 
 // Mở khóa: đặt buổi bằng gói, HLV xác nhận, nhận xét lại được
 $u1web->get('/my-coach.php?tab=sessions');
 check('Học viên thấy gói 4 buổi và form đặt buổi', $u1web->has('còn 4/4 buổi') && $u1web->has('name="time"'));
+check('Đơn đã thanh toán: không còn mã VietQR', !$u1web->has('img.vietqr.io'));
 $u1web->postFollow('/my-coach.php?tab=sessions', ['csrf_token' => $u1web->csrf(), 'action' => 'book', 'date' => date('Y-m-d', strtotime('-1 day')), 'time' => '18:00', 'note' => '']);
 check('Đặt buổi ngày đã qua: bị chặn', $u1web->has('ít nhất 2 giờ'));
 $u1web->postFollow('/my-coach.php?tab=sessions', ['csrf_token' => $u1web->csrf(), 'action' => 'book', 'date' => $later, 'time' => '08:00', 'note' => '<script>alert(1)</script>']);
